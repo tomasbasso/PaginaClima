@@ -73,7 +73,7 @@
 
 ### Deploy (OPS)
 
-- [ ] **OPS-01**: Cada push a `main` en GitHub se publica solo en Vercel (región São Paulo)
+- [x] **OPS-01**: Cada push a `main` en GitHub se publica solo en Vercel (región São Paulo)
 
 ## v2 Requirements
 
@@ -136,7 +136,7 @@
 | ALRT-04 | Phase 7 | Pending |
 | ALRT-05 | Phase 7 | Pending |
 | ALRT-06 | Phase 7 | Pending |
-| OPS-01 | Phase 1 | Pending |
+| OPS-01 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 37 total
