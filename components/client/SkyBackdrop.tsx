@@ -2,7 +2,7 @@
 // Phase-1 sky: the six static CSS-gradient token sets of the UI-SPEC, crossfaded between two
 // layers (gradients do not interpolate). Single replacement point for the phase-3 WebGL canvas,
 // which keeps these tokens as its no-WebGL fallback (UI-SPEC "Contrato con la fase 3").
-import { useEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import { resolveSkyState, type SkyState, type SkyToken, skyToken } from '@/lib/sky/state'
 
 const RECOMPUTE_MS = 60_000
@@ -22,13 +22,27 @@ export function SkyBackdrop({
   // Identical on server and client: layer A visible with the server token.
   const [layers, setLayers] = useState<Layers>({ a: initial, b: initial, active: 'a' })
   const weather = state.weather
+  // Recomputed by every server render: a router.refresh() that brings a new render (and with it
+  // a possibly older server data-sky, which React patches back onto <html>/<main>) re-runs the
+  // sync below right away instead of waiting for the next 60 s tick (WR-10).
+  const renderedSunAltitude = state.sunAltitude
   const rootRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  // Layout effect: runs after React patched the server attributes and before paint, so the
+  // accent never shows a stale token, not even for one frame.
+  useLayoutEffect(() => {
     if (!live) return
+    // The token only ever comes from skyToken() (closed union), never from upstream text.
+    const current = () => skyToken(resolveSkyState(new Date(), weather))
+    const applyAccent = (token: SkyToken) => {
+      // --accent (tab bar, diamond, focus ring) follows the sky: <html> and the hosting <main>.
+      document.documentElement.dataset.sky = token
+      const host = rootRef.current?.parentElement
+      if (host?.hasAttribute('data-sky')) host.dataset.sky = token
+    }
+    applyAccent(current())
     const tick = () => {
-      // The token only ever comes from skyToken() (closed union), never from upstream text.
-      const next = skyToken(resolveSkyState(new Date(), weather))
+      const next = current()
       setLayers((cur) => {
         const shown = cur.active === 'a' ? cur.a : cur.b
         if (shown === next) return cur
@@ -36,10 +50,7 @@ export function SkyBackdrop({
           ? { a: cur.a, b: next, active: 'b' }
           : { a: next, b: cur.b, active: 'a' }
       })
-      // --accent (tab bar, diamond, focus ring) follows the sky: <html> and the hosting <main>.
-      document.documentElement.dataset.sky = next
-      const host = rootRef.current?.parentElement
-      if (host?.hasAttribute('data-sky')) host.dataset.sky = next
+      applyAccent(next)
     }
     const first = window.setTimeout(tick, 0)
     const id = window.setInterval(tick, RECOMPUTE_MS)
@@ -47,7 +58,7 @@ export function SkyBackdrop({
       window.clearTimeout(first)
       window.clearInterval(id)
     }
-  }, [live, weather])
+  }, [live, weather, renderedSunAltitude])
 
   return (
     <div ref={rootRef} aria-hidden="true" className={`absolute inset-0 -z-10 overflow-hidden ${className}`}>
