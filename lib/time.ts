@@ -26,3 +26,52 @@ const dateKeyFormat = new Intl.DateTimeFormat('en-CA', {
 export function localDateKey(d: Date): string {
   return dateKeyFormat.format(d)
 }
+
+// Always hourCycle 'h23' (the 12-hour flag set to false can yield "24:05" at midnight).
+const headerFormat = new Intl.DateTimeFormat('es-AR', {
+  timeZone: TZ,
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+const hhmmFormat = new Intl.DateTimeFormat('es-AR', {
+  timeZone: TZ,
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+})
+
+const dayMonthFormat = new Intl.DateTimeFormat('es-AR', {
+  timeZone: TZ,
+  day: '2-digit',
+  month: '2-digit',
+})
+
+function parts(fmt: Intl.DateTimeFormat, d: Date): Partial<Record<Intl.DateTimeFormatPartTypes, string>> {
+  const out: Partial<Record<Intl.DateTimeFormatPartTypes, string>> = {}
+  for (const p of fmt.formatToParts(d)) out[p.type] = p.value
+  return out
+}
+
+/** "viernes 23 de octubre, 23:59" — assembled from parts, never from ICU literals. */
+export function formatHeaderDate(d: Date): string {
+  const p = parts(headerFormat, d)
+  return `${p.weekday} ${p.day} de ${p.month}, ${p.hour}:${p.minute}`.toLowerCase()
+}
+
+/** "00:05" in Argentina time, 24 h. */
+export function formatHHmm(d: Date): string {
+  const p = parts(hhmmFormat, d)
+  return `${p.hour}:${p.minute}`
+}
+
+/** "23/10" in Argentina time. */
+export function formatDayMonth(d: Date): string {
+  // es-AR ICU drops '2-digit' for day/month ("5/1"), so pad explicitly.
+  const p = parts(dayMonthFormat, d)
+  return `${String(p.day).padStart(2, '0')}/${String(p.month).padStart(2, '0')}`
+}

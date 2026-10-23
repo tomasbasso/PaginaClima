@@ -26,6 +26,7 @@ describe('lib/time (D-08, DATA-04) under TZ=UTC', () => {
   it('formatHHmm renders 24h', () => {
     expect(formatHHmm(new Date('2026-10-24T03:05:00Z'))).toBe('00:05')
     expect(formatHHmm(new Date('2026-10-23T18:40:00Z'))).toBe('15:40')
+    expect(formatHHmm(new Date('2026-10-23T12:05:00Z'))).toBe('09:05')
   })
 
   it('formatDayMonth renders dd/MM in local time', () => {
