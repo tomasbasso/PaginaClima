@@ -19,9 +19,10 @@ Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con
 - [ ] **Ahora**: temperatura, sensación térmica, viento, humedad y presión actuales
 - [ ] **48 h por hora**: meteograma con temperatura, lluvia y viento
 - [ ] **7–14 días**: pronóstico diario con probabilidad de lluvia real (Open-Meteo Ensemble)
-- [ ] **Los modelos opinan**: ECMWF, GFS, ICON y MET Norway lado a lado + indicador de coincidencia
+- [ ] **Los modelos opinan**: ECMWF, GFS, ICON y GEM votan la coincidencia; MET Norway se muestra aparte como "basado en ECMWF"
 - [ ] **Lluvia acumulada**: semana / mes / año contra el promedio histórico (Open-Meteo Historical)
-- [ ] **Radar de lluvia** (RainViewer)
+- [ ] **Satélite IR** (GOES-East vía NASA GIBS) + link al radar del SMN — reemplaza a RainViewer, que no cubre Argentina
+- [ ] **Modo offline**: muestra el último pronóstico guardado sin señal
 - [ ] **Sol y luna**: salida/puesta del sol, fase lunar
 - [ ] **Cielo vivo**: fondo generativo/animado según hora real y condición (amanecer, siesta, tormenta, noche estrellada, niebla) + horizonte pampeano
 - [ ] **PWA instalable** en iPhone (Safari) y Android
@@ -64,6 +65,10 @@ Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con
 | GitHub Actions como cron horario | El cron de Vercel Hobby es diario | — Pending |
 | Supabase free para suscripciones push | Sin servidor propio para guardar estado | — Pending |
 | Push como última fase | No bloquea nada y suma complejidad | — Pending |
+| Satélite IR GOES-East en vez de RainViewer | RainViewer tiene 0 cobertura sobre Argentina (medido) | — Pending |
+| MET Norway no vota en la coincidencia | Fuera de Escandinavia usa datos de ECMWF (contaría doble) | — Pending |
+| Helada agronómica: mínima ≤ 2 °C | A 2 °C en abrigo ya hiela a ras del suelo | — Pending |
+| Modo offline con último dato | En el campo se corta la señal seguido | — Pending |
 
 ## Evolution
 
