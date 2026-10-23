@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-23T21:20:00.126Z"
+last_updated: "2026-10-23T21:31:32.708Z"
 last_activity: 2026-10-23
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 3
+  completed_plans: 4
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 1 (Fundaciones y Ahora) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-10-23
 
-Progress: [████░░░░░░] 43%
+Progress: [██████░░░░] 57%
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Progress: [████░░░░░░] 43%
 *Updated after each plan completion*
 | Phase 01 P01 | 10 min | 3 tasks | 25 files |
 | Phase 01 P04 | 12 min | 3 tasks | 8 files |
+| Phase 01 P05 | 9 min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,8 @@ Recent decisions affecting current work:
 - [Phase 1]: 01-01: RootLayout typed explicitly (not generated LayoutProps) so tsc --noEmit works before next typegen
 - [Phase 1]: 01-01: smoke.mjs --expect-404 needs MSYS_NO_PATHCONV=1 under Git Bash
 - [Phase 01]: Sky: llovizna->lluvia, nieve->cubierto in SkyWeather; skyFromSnapshot shared by layout and page
+- [Phase 01]: 01-05: Freshness refreshes once per fetchedAt (useRef); fixture pages pass autoRefresh=false
+- [Phase 01]: 01-05: snapshot sources built from Promise.allSettled; MET Norway cached as 3-field summary, never displayed
 
 ### Pending Todos
 
@@ -88,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-23T21:20:00.109Z
-Stopped at: Completed 01-04-PLAN.md
+Last session: 2026-10-23T21:31:32.689Z
+Stopped at: Completed 01-05-PLAN.md
 Resume file: None
