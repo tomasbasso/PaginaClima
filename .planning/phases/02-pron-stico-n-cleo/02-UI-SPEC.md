@@ -101,7 +101,7 @@ El sistema completo queda con **5 tamaños y 2 pesos** (400 y 600): los 4 de la 
 Reglas:
 - Todos los números (gráfico, lectura, diario) llevan `.nums` (`lining-nums tabular-nums`) y temperaturas con `formatTemp` (signo `−` U+2212).
 - El texto dentro del SVG usa `font-family: var(--font-sans)` por clase CSS, nunca una fuente del sistema.
-- **Titular:** máximo 2 líneas a 32 px en 342 px. La función garantiza ≤ 6 palabras y ≤ 34 caracteres (tests). **Fallback [default]:** si la verificación del navegador (ver "Ajustes de Ahora") falla con el titular más largo de los fixtures, el rol pasa a **28px / 1.21 (34px)** y no se toca nada más. No se usa ningún otro tamaño.
+- **Titular:** máximo 2 líneas a 32 px en 342 px. La función garantiza ≤ 7 palabras y ≤ 34 caracteres (tests). **Fallback [default]:** si la verificación del navegador (ver "Ajustes de Ahora") falla con el titular más largo de los fixtures, el rol pasa a **28px / 1.21 (34px)** y no se toca nada más. No se usa ningún otro tamaño.
 - Mayúsculas por CSS (`uppercase`), nunca en el string: las etiquetas salen de tablas locales en sentence case, como en la fase 1.
 
 ---
@@ -387,7 +387,7 @@ Castellano rioplatense, voseo, sin emojis ni signos de exclamación. Todo sale d
 
 ### Titular editorial (NOW-03)
 
-Función pura `buildHeadline(snapshot, now): string | null` en `lib/forecast/headline.ts`. Sentence case, ≤ 6 palabras, ≤ 34 caracteres (contando el prefijo), sin "!" ni punto final.
+Función pura `buildHeadline(snapshot, now): string | null` en `lib/forecast/headline.ts`. Sentence case, ≤ 7 palabras y ≤ 34 caracteres (contando el prefijo), sin "!" ni punto final.
 
 **Ventana (D-14):** 05:00–20:59 → lo que queda de hoy, sin prefijo. 21:00–23:59 → el día siguiente, con prefijo `Mañana: `. 00:00–04:59 → el día calendario en curso, sin prefijo. Con prefijo, **nunca** se usa la franja "a la mañana" para temperatura: se dice `arranque fresco` / `fresco temprano`.
 

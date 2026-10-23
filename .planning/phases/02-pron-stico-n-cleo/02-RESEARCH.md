@@ -291,7 +291,7 @@ export function buildHeadline(s: WeatherSnapshot, now: Date): string | null
 Thresholds have no official source here. The SMN alert thresholds for Santa Rosa couldn't be retrieved in this session (the search only returned press notes). Calibrate them with the user and keep them as named constants (`FROST_C`, `HEAT_C`, `STRONG_HEAT_C`, `COLD_MAX_C`, `STRONG_WIND_KMH`, `STRONG_GUST_KMH`) so tests document them. The **helada at ≤ 0 °C** (air temperature at shelter height) is the standard meteorological definition. [ASSUMED]
 
 ### Composition
-- Use at most two fragments: the highest-ranked "event" (storm or rain, with its time) plus, if present, a temperature or wind "context". Example: "Día de calor, tormentas a la noche". With no event, use context + general state: "Helada y después sol" / "Mañana fresca, tarde templada". Cap the length at about 6 words and roughly 32 characters, so it fits in 2 lines at 32 px within 342 px. Enforce this in tests: `expect(words(h)).toBeLessThanOrEqual(6)` and `expect(h.length).toBeLessThanOrEqual(34)`. [ASSUMED: character budget, check in the browser]
+- Use at most two fragments: the highest-ranked "event" (storm or rain, with its time) plus, if present, a temperature or wind "context". Example: "Día de calor, tormentas a la noche". With no event, use context + general state: "Helada y después sol" / "Mañana fresca, tarde templada". Cap the length at 7 words (D-16 "unas 6"; the example above has 7) and 34 characters, so it fits in 2 lines at 32 px within 342 px. Enforce this in tests: `expect(words(h)).toBeLessThanOrEqual(7)` and `expect(h.length).toBeLessThanOrEqual(34)`. [ASSUMED: character budget, check in the browser]
 - **Time-of-day buckets** (local hour of the first hour that meets the condition): `madrugada` 0–5, `mañana` 6–11, `mediodía` 12–13, `tarde` 14–19, `noche` 20–23. Phrase: "a la madrugada", "a la mañana", "al mediodía", "a la tarde", "a la noche". If the condition starts in the current hour, use "ahora" ("Llueve ahora", "Tormenta ahora"). If it covers ≥ 3 buckets, use "todo el día" ("Lluvia todo el día"). If it starts and ends in different buckets, use the first ("desde la tarde" is acceptable too).
 - **Ambiguity of "mañana":** "Mañana fresca, lluvia a la tarde" (roadmap example) reads as "morning". With the night-time prefix it becomes "Mañana: mañana fresca…", which is clumsy. Rule: when the prefix "Mañana:" is used, never use the bucket "mañana" for temperature; say "arranque fresco" or "fresco temprano" instead. Write a test for it.
 - No exclamation marks, sentence case, rioplatense vocabulary ("chaparrones", "llovizna", "fresco", "templado", "pesado" for heat + humidity ≥ 70 %, optional). Phrases come from a fixed table, never from upstream strings (same rule as `wmo.ts`).
@@ -423,7 +423,7 @@ const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
 |---|-------|---------|---------------|
 | A1 | Headline thresholds (helada ≤ 0 °C, calor 32/35 °C, frío max ≤ 12 °C, viento 40 km/h / ráfaga 60 km/h) | Headline rule design | The headline says "calor" too often or too rarely; tune with the user. Low technical risk |
 | A2 | 00:00–04:59 summarises the current calendar day (no "Mañana:" prefix) | Headline window | Contradicts a literal reading of D-14; confirm with the user or the UI-SPEC |
-| A3 | A ~32-character, ≤ 6-word headline fits in 2 lines at Playfair italic 32 px in 342 px | Headline composition, Pitfall 1 | Needs a browser check. If it takes 3 lines, the first-screen budget fails |
+| A3 | A ≤ 34-character, ≤ 7-word headline fits in 2 lines at Playfair italic 32 px in 342 px | Headline composition, Pitfall 1 | Needs a browser check. If it takes 3 lines, the first-screen budget fails |
 | A4 | Strong gust threshold 50 km/h for the meteogram | Layout budget | Cosmetic |
 | A5 | Rain band domain floor 4 mm | Pitfall 7 | Cosmetic |
 | A6 | Turbopack builds d3 ESM without `transpilePackages` | Pitfall 9 | Build error, trivial fix |
@@ -432,14 +432,17 @@ const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
 | A9 | slopcheck verdicts for the 4 packages (not run) | Package audit | Very low: canonical d3 and DefinitelyTyped packages |
 | A10 | Arrow points downwind (`deg + 180`) | Layout budget | Convention; pick one and label it in the UI-SPEC |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **What does `/pronostico` look like with respect to the sky and horizon?**
    - What we know: `Hero`'s gradient is sized to `<main>`, and 14 rows are long.
    - What's unclear: whether `/pronostico` keeps the full sky + horizon composition.
    - Recommendation: the UI-SPEC for phase 2 decides. The technical constraint is in Pattern 4.
+   - **RESOLVED:** 02-UI-SPEC uses `Hero` in the `compact` variant (header + title + fixed 120 px silhouette) with the list on ground in the `below` slot (plan 02-02).
 2. **Headline window between 00:00 and 04:59** (A2). Recommendation: current calendar day, no prefix.
+   - **RESOLVED:** CONTEXT D-14 now states it: 00:00–04:59 summarises the current calendar day, without prefix (plan 02-01).
 3. **Headline type size if 2 lines at 32 px don't fit.** Recommendation: keep 32 px (D-03), shorten the copy (≤ 32 characters) and tighten spacing. Fall back to 28 px only if the browser check fails.
+   - **RESOLVED:** 02-UI-SPEC keeps 32/1.19 and defines the 28px/1.21 fallback, applied only if the mandatory 390×844 browser check fails (plans 02-01 Task 3 and 02-05 Task 2).
 
 ## Environment Availability
 
@@ -469,7 +472,7 @@ const onPointer = (e: React.PointerEvent<SVGRectElement>) => {
 | FCST-01 | 390 px: no horizontal scroll, labels legible, scrubber drags and page still scrolls vertically | manual (browser 390×844 + iPhone) | — | manual |
 | FCST-02 | Past days filtered; labels Hoy/Mañana/"sáb 25" (TZ=UTC); `rainText` null below 1 mm, "4 mm" otherwise; range scale shared and clamped; null min/max rows | unit | `npx vitest run lib/forecast/daily.test.ts` | ❌ Wave 0 |
 | FCST-02 | Toggle 7 ↔ 14, note on days 8–14 | manual / visual in `/pronostico` and `/dev/estados` | — | manual |
-| NOW-03 | Window by local hour (04:59 / 05:00 / 20:59 / 21:00 boundaries, under TZ=UTC); priority storm > rain > temp > wind > general; time buckets; "Mañana:" prefix; no "mañana" bucket after the prefix; ≤ 6 words and ≤ 34 chars; no "!"; `null` without data | unit | `npx vitest run lib/forecast/headline.test.ts` | ❌ Wave 0 |
+| NOW-03 | Window by local hour (04:59 / 05:00 / 20:59 / 21:00 boundaries, under TZ=UTC); priority storm > rain > temp > wind > general; time buckets; "Mañana:" prefix; no "mañana" bucket after the prefix; ≤ 7 words and ≤ 34 chars; no "!"; `null` without data | unit | `npx vitest run lib/forecast/headline.test.ts` | ❌ Wave 0 |
 | NOW-03 | Ahora + headline + horizon fit 390×844 | manual browser check (repeat UAT-01) | — | manual |
 | — | `localHour(d)` under TZ=UTC | unit | `npx vitest run lib/time.test.ts` | ✅ (extend) |
 | — | `sections.ts`: pronostico enabled | unit | `npx vitest run lib/sections.test.ts` | ✅ (update expectation) |
