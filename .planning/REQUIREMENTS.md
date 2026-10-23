@@ -15,7 +15,7 @@
 ### Ahora (NOW)
 
 - [x] **NOW-01**: El usuario ve temperatura actual, sensación térmica, humedad, presión y viento (velocidad, ráfaga y dirección)
-- [ ] **NOW-02**: El usuario ve el estado del tiempo descrito en castellano rioplatense
+- [x] **NOW-02**: El usuario ve el estado del tiempo descrito en castellano rioplatense
 - [ ] **NOW-03**: El usuario ve un titular editorial generado por reglas que resume el día (ej. "Mañana fresca, lluvia a la tarde")
 
 ### Pronóstico (FCST)
@@ -105,7 +105,7 @@
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Complete |
 | NOW-01 | Phase 1 | Complete |
-| NOW-02 | Phase 1 | Pending |
+| NOW-02 | Phase 1 | Complete |
 | NOW-03 | Phase 2 | Pending |
 | FCST-01 | Phase 2 | Pending |
 | FCST-02 | Phase 2 | Pending |

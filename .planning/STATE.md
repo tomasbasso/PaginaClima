@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-23T17:36:08.911Z"
+last_updated: "2026-10-23T21:20:00.126Z"
 last_activity: 2026-10-23
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
+  completed_plans: 3
   percent: 0
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 1 (Fundaciones y Ahora) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-10-23
 
-Progress: [█░░░░░░░░░] 14%
+Progress: [████░░░░░░] 43%
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Progress: [█░░░░░░░░░] 14%
 
 *Updated after each plan completion*
 | Phase 01 P01 | 10 min | 3 tasks | 25 files |
+| Phase 01 P04 | 12 min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - [Phase 1]: 01-01: Source adapters use unstable_cache(fetchRaw, ['<source>','v1']) returning { data, fetchedAt }; page and route call getWeatherSnapshot() directly and never throw
 - [Phase 1]: 01-01: RootLayout typed explicitly (not generated LayoutProps) so tsc --noEmit works before next typegen
 - [Phase 1]: 01-01: smoke.mjs --expect-404 needs MSYS_NO_PATHCONV=1 under Git Bash
+- [Phase 01]: Sky: llovizna->lluvia, nieve->cubierto in SkyWeather; skyFromSnapshot shared by layout and page
 
 ### Pending Todos
 
@@ -86,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-23T17:35:58.959Z
-Stopped at: Phase 1 context gathered
+Last session: 2026-10-23T21:20:00.109Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
