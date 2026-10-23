@@ -461,4 +461,4 @@ Función pura `buildHeadline(snapshot, now): string | null` en `lib/forecast/hea
 - [x] Dimension 5 Spacing: FLAG (excepciones justificadas, aceptado)
 - [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-23
