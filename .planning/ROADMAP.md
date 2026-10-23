@@ -33,7 +33,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Si una fuente externa falla (simulada), la página sigue cargando y la sección afectada muestra el último dato bueno o un aviso, en vez de romperse
   4. Fechas y horas se muestran en hora argentina; a las 21–24 h locales (borde 00–03Z) el "hoy" no salta al día siguiente
   5. Un push a `main` en GitHub publica automáticamente la nueva versión en Vercel
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 01-01-PLAN.md — Walking skeleton: scaffold Next 16.4.3, Vitest, Open-Meteo vía unstable_cache, snapshot, página ISR y /api/weather
+- [ ] 01-02-PLAN.md — Deploy: push a main (con aprobación), vinculación con Vercel (gru1) y smoke en producción
+- [ ] 01-03-PLAN.md — Pantalla Ahora completa: hora argentina, viento, WMO rioplatense, temperatura, horizonte pampeano
+- [ ] 01-04-PLAN.md — Cielo por hora y tiempo (data-sky, SkyBackdrop con crossfade) y barra de pestañas
+- [ ] 01-05-PLAN.md — Frescura "actualizado hace X min", aviso de dato viejo, crédito Open-Meteo y MET Norway cacheado
+- [ ] 01-06-PLAN.md — Fallas: estado por fuente, WEATHER_FAULT, Fuente caída / Sin datos / Cargando / error.tsx
+- [ ] 01-07-PLAN.md — /dev/estados y verificación final en producción tras el push
 **UI hint**: yes
 
 ### Phase 2: Pronóstico núcleo
@@ -122,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Fundaciones y Ahora | 0/TBD | Not started | - |
+| 1. Fundaciones y Ahora | 0/7 | Not started | - |
 | 2. Pronóstico núcleo | 0/TBD | Not started | - |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
