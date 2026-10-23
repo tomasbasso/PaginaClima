@@ -1,7 +1,7 @@
 // Aggregator: read-through for Open-Meteo, plain allSettled for MET Norway, outcome-based status.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import fixture from '@/lib/sources/__fixtures__/open-meteo-forecast.json'
-import { SourceError } from '@/lib/sources/errors'
+import type { SourceId } from './types'
 import { isOutdated } from './freshness'
 import { selectAhoraVariant } from './status'
 
@@ -25,6 +25,12 @@ const met = (ms: number) => ({
   data: { updatedAt: iso(ms), firstTime: iso(ms), firstTempC: 18 },
   fetchedAt: iso(ms),
 })
+
+/** Built from the post-resetModules graph so instanceof matches inside the aggregator. */
+async function sourceError(source: SourceId, code: string) {
+  const { SourceError } = await import('@/lib/sources/errors')
+  return new SourceError(source, code)
+}
 
 async function loadSnapshot() {
   const mod = await import('./snapshot')
@@ -64,7 +70,7 @@ describe('getWeatherSnapshot() status', () => {
 
   it('idle-then-visit, failing upstream: last-good kept, stale http_500, degraded', async () => {
     mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 3 * 60 * MIN))
-    mocks.getOpenMeteoForecastFresh.mockRejectedValue(new SourceError('open-meteo', 'http_500'))
+    mocks.getOpenMeteoForecastFresh.mockRejectedValue(await sourceError('open-meteo', 'http_500'))
 
     const s = await loadSnapshot()
 
@@ -79,7 +85,7 @@ describe('getWeatherSnapshot() status', () => {
   })
 
   it('Open-Meteo last-good rejected: never throws, now null, error, empty', async () => {
-    mocks.getOpenMeteoForecast.mockRejectedValue(new SourceError('open-meteo', 'network'))
+    mocks.getOpenMeteoForecast.mockRejectedValue(await sourceError('open-meteo', 'network'))
 
     const s = await loadSnapshot()
 
@@ -97,7 +103,7 @@ describe('getWeatherSnapshot() status', () => {
 
   it('MET rejected only: Open-Meteo unaffected', async () => {
     mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
-    mocks.getMetNorway.mockRejectedValue(new SourceError('met-norway', 'http_503'))
+    mocks.getMetNorway.mockRejectedValue(await sourceError('met-norway', 'http_503'))
 
     const s = await loadSnapshot()
 

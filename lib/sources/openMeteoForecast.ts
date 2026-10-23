@@ -48,3 +48,19 @@ export const getOpenMeteoForecast = unstable_cache(
   ['open-meteo-forecast', 'v1'],
   { revalidate: TTL.openMeteoForecast, tags: ['open-meteo'] },
 )
+
+/**
+ * Time-bucketed getter for the read-through refresh (plan 06). `bucket` only feeds the cache
+ * key (unstable_cache keys include JSON(args)), so the first read in each 15-min bucket is a
+ * guaranteed, awaited miss and every later render in that bucket shares the result.
+ * Never call `fetchOpenMeteoForecastRaw()` directly from render code: an un-cached no-store
+ * fetch outside unstable_cache would turn the ISR page dynamic.
+ */
+export const getOpenMeteoForecastFresh = unstable_cache(
+  (bucket: number) => {
+    void bucket
+    return fetchOpenMeteoForecastRaw()
+  },
+  ['open-meteo-forecast', 'v1', 'fresh'],
+  { revalidate: TTL.openMeteoForecast, tags: ['open-meteo'] },
+)
