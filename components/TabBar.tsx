@@ -1,7 +1,12 @@
-// Bottom navigation (UI-SPEC "Barra de pestañas" + "Íconos"). Server component.
+'use client'
+
+// Bottom navigation (UI-SPEC "Barra de pestañas" + "Íconos"). Client component: the active tab
+// follows the current route (usePathname), and next/link keeps tab changes client-side (WR-07).
 // Disabled sections are spans, not links: no route, no focus, no click feedback.
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import type React from 'react'
-import { SECTIONS, type SectionId } from '@/lib/sections'
+import { isActiveSection, SECTIONS, type SectionId } from '@/lib/sections'
 
 // Renders viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
 // stroke-linecap="square" stroke-linejoin="miter" (camelCase props in JSX).
@@ -68,20 +73,33 @@ const ITEM =
   'flex min-h-11 min-w-11 flex-1 flex-col items-center justify-center text-[12px] font-semibold leading-[1.33] tracking-[0.02em]'
 
 export function TabBar() {
+  const pathname = usePathname()
   return (
     <nav
       aria-label="Secciones"
       className="fixed inset-x-0 bottom-0 z-10 h-[calc(56px+env(safe-area-inset-bottom))] border-t border-ink/12 bg-bar pb-[env(safe-area-inset-bottom)]"
     >
       <div className="mx-auto flex h-full max-w-[560px]">
-        {SECTIONS.map((s) =>
-          s.enabled ? (
-            <a key={s.id} href={s.href} aria-current="page" className={`${ITEM} text-[var(--accent)]`}>
-              {ICONS[s.id]}
-              <span className="mt-1">{s.label}</span>
-              <span className="mt-1 h-px w-4 bg-[var(--accent)]" aria-hidden="true" />
-            </a>
-          ) : (
+        {SECTIONS.map((s) => {
+          if (s.enabled) {
+            const active = isActiveSection(pathname, s.href)
+            return (
+              <Link
+                key={s.id}
+                href={s.href}
+                aria-current={active ? 'page' : undefined}
+                className={`${ITEM} ${active ? 'text-[var(--accent)]' : 'text-ink/75'}`}
+              >
+                {ICONS[s.id]}
+                <span className="mt-1">{s.label}</span>
+                <span
+                  className={`mt-1 h-px w-4 ${active ? 'bg-[var(--accent)]' : ''}`}
+                  aria-hidden="true"
+                />
+              </Link>
+            )
+          }
+          return (
             <span key={s.id} aria-disabled="true" className={`${ITEM} text-ink/30`}>
               {ICONS[s.id]}
               <span className="mt-1">
@@ -90,8 +108,8 @@ export function TabBar() {
               </span>
               <span className="mt-1 h-px w-4" aria-hidden="true" />
             </span>
-          ),
-        )}
+          )
+        })}
       </div>
     </nav>
   )
