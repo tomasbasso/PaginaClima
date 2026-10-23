@@ -131,3 +131,82 @@ describe('getWeatherSnapshot() status', () => {
     expect(mocks.getMetNorway).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.useFakeTimers()
+    vi.setSystemTime(T0)
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    mocks.getOpenMeteoForecast.mockReset()
+    mocks.getOpenMeteoForecastFresh.mockReset()
+    mocks.getMetNorway.mockReset()
+    mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
+    mocks.getMetNorway.mockResolvedValue(met(T0 - 5 * MIN))
+    vi.stubEnv('VERCEL_ENV', undefined)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
+
+  it('openmeteo-down: Open-Meteo error but last-good data kept', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'openmeteo-down')
+    const s = await loadSnapshot()
+    expect(s.sources[0]).toEqual({
+      id: 'open-meteo',
+      status: 'error',
+      fetchedAt: iso(T0 - 5 * MIN),
+      errorCode: 'fault',
+    })
+    expect(s.now).not.toBeNull()
+    expect(s.sources[1].status).toBe('ok')
+    expect(selectAhoraVariant(s)).toBe('degraded')
+  })
+
+  it('metno-down: only MET is error', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'metno-down')
+    const s = await loadSnapshot()
+    expect(s.sources[0].status).toBe('ok')
+    expect(s.sources[1]).toMatchObject({ id: 'met-norway', status: 'error', errorCode: 'fault' })
+    expect(selectAhoraVariant(s)).toBe('normal')
+  })
+
+  it('stale: Open-Meteo fetchedAt shifted back 45 min, still ok', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'stale')
+    const s = await loadSnapshot()
+    expect(s.sources[0]).toEqual({ id: 'open-meteo', status: 'ok', fetchedAt: iso(T0 - 50 * MIN) })
+    expect(isOutdated(T0 - Date.parse(s.sources[0].fetchedAt!))).toBe(true)
+  })
+
+  it('empty: no data, every source error', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'empty')
+    const s = await loadSnapshot()
+    expect(s.now).toBeNull()
+    expect(s.hourly48).toEqual([])
+    expect(s.daily).toEqual([])
+    for (const src of s.sources) expect(src).toMatchObject({ status: 'error', fetchedAt: null })
+    expect(selectAhoraVariant(s)).toBe('empty')
+  })
+
+  it.each(['openmeteo-down', 'metno-down', 'stale', 'empty'])(
+    'ignores %s in production',
+    async (fault) => {
+      vi.stubEnv('WEATHER_FAULT', fault)
+      vi.stubEnv('VERCEL_ENV', 'production')
+      const s = await loadSnapshot()
+      expect(s.now).not.toBeNull()
+      expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok'])
+      expect(s.sources[0].fetchedAt).toBe(iso(T0 - 5 * MIN))
+    },
+  )
+
+  it('ignores an unknown fault value', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'everything-on-fire')
+    const s = await loadSnapshot()
+    expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok'])
+    expect(s.now).not.toBeNull()
+  })
+})
