@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deriveSourceStatus, selectAhoraVariant } from './status'
+import { deriveSourceStatus, selectAhoraVariant, snapshotHasNow } from './status'
 import type { NowData, SourceInfo, WeatherSnapshot } from './types'
 
 const NOW: NowData = {
@@ -61,5 +61,19 @@ describe('selectAhoraVariant()', () => {
 
   it.each(['stale', 'error'] as const)('%s with now set → degraded', (status) => {
     expect(selectAhoraVariant(snap(NOW, { status }))).toBe('degraded')
+  })
+})
+
+describe('snapshotHasNow (WR-08)', () => {
+  it('is true for a snapshot with current data', () => {
+    expect(snapshotHasNow({ now: NOW, sources: [] })).toBe(true)
+  })
+
+  it('is false without current data or for malformed bodies', () => {
+    expect(snapshotHasNow({ now: null, sources: [] })).toBe(false)
+    expect(snapshotHasNow({ now: { tempC: 'x' } })).toBe(false)
+    expect(snapshotHasNow(null)).toBe(false)
+    expect(snapshotHasNow('Sin datos')).toBe(false)
+    expect(snapshotHasNow(undefined)).toBe(false)
   })
 })

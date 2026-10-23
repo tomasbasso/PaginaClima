@@ -16,3 +16,13 @@ export function selectAhoraVariant(s: WeatherSnapshot): Exclude<AhoraVariant, 'l
   if (!s.now) return 'empty'
   return s.sources[0]?.status === 'ok' ? 'normal' : 'degraded'
 }
+
+/**
+ * True when a /api/weather JSON body carries current data (WR-08). Takes `unknown` because it
+ * reads a network response on the client; anything malformed counts as "no data".
+ */
+export function snapshotHasNow(json: unknown): boolean {
+  if (!json || typeof json !== 'object') return false
+  const now = (json as { now?: unknown }).now
+  return !!now && typeof now === 'object' && typeof (now as { tempC?: unknown }).tempC === 'number'
+}
