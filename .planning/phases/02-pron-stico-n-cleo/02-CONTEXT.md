@@ -36,7 +36,7 @@ Fuera de la fase: cielo WebGL (fase 3), probabilidad real de ensemble y rango p1
 
 ### Titular editorial (NOW-03) — a criterio de Claude (el usuario aceptó los defaults)
 - **D-13:** Es una función pura en `lib/` con tests de Vitest. Recibe el snapshot y la hora local, y devuelve un string (o `null` si no hay datos).
-- **D-14:** La ventana: de 05:00 a 20:59 local resume **lo que queda de hoy**. De 21:00 a 04:59 resume **mañana** y lo dice ("Mañana: …").
+- **D-14:** La ventana: de 05:00 a 20:59 local resume **lo que queda de hoy**. De 21:00 a 23:59 resume **mañana** y lo dice ("Mañana: …"). De 00:00 a 04:59 resume el día calendario en curso, sin prefijo, porque ya es el "hoy" que viene (lo resuelve la pregunta abierta 1 de RESEARCH, a criterio de Claude).
 - **D-15:** La prioridad: tormenta > lluvia (con su momento: "a la tarde", "a la noche"…) > extremos de temperatura (helada, calor fuerte, fresco) > viento fuerte > estado general.
 - **D-16:** Es corto (unas 6 palabras como máximo), en rioplatense y sin signos de exclamación. Ejemplos: "Mañana fresca, lluvia a la tarde", "Día de calor, tormentas a la noche". Cambia cuando cambia el pronóstico, porque se calcula en cada render del snapshot.
 
