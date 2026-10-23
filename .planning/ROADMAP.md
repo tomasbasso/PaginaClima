@@ -34,13 +34,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. Fechas y horas se muestran en hora argentina; a las 21–24 h locales (borde 00–03Z) el "hoy" no salta al día siguiente
   5. Un push a `main` en GitHub publica automáticamente la nueva versión en Vercel
 **Plans**: 7 plans
-Plans:
+Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07):
 - [ ] 01-01-PLAN.md — Walking skeleton: scaffold Next 16.4.3, Vitest, Open-Meteo vía unstable_cache, snapshot, página ISR y /api/weather
 - [ ] 01-02-PLAN.md — Deploy: push a main (con aprobación), vinculación con Vercel (gru1) y smoke en producción
 - [ ] 01-03-PLAN.md — Pantalla Ahora completa: hora argentina, viento, WMO rioplatense, temperatura, horizonte pampeano
 - [ ] 01-04-PLAN.md — Cielo por hora y tiempo (data-sky, SkyBackdrop con crossfade) y barra de pestañas
 - [ ] 01-05-PLAN.md — Frescura "actualizado hace X min", aviso de dato viejo, crédito Open-Meteo y MET Norway cacheado
-- [ ] 01-06-PLAN.md — Fallas: estado por fuente, WEATHER_FAULT, Fuente caída / Sin datos / Cargando / error.tsx
+- [ ] 01-06-PLAN.md — Fallas: refresco read-through, estado por fuente según resultado real, WEATHER_FAULT, Fuente caída / Sin datos / Cargando / error.tsx
 - [ ] 01-07-PLAN.md — /dev/estados y verificación final en producción tras el push
 **UI hint**: yes
 

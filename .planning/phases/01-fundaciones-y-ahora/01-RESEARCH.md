@@ -302,6 +302,8 @@ UI mapping (UI-SPEC states):
 
 Caveat: under `next dev` the page renders in request context (background revalidation), so `stale` can appear briefly after idle. Validate status behavior with `next build && next start` or on a preview deployment.
 
+**Revision (plan checker, superseded design):** age-based `stale` is not used. Because `unstable_cache` is stale-while-revalidate in request context (and A12 is only MEDIUM for Vercel's ISR regeneration), an idle period can hand a render, `/api/weather` or a client `router.refresh()` an entry older than TTL + grace with no upstream failure, which would show a false "No pudimos actualizar…" notice and break DATA-01 "≤ 15 min". Plan 01-06 instead uses a read-through: read the last-good `unstable_cache` entry; if it is older than TTL, await a second `unstable_cache` getter keyed by a 15-min time bucket (`['open-meteo-forecast','v1','fresh']` + `JSON([bucket])`). Facts relied on (Pattern 1): a miss is always awaited and its error propagates; args are part of the key; nested fetches inside `unstable_cache` are no-store without marking the page dynamic. Success → fresh data, `ok`; failure → last-good data, `stale` with the real error code; last-good miss + failure → `error`. `deriveSourceStatus` therefore takes the settled outcome, not the age. The 30-min "Desactualizado" notice stays client-age-based and is reachable only on the first visit after a long idle (Pitfall 8) or via `WEATHER_FAULT=stale`. MET Norway is excluded from the read-through (ToS `Expires`, Pitfall 7; not displayed in phase 1).
+
 ### Pattern 3: ISR page + route handler sharing one memoized snapshot
 ```ts
 // lib/weather/snapshot.ts
@@ -576,15 +578,20 @@ export function formatHeaderDate(d: Date) {
 | A11 | `z.iso.date()` exists in zod 4.6.7 | Code Examples | Low: a regex fallback is given. |
 | A12 | ISR regeneration on Vercel runs the page as `prerender-legacy` (as `next start` does) | Pattern 1/2 | Medium: if it ran in request context, stale is still returned (background path), only the status-by-age semantics shift. Last-good holds either way. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Attribution line (Open-Meteo CC BY 4.0) is absent from the locked UI-SPEC.**
    - Known: the license requires attribution. MET is not displayed in phase 1, so it needs none yet.
    - Recommendation: the planner adds a minimal credit (e.g. Label 12/600 ink/55-on-large or ink/75 "DATOS: OPEN-METEO.COM" link) next to "ESTIMADO POR MODELO", flagged for user confirmation since the UI-SPEC is locked.
+   - **RESOLVED:** plan 01-05 Task 2 adds the credit line "DATOS: OPEN-METEO.COM" linking to https://open-meteo.com next to "ESTIMADO POR MODELO" (deliberate minimal deviation from the locked UI-SPEC, required by CC BY 4.0).
 2. **"NOCHE DESPEJADA": solar phase `noche` (alt < −6°) or Open-Meteo `is_day=0`?** They differ during civil twilight. Recommendation: use the same solar phase as `resolveSkyState` for visual coherence.
+   - **RESOLVED:** NOCHE DESPEJADA is decided by the solar phase (`getSolarPhase(...).phase === 'noche'`, sun altitude < −6°), not `is_day` (plan 01-03 Task 1).
 3. **Repo visibility.** `origin` exists. Is it private per D-09? The user confirms in the deploy checkpoint.
+   - **RESOLVED:** repo privacy is confirmed by the user at the plan 01-02 push checkpoint before anything is pushed (D-09), and re-confirmed at plan 01-07 Task 2.
 4. **`data-sky` on `<html>`** requires the root layout to read the snapshot. Recommendation: the layout calls the memoized `getWeatherSnapshot()` (cheap) and computes `data-sky`. CSS uses `[data-sky="…"]` attribute selectors (not `html[data-sky]`) so `/dev/estados` can override per wrapper element.
+   - **RESOLVED:** the layout computes `data-sky` from the memoized snapshot and the CSS uses `[data-sky="…"]` attribute selectors (plan 01-04); `/dev/estados` sets `data-sky` per frame (plan 01-07).
 5. **D-07 literal "MET 1800 s" vs the measured Expires (~1815 s).** Recommendation: 2100 s, which is within D-05's "≥ 1800".
+   - **RESOLVED:** `TTL.metNorway = 2100` in lib/config.ts (plans 01-01 and 01-05).
 
 ## Environment Availability
 
@@ -619,8 +626,8 @@ export function formatHeaderDate(d: Date) {
 | DATA-01 | Cached getters use TTL 900 / 2100; page & route export `revalidate = 600` | static check | `grep -q "revalidate = 600" app/page.tsx app/api/weather/route.ts && ! grep -q cacheComponents next.config.ts` | ❌ |
 | DATA-01 | Repeated requests don't refetch upstream | smoke (prod) | `curl -s https://<prod>/api/weather \| jq -r '.sources[0].fetchedAt'` twice within 5 min → identical; Vercel logs show ≤ 1 `[upstream] open-meteo` per 15 min | manual-assisted |
 | DATA-01 | Build output marks `/` and `/api/weather` as ISR (revalidate 10m) | build | `npm run build` (inspect route table) | ❌ |
-| DATA-02 | Freshness labels: <1 min "RECIÉN", 1, n (2–59), n H, ≥24 h "EL dd/MM A LAS HH:mm" | unit | `npx vitest run lib/weather/format.test.ts` | ❌ |
-| DATA-03 | `deriveSourceStatus` ok/stale/error boundaries (TTL+grace) | unit | `npx vitest run lib/weather/status.test.ts` | ❌ |
+| DATA-02 | Freshness labels: <1 min "RECIÉN", 1, n (2–59), n H, ≥24 h "EL dd/MM A LAS HH:mm" | unit | `npx vitest run lib/weather/freshness.test.ts` | ❌ |
+| DATA-03 | `deriveSourceStatus` outcome-based (rejected → error, refreshError → stale, else ok); read-through idle-then-visit with fake timers | unit | `npx vitest run lib/weather/status.test.ts lib/sources/readThrough.test.ts` | ❌ |
 | DATA-03 | Aggregator: OM rejected → status error, no throw; MET rejected → only MET error; faults applied only when `VERCEL_ENV !== 'production'` | unit (mocked getters) | `npx vitest run lib/weather/snapshot.test.ts` | ❌ |
 | DATA-03 | Adapter throws `SourceError` on 500, network error and schema-broken fixture | unit (mocked fetch) | `npx vitest run lib/sources` | ❌ |
 | DATA-03 | `/dev/estados` renders all 5 states; returns 404 in production | manual + smoke | browser on preview; `curl -o /dev/null -w '%{http_code}' https://<prod>/dev/estados` → 404 | manual |
