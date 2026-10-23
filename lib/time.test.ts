@@ -1,9 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
+  addDaysToKey,
   formatDayMonth,
   formatHHmm,
   formatHeaderDate,
   localDateKey,
+  localHour,
+  relativeDayLabel,
+  weekdayLong,
+  weekdayShort,
   withOffset,
 } from './time'
 
@@ -46,5 +51,30 @@ describe('lib/time (D-08, DATA-04) under TZ=UTC', () => {
         expect(out).not.toMatch(/[ap]\.\s?m\./i)
       }
     }
+  })
+  it('localHour reads the Argentina hour, never the runtime one', () => {
+    expect(localHour(new Date('2026-10-24T02:59:00Z'))).toBe(23)
+    expect(localHour(new Date('2026-10-24T03:00:00Z'))).toBe(0)
+    expect(localHour(new Date('2026-10-23T17:30:00Z'))).toBe(14)
+  })
+
+  it('addDaysToKey crosses month and year boundaries', () => {
+    expect(addDaysToKey('2026-10-31', 1)).toBe('2026-11-01')
+    expect(addDaysToKey('2026-12-31', 1)).toBe('2027-01-01')
+    expect(addDaysToKey('2026-03-01', -1)).toBe('2026-02-28')
+  })
+
+  it('weekdayShort / weekdayLong come from local tables', () => {
+    expect(weekdayShort('2026-10-24')).toBe('sáb')
+    expect(weekdayLong('2026-10-24')).toBe('sábado')
+    expect(weekdayShort('2026-10-25')).toBe('dom')
+    expect(weekdayLong('2026-10-28')).toBe('miércoles')
+  })
+
+  it('relativeDayLabel: Hoy, Mañana, then "{weekday} {day}"', () => {
+    expect(relativeDayLabel('2026-10-23', '2026-10-23')).toBe('Hoy')
+    expect(relativeDayLabel('2026-10-24', '2026-10-23')).toBe('Mañana')
+    expect(relativeDayLabel('2026-10-25', '2026-10-23')).toBe('dom 25')
+    expect(relativeDayLabel('2026-11-02', '2026-10-31')).toBe('lun 2')
   })
 })
