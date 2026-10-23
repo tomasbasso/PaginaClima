@@ -3,6 +3,7 @@ import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import type React from "react";
 import { skyFromSnapshot, skyToken } from "@/lib/sky/state";
 import { getWeatherSnapshot } from "@/lib/weather/snapshot";
+import { TabBar } from "@/components/TabBar";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -48,7 +49,10 @@ export default async function RootLayout({
       data-sky={skyToken(sky)}
       className={`${playfair.variable} ${jakarta.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        {children}
+        <TabBar />
+      </body>
     </html>
   );
 }
