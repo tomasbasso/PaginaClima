@@ -29,7 +29,7 @@
   --accent: #8ecae6;
 }
 
-/* Sky states (UI-SPEC "Estados del cielo"). Plain attribute selectors (not html[data-sky]) so a
+/* Sky states (UI-SPEC "Estados del cielo"). Plain attribute selectors (never scoped to the root element) so a
    contained frame such as /dev/estados or a SkyBackdrop layer can override the tokens. */
 [data-sky="noche"] {
   --sky-1: #070b14;
