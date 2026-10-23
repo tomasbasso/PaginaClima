@@ -5,6 +5,22 @@ import { TZ } from '@/lib/config'
 const localDT = z.iso.datetime({ local: true }) // "2026-10-23T12:00" (naive local time)
 const nums = z.array(z.number().nullable())
 
+/**
+ * Parallel arrays must all match `time` (WR-03). Shorter arrays would otherwise turn into
+ * silent nulls (or "undefined-03:00" for sunrise/sunset): fail loudly with 'schema' instead.
+ */
+function sameLengthAsTime(block: { time: unknown[] } & Record<string, unknown>, ctx: z.RefinementCtx) {
+  for (const [key, value] of Object.entries(block)) {
+    if (key !== 'time' && Array.isArray(value) && value.length !== block.time.length) {
+      ctx.addIssue({
+        code: 'custom',
+        path: [key],
+        message: `${key} has ${value.length} items, time has ${block.time.length}`,
+      })
+    }
+  }
+}
+
 export const ForecastDto = z.object({
   utc_offset_seconds: z.number().int(),
   timezone: z.literal(TZ),
@@ -33,7 +49,7 @@ export const ForecastDto = z.object({
     wind_direction_10m: nums,
     relative_humidity_2m: nums,
     is_day: nums,
-  }),
+  }).superRefine(sameLengthAsTime),
   daily: z.object({
     time: z.array(z.iso.date()),
     weather_code: nums,
@@ -43,7 +59,7 @@ export const ForecastDto = z.object({
     sunrise: z.array(localDT),
     sunset: z.array(localDT),
     wind_gusts_10m_max: nums,
-  }),
+  }).superRefine(sameLengthAsTime),
 })
 
 export type ForecastDto = z.infer<typeof ForecastDto>

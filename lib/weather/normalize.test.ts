@@ -40,3 +40,25 @@ describe('normalizeForecast with the real fixture (NOW-01, DATA-04)', () => {
     expect(r.hourly48[5].tempC).toBeNull()
   })
 })
+
+describe('ForecastDto parallel-array length guard (WR-03)', () => {
+  it('accepts the real fixture', () => {
+    expect(ForecastDto.safeParse(fixture).success).toBe(true)
+  })
+
+  it('rejects a daily sunrise array shorter than daily.time', () => {
+    const copy = structuredClone(fixture) as typeof fixture
+    copy.daily.sunrise.pop()
+    const r = ForecastDto.safeParse(copy)
+    expect(r.success).toBe(false)
+    expect(r.error?.issues[0].path).toEqual(['daily', 'sunrise'])
+  })
+
+  it('rejects an hourly array shorter than hourly.time', () => {
+    const copy = structuredClone(fixture) as typeof fixture
+    copy.hourly.wind_gusts_10m.splice(10)
+    const r = ForecastDto.safeParse(copy)
+    expect(r.success).toBe(false)
+    expect(r.error?.issues[0].path).toEqual(['hourly', 'wind_gusts_10m'])
+  })
+})
