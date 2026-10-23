@@ -1,0 +1,23 @@
+# Clima Winifreda
+Tipo: propio (uso personal + portfolio, no comercial)
+Etapa actual: 2. Definir y planificar
+
+## Decisiones
+- 2026-10-23 GO. Diferencial: diseño único ("cielo vivo"), no otra app de clima aburrida.
+- 2026-10-23 Solo Winifreda, La Pampa (coordenadas fijas). Sin buscador ni favoritos → sin Geocoding ni localStorage de localidades.
+- 2026-10-23 Alcance completo, 7 secciones: Ahora · 48 h por hora (meteograma) · 7–14 días con probabilidad (Ensemble) · Los modelos opinan (ECMWF/GFS/ICON/MET Norway + coincidencia) · Lluvia acumulada vs promedio histórico · Radar (RainViewer) · Sol y luna.
+- 2026-10-23 Diseño: cielo vivo generativo/animado según hora real y estado del tiempo + tipografía editorial grande + silueta del horizonte pampeano.
+- 2026-10-23 Notificaciones Web Push (helada, tormenta, viento) como ÚLTIMA fase.
+- 2026-10-23 Hosting: código en GitHub, deploy en Vercel Hobby (gratis, uso no comercial). Se descartó GitHub Pages (sin servidor: perdía caché, MET Norway y push) y el VPS con Coolify (es de un cliente).
+- 2026-10-23 Cron cada hora con GitHub Actions llamando a una ruta de la app (el cron de Vercel Hobby es 1 vez/día). Suscripciones push en Supabase (plan gratis).
+- 2026-10-23 Stack: Next.js + TypeScript, Tailwind, Recharts, PWA, Route Handlers con revalidate, Open-Meteo (Forecast, Ensemble, Historical), MET Norway, RainViewer. Plan gratis de Open-Meteo OK por ser no comercial.
+
+## Etapas
+- [x] 1. Validar: GO — proyecto propio, diferencial en el diseño, todo gratis en Vercel + Actions + Supabase.
+- [ ] 2. Definir y planificar
+- [ ] 3. Identidad y diseño
+- [ ] 4. Construir (fases de GSD)
+- [ ] 5. Verificar
+- [ ] 6. Publicar
+- [ ] 7. Lanzar y vender
+- [ ] 8. Mantener
