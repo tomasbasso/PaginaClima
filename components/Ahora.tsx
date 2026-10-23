@@ -1,5 +1,6 @@
 // "Ahora" screen (UI-SPEC Layout). Server component: only zod-validated numbers reach it;
 // every label comes from local tables (wmo.ts, wind.ts), never from upstream strings.
+import { Freshness } from '@/components/client/Freshness'
 import { LiveClock } from '@/components/client/LiveClock'
 import { getSolarPhase } from '@/lib/sky/phase'
 import { formatInt, formatTemp } from '@/lib/weather/format'
@@ -51,12 +52,16 @@ export function Ahora({
   snapshot,
   renderedAt,
   headline,
+  autoRefresh = true,
 }: {
   snapshot: WeatherSnapshot
   renderedAt: string
   headline?: string
+  /** false on fixture pages (/dev/estados) that would otherwise refresh in a loop */
+  autoRefresh?: boolean
 }) {
   const { now } = snapshot
+  const fetchedAt = snapshot.sources[0]?.fetchedAt
 
   return (
     <section className="flex flex-col">
@@ -64,7 +69,12 @@ export function Ahora({
       <Header renderedAt={renderedAt} />
 
       {now ? (
-        <NowBlock now={now} renderedAt={renderedAt} headline={headline} />
+        <>
+          <NowBlock now={now} renderedAt={renderedAt} headline={headline} />
+          {fetchedAt ? (
+            <Freshness fetchedAt={fetchedAt} renderedAt={renderedAt} autoRefresh={autoRefresh} />
+          ) : null}
+        </>
       ) : (
         <h2 className={`${HEADING} mt-12 italic text-ink`}>
           Ahora no tenemos el tiempo de Winifreda.
