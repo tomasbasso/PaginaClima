@@ -36,6 +36,11 @@ method: Claude built-in browser (Chromium, viewport emulated at 390×844, dark) 
 ### Minor note
 - On /dev/estados the tab bar shows "Ahora" active although the path is /dev/estados (dev page only).
 
+## Fixes (2026-10-23)
+
+- **UAT-01 fixed.** New `--band-h` token in `app/globals.css`: `clamp(120px, 100svh − 632px − safe areas, 240px)`. Used by the band in `components/Hero.tsx` and by the `.sky-layer` gradient (S4 stop at 40 % of the band). Re-measured locally: at 390×844 the document is 844px tall, the band is 212px and ends exactly at the tab bar (silhouette fully visible), 81px between the last text and the band; at 430×932 the band keeps 240px and the page does not scroll. If the content grows (notice, phase-2 headline), the band shrinks down to 120px before the hero starts to scroll.
+- **UAT-02 fixed.** `Ahora` takes an optional `night` prop (defaults to the real solar phase); `/dev/estados` passes the frame's own phase, and its frames pin `--band-h: 240px`. The "Cielo noche" frame now shows "NOCHE DESPEJADA".
+
 ## Pending human checks (real iPhone)
 - Open in Safari and as an installed PWA: look at 390px, safe areas, legibility over the sky.
 - Leave the PWA in background > 15 min and return: data refreshes (backoff 1/2/4/8/15 min).
