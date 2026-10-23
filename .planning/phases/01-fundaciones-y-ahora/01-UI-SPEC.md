@@ -1,7 +1,8 @@
 ---
 phase: 1
 slug: fundaciones-y-ahora
-status: draft
+status: approved
+reviewed_at: 2026-10-23
 shadcn_initialized: false
 preset: none
 created: 2026-10-23
@@ -350,11 +351,11 @@ De noche, los códigos 0–1 se muestran como `NOCHE DESPEJADA`.
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: FLAG (no bloqueante: "Reintentar" sin sustantivo)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: FLAG (no bloqueante: rombo de 6px)
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-23 (gsd-ui-checker)

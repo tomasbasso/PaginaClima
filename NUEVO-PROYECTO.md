@@ -1,6 +1,6 @@
 # Clima Winifreda
 Tipo: propio (uso personal + portfolio, no comercial)
-Etapa actual: 3. Identidad y diseño
+Etapa actual: 4. Construir — Fase 1 (siguiente: /gsd-discuss-phase 1)
 Repo: https://github.com/tomasbasso/PaginaClima (remote origin, sin push todavía)
 
 ## Decisiones
@@ -12,12 +12,13 @@ Repo: https://github.com/tomasbasso/PaginaClima (remote origin, sin push todaví
 - 2026-10-23 Hosting: código en GitHub, deploy en Vercel Hobby (gratis, uso no comercial). Se descartó GitHub Pages (sin servidor: perdía caché, MET Norway y push) y el VPS con Coolify (es de un cliente).
 - 2026-10-23 Cron cada hora con GitHub Actions llamando a una ruta de la app (el cron de Vercel Hobby es 1 vez/día). Suscripciones push en Supabase (plan gratis).
 - 2026-10-23 Stack: Next.js + TypeScript, Tailwind, Recharts, PWA, Route Handlers con revalidate, Open-Meteo (Forecast, Ensemble, Historical), MET Norway, RainViewer. Plan gratis de Open-Meteo OK por ser no comercial.
+- 2026-10-23 Diseño: sistema "Pampa Cielo Editorial" (Stitch 7105606539074745910). Playfair Display + Plus Jakarta Sans, 0px de radio, sin tarjetas, líneas crema, zona oscura bajo el horizonte para contraste, barra Ahora/Pronóstico/Modelos/Cielo, sin buscador.
 
 ## Etapas
 - [x] 1. Validar: GO — proyecto propio, diferencial en el diseño, todo gratis en Vercel + Actions + Supabase.
 - [x] 2. Definir y planificar: roadmap GSD de 7 fases (37 requisitos) aprobado. Ver .planning/
 - 2026-10-23 Investigación: RainViewer sin cobertura en Argentina → satélite IR GOES + link SMN. MET Norway no vota (usa ECMWF). Modelos: ECMWF, GFS, ICON, GEM. Helada ≤ 2 °C. Offline sí.
-- [ ] 3. Identidad y diseño
+- [x] 3. Identidad y diseño: 3 pantallas en Stitch (tarde, atardecer, tormenta) en design/stitch/ + contrato UI de Fase 1 aprobado (.planning/phases/01-fundaciones-y-ahora/01-UI-SPEC.md). Marca = solo ícono PWA, sin brandkit.
 - [ ] 4. Construir (fases de GSD)
 - [ ] 5. Verificar
 - [ ] 6. Publicar
