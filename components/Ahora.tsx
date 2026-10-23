@@ -1,9 +1,15 @@
 // "Ahora" screen (UI-SPEC Layout). Server component: only zod-validated numbers reach it;
 // every label comes from local tables (wmo.ts, wind.ts), never from upstream strings.
+import type { ReactNode } from 'react'
+import { NoData } from '@/components/NoData'
+import { Notice } from '@/components/Notice'
 import { Freshness } from '@/components/client/Freshness'
 import { LiveClock } from '@/components/client/LiveClock'
+import { RetryButton } from '@/components/client/RetryButton'
 import { getSolarPhase } from '@/lib/sky/phase'
+import { formatHHmm } from '@/lib/time'
 import { formatInt, formatTemp } from '@/lib/weather/format'
+import type { AhoraVariant } from '@/lib/weather/status'
 import type { WeatherSnapshot } from '@/lib/weather/types'
 import { describeWind } from '@/lib/weather/wind'
 import { describeWeather } from '@/lib/weather/wmo'
@@ -29,11 +35,13 @@ function DataItem({
   value,
   unit,
   first = false,
+  muted = false,
 }: {
   label: string
   value: string
   unit?: string
   first?: boolean
+  muted?: boolean
 }) {
   return (
     <div
@@ -41,46 +49,99 @@ function DataItem({
     >
       <dt className={`${LABEL} text-ink/75`}>{label}</dt>
       <dd className="nums">
-        <span className={`${HEADING} text-ink`}>{value}</span>
+        <span className={`${HEADING} ${muted ? 'text-ink/55' : 'text-ink'}`}>{value}</span>
         {unit ? <span className={`${BODY} ml-1 text-ink/75`}>{unit}</span> : null}
       </dd>
     </div>
   )
 }
 
+/**
+ * Data states (UI-SPEC "Estados de interacción y de datos"):
+ * - normal: current data + freshness row.
+ * - degraded: Open-Meteo refresh failed (or fault): same data, "No pudimos actualizar…" notice
+ *   with the last good time; the age-based Desactualizado notice is suppressed (one notice).
+ * - empty: Sin datos + Reintentar (header stays; sky/horizon/tab bar live outside).
+ * - loading: "—" values, CARGANDO, no freshness row (app/loading.tsx).
+ * MET Norway status never changes the UI ("Fuente secundaria caída" = nothing visible).
+ * Synchronous with no server-only imports: app/error.tsx (client) renders it too.
+ */
 export function Ahora({
   snapshot,
   renderedAt,
   headline,
   autoRefresh = true,
+  variant,
+  retry,
 }: {
-  snapshot: WeatherSnapshot
+  snapshot: WeatherSnapshot | null
   renderedAt: string
   headline?: string
   /** false on fixture pages (/dev/estados) that would otherwise refresh in a loop */
   autoRefresh?: boolean
+  /** defaults to 'normal' with data, 'empty' without */
+  variant?: AhoraVariant
+  /** replaces the default RetryButton in the empty state (error boundary passes its retry) */
+  retry?: ReactNode
 }) {
-  const { now } = snapshot
-  const fetchedAt = snapshot.sources[0]?.fetchedAt
+  const now = snapshot?.now ?? null
+  const fetchedAt = snapshot?.sources[0]?.fetchedAt ?? null
+  const resolved: AhoraVariant =
+    variant === 'loading' ? 'loading' : !now ? 'empty' : (variant ?? 'normal')
 
   return (
-    <section className="flex flex-col">
+    <section className="flex flex-col" aria-busy={resolved === 'loading' || undefined}>
       <h1 className="sr-only">Clima en Winifreda, La Pampa</h1>
       <Header renderedAt={renderedAt} />
 
-      {now ? (
+      {resolved === 'loading' ? <LoadingBlock /> : null}
+
+      {resolved === 'empty' ? <NoData action={retry ?? <RetryButton />} /> : null}
+
+      {now && (resolved === 'normal' || resolved === 'degraded') ? (
         <>
           <NowBlock now={now} renderedAt={renderedAt} headline={headline} />
           {fetchedAt ? (
-            <Freshness fetchedAt={fetchedAt} renderedAt={renderedAt} autoRefresh={autoRefresh} />
+            <Freshness
+              fetchedAt={fetchedAt}
+              renderedAt={renderedAt}
+              autoRefresh={autoRefresh}
+              suppressOutdatedNotice={resolved === 'degraded'}
+            />
+          ) : null}
+          {resolved === 'degraded' && fetchedAt ? (
+            <Notice role="status">
+              No pudimos actualizar el pronóstico. Te mostramos el último dato bueno, de las{' '}
+              {formatHHmm(new Date(fetchedAt))}.
+            </Notice>
           ) : null}
         </>
-      ) : (
-        <h2 className={`${HEADING} mt-12 italic text-ink`}>
-          Ahora no tenemos el tiempo de Winifreda.
-        </h2>
-      )}
+      ) : null}
     </section>
+  )
+}
+
+/** CARGANDO: same layout as NowBlock, "—" in ink/55, no diamond, no gust line, no freshness. */
+function LoadingBlock() {
+  return (
+    <div className="mt-12 flex flex-col">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <p className="nums flex items-start font-serif text-ink/55" aria-hidden="true">
+          <span className="text-[112px] leading-none tracking-[-0.03em]">—</span>
+        </p>
+        <div className="flex flex-col items-end gap-2 pb-1 text-right">
+          <p className={`${LABEL} text-ink`}>CARGANDO</p>
+        </div>
+      </div>
+
+      <dl className="mt-8 grid grid-cols-3 border-y border-ink/20" aria-hidden="true">
+        <DataItem first muted label="HUMEDAD" value="—" />
+        <DataItem muted label="PRESIÓN" value="—" />
+        <DataItem muted label="VIENTO" value="—" />
+      </dl>
+
+      <div className="mt-4 h-px w-full bg-ink/12" aria-hidden="true" />
+    </div>
   )
 }
 
