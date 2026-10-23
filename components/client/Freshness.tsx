@@ -60,9 +60,14 @@ export function Freshness({
     }
 
     const timeout = setTimeout(maybeRefresh, 3_000)
+    // While the page stays on screen the age keeps growing: re-check every minute (WR-01).
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') maybeRefresh()
+    }, 60_000)
     document.addEventListener('visibilitychange', onVisibility)
     return () => {
       clearTimeout(timeout)
+      clearInterval(interval)
       document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [fetchedAt, autoRefresh, router])
