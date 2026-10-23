@@ -27,6 +27,15 @@
   --sky-4: #6fa3c9;
   --sky-5: #a9d6ea;
   --accent: #8ecae6;
+  /* Horizon band height (UAT-01): up to 240px, shrinking so that a normal Ahora screen fits the
+     first viewport on a 390×844 iPhone, safe areas included. 632px = 24 top padding + ~487 content
+     + 64 minimum spacer + 56 tab bar. Never below the 120px silhouette; if the content still does
+     not fit, the hero grows and scrolls (UI-SPEC). */
+  --band-h: clamp(
+    120px,
+    calc(100svh - 632px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
+    240px
+  );
 }
 
 /* Sky states (UI-SPEC "Estados del cielo"). Plain attribute selectors (never scoped to the root element) so a
@@ -107,14 +116,14 @@ html:has(main[data-sky="tormenta"]) {
    sits on top of the tab bar. Below the horizon: ground color. */
 .sky-layer {
   --bar-h: calc(56px + env(safe-area-inset-bottom));
-  --band-top: calc(100% - var(--bar-h) - 240px);
+  --band-top: calc(100% - var(--bar-h) - var(--band-h));
   --horizon: calc(100% - var(--bar-h));
   background: linear-gradient(
     to bottom,
     var(--sky-1) 0%,
     var(--sky-2) calc(var(--band-top) * 0.4),
     var(--sky-3) var(--band-top),
-    var(--sky-4) calc(var(--horizon) - 96px),
+    var(--sky-4) calc(var(--horizon) - var(--band-h) * 0.4),
     var(--sky-5) var(--horizon),
     #0e131c var(--horizon)
   );

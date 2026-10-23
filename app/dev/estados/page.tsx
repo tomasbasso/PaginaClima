@@ -41,7 +41,9 @@ function Frame({
       <section
         aria-label={name}
         data-sky={token}
-        className="relative isolate flex h-[844px] w-[390px] shrink-0 flex-col overflow-hidden bg-ground"
+        // Frames are always 844px tall and have no tab bar, so the band keeps its full 240px
+        // instead of following the window's viewport height.
+        className="relative isolate flex h-[844px] w-[390px] shrink-0 flex-col overflow-hidden bg-ground [--band-h:240px]"
       >
         <SkyBackdrop state={sky} />
         <div className="flex flex-1 flex-col pt-[24px]">
@@ -51,11 +53,12 @@ function Frame({
               renderedAt={renderedAt}
               variant={variant}
               autoRefresh={false}
+              night={sky.phase === 'noche'}
             />
           </div>
           <div className="min-h-16 flex-1" />
         </div>
-        <div className="relative h-60 w-full shrink-0" aria-hidden="true">
+        <div className="relative h-(--band-h) w-full shrink-0" aria-hidden="true">
           <div className="absolute inset-x-0 bottom-0">
             <PampaHorizon />
           </div>

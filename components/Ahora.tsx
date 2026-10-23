@@ -73,10 +73,14 @@ export function Ahora({
   autoRefresh = true,
   variant,
   retry,
+  night,
 }: {
   snapshot: WeatherSnapshot | null
   renderedAt: string
   headline?: string
+  /** "NOCHE DESPEJADA" switch; defaults to the real solar phase at renderedAt. /dev/estados
+   *  passes the frame's own phase so the night frame shows the night label during the day. */
+  night?: boolean
   /** false on fixture pages (/dev/estados) that would otherwise refresh in a loop */
   autoRefresh?: boolean
   /** defaults to 'normal' with data, 'empty' without */
@@ -100,7 +104,7 @@ export function Ahora({
 
       {now && (resolved === 'normal' || resolved === 'degraded') ? (
         <>
-          <NowBlock now={now} renderedAt={renderedAt} headline={headline} />
+          <NowBlock now={now} renderedAt={renderedAt} headline={headline} night={night} />
           {fetchedAt ? (
             <Freshness
               fetchedAt={fetchedAt}
@@ -149,12 +153,14 @@ function NowBlock({
   now,
   renderedAt,
   headline,
+  night: nightOverride,
 }: {
   now: NonNullable<WeatherSnapshot['now']>
   renderedAt: string
   headline?: string
+  night?: boolean
 }) {
-  const night = getSolarPhase(new Date(renderedAt)).phase === 'noche'
+  const night = nightOverride ?? getSolarPhase(new Date(renderedAt)).phase === 'noche'
   const weather = describeWeather(now.weatherCode, { night })
   const wind = describeWind(now.windKmh, now.windDirDeg, now.gustKmh)
   const temp = formatTemp(now.tempC)
