@@ -1,0 +1,131 @@
+# Roadmap: Clima Winifreda
+
+## Overview
+
+El camino arranca con una página real publicada en Vercel desde el día uno: la capa de datos en el servidor (adapters, `WeatherSnapshot`, caché por TTL, hora argentina) y la sección Ahora. Sobre esa base se suma el pronóstico núcleo (meteograma de 48 h, diario y titular editorial), después el diferencial visual (cielo vivo con horizonte pampeano, probado en un iPhone real), y luego la honestidad sobre la incertidumbre (los modelos opinan y la probabilidad real desde ensembles). Se completa el contenido con lluvia acumulada, satélite IR y sol/luna, se vuelve instalable y offline como PWA, y se cierra con alertas Web Push revisadas cada hora. Cada fase es un corte vertical: termina con algo visible y desplegado.
+
+## Phases
+
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
+
+Decimal phases appear between their surrounding integers in numeric order.
+
+- [ ] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel
+- [ ] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial
+- [ ] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
+- [ ] **Phase 4: Los modelos opinan** - Comparación ECMWF/GFS/ICON/GEM, semáforo de coincidencia, MET Norway aparte y probabilidad real de ensemble
+- [ ] **Phase 5: Lluvia, satélite y astros** - Lluvia acumulada contra la normal, satélite IR GOES-East, link al radar del SMN, sol y luna
+- [ ] **Phase 6: PWA instalable y offline** - Instalación en iPhone y Android con instrucciones, y último pronóstico disponible sin señal
+- [ ] **Phase 7: Alertas Web Push** - Avisos de helada, tormenta y viento fuerte revisados cada hora, sin repetidos
+
+## Phase Details
+
+### Phase 1: Fundaciones y Ahora
+**Goal**: El usuario abre la URL pública en Vercel y ve el tiempo actual de Winifreda, servido desde la caché del servidor, en hora argentina y con su antigüedad visible
+**Mode:** mvp
+**Depends on**: Nothing (first phase)
+**Requirements**: DATA-01, DATA-02, DATA-03, DATA-04, NOW-01, NOW-02, OPS-01
+**Success Criteria** (what must be TRUE):
+  1. Al abrir la URL pública (Vercel, región São Paulo) el usuario ve temperatura, sensación térmica, humedad, presión y viento (velocidad, ráfaga y dirección), con el estado del tiempo en castellano rioplatense
+  2. El usuario ve "actualizado hace X min", y recargar varias veces seguidas no genera requests nuevos a Open-Meteo/MET Norway (se sirven desde la caché del servidor, con datos de no más de 15 min respecto de la última corrida)
+  3. Si una fuente externa falla (simulada), la página sigue cargando y la sección afectada muestra el último dato bueno o un aviso, en vez de romperse
+  4. Fechas y horas se muestran en hora argentina; a las 21–24 h locales (borde 00–03Z) el "hoy" no salta al día siguiente
+  5. Un push a `main` en GitHub publica automáticamente la nueva versión en Vercel
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 2: Pronóstico núcleo
+**Goal**: El usuario entiende de un vistazo qué va a pasar en las próximas 48 h y en los próximos días, con un titular que resume el día
+**Mode:** mvp
+**Depends on**: Phase 1
+**Requirements**: FCST-01, FCST-02, NOW-03
+**Success Criteria** (what must be TRUE):
+  1. En un iPhone de 390 px el usuario lee un meteograma de 48 h con temperatura, lluvia en mm y viento, sin scroll horizontal forzado ni etiquetas encimadas
+  2. El usuario ve el pronóstico diario de 7 a 14 días con máxima, mínima, estado del tiempo y lluvia esperada por día (días locales argentinos)
+  3. El usuario ve arriba de todo un titular editorial en rioplatense que resume el día (ej. "Mañana fresca, lluvia a la tarde") y que cambia cuando cambia el pronóstico
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 3: Cielo vivo
+**Goal**: La app se ve como ninguna otra: el fondo es un cielo generativo que sigue al sol real y al tiempo de Winifreda, con el horizonte pampeano, legible y liviano en un iPhone real
+**Mode:** mvp
+**Depends on**: Phase 2
+**Requirements**: SKY-01, SKY-02, SKY-03, SKY-04, SKY-05, SKY-06
+**Success Criteria** (what must be TRUE):
+  1. El fondo cambia según la posición real del sol (noche, amanecer, día, atardecer) y según el estado del tiempo (despejado, nublado, lluvia, tormenta, niebla, noche estrellada), y en `/dev/sky` se pueden forzar todos los estados para revisarlos
+  2. El usuario ve la silueta del horizonte pampeano abajo, y todo el texto (Ahora, titular, meteograma) se lee con buen contraste sobre cualquier estado del cielo
+  3. Con "reducir movimiento" activado el usuario ve un cielo estático; sin WebGL ve un fallback que igual representa la hora y el tiempo
+  4. En un iPhone real la animación corre fluida (tope 30 fps), se pausa al pasar a segundo plano y el teléfono no se calienta en un uso de varios minutos
+**Plans**: TBD
+**UI hint**: yes
+**Research**: sí — WebGL2 contra Canvas 2D en Safari standalone, presupuesto de rendimiento en iPhone
+
+### Phase 4: Los modelos opinan
+**Goal**: El usuario sabe cuánta confianza tenerle al pronóstico: ve qué dice cada modelo, si coinciden, y una probabilidad de lluvia real con su rango de incertidumbre
+**Mode:** mvp
+**Depends on**: Phase 2
+**Requirements**: MODL-01, MODL-02, MODL-03, FCST-03, FCST-04
+**Success Criteria** (what must be TRUE):
+  1. El usuario ve el pronóstico de ECMWF, GFS, ICON y GEM lado a lado para los próximos días (o de los 3 disponibles si GEM no cubre la zona, con aclaración)
+  2. El usuario ve un semáforo por día (coinciden / dudan / no se ponen de acuerdo) calculado solo con los modelos independientes
+  3. El usuario ve el pronóstico de MET Norway como segunda opinión, rotulado "basado en ECMWF" y sin peso en el semáforo
+  4. Cada día del pronóstico diario muestra la probabilidad de lluvia calculada desde los miembros del ensemble (≥ 1 mm en el día local), y los días lejanos muestran el rango p10–p90 de temperatura y lluvia
+**Plans**: TBD
+**UI hint**: yes
+**Research**: sí — IDs de modelos en Open-Meteo, disponibilidad de GEM en Sudamérica, horizontes por modelo del ensemble
+
+### Phase 5: Lluvia, satélite y astros
+**Goal**: El usuario completa el panorama: cuánto llovió contra lo normal, qué nubosidad se acerca y cuándo sale y se pone el sol, con la fase de la luna
+**Mode:** mvp
+**Depends on**: Phase 1
+**Requirements**: RAIN-01, RAIN-02, RAIN-03, SAT-01, SAT-02, ASTRO-01, ASTRO-02
+**Success Criteria** (what must be TRUE):
+  1. El usuario ve la lluvia acumulada de la semana, el mes y el año, cada una comparada contra el promedio 1991–2020 prorrateado a la misma fecha, con la aclaración "estimado por reanálisis, no pluviómetro"
+  2. El usuario ve una imagen satelital infrarroja reciente de GOES-East centrada en Winifreda (carga diferida, sin trabar la pantalla principal) y puede abrir el radar del SMN con un link externo
+  3. El usuario ve la hora de salida y puesta del sol y la duración del día, y la fase lunar actual dibujada como se ve desde el hemisferio sur
+**Plans**: TBD
+**UI hint**: yes
+**Research**: sí — capa exacta y GetCapabilities de NASA GIBS, ToS de OpenFreeMap, costura ERA5 + `past_days`
+
+### Phase 6: PWA instalable y offline
+**Goal**: El usuario tiene la app en la pantalla de inicio de su iPhone y la puede abrir en el campo sin señal
+**Mode:** mvp
+**Depends on**: Phase 5
+**Requirements**: PWA-01, PWA-02, PWA-03
+**Success Criteria** (what must be TRUE):
+  1. El usuario instala la app desde Safari en iPhone y desde Chrome en Android, y la abre a pantalla completa con su propio ícono
+  2. Un usuario de iPhone que todavía no la instaló ve instrucciones claras de cómo hacerlo (y no las ve si ya la abre instalada)
+  3. En modo avión, el usuario abre la app instalada y ve el último pronóstico guardado con la hora en que se descargó
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 7: Alertas Web Push
+**Goal**: El usuario se entera a tiempo de heladas, tormentas y viento fuerte en Winifreda sin tener que abrir la app
+**Mode:** mvp
+**Depends on**: Phase 6
+**Requirements**: ALRT-01, ALRT-02, ALRT-03, ALRT-04, ALRT-05, ALRT-06
+**Success Criteria** (what must be TRUE):
+  1. El usuario activa las notificaciones con un botón (en iPhone, solo desde la app instalada, con explicación si no lo está) y recibe una notificación de prueba
+  2. El usuario recibe un aviso de helada cuando se pronostica mínima ≤ 2 °C, de tormenta cuando CAPE, probabilidad y modelos convectivos lo indican, y de viento fuerte cuando las ráfagas superan el umbral
+  3. Para un mismo evento el usuario recibe un solo aviso, aunque el chequeo corra varias veces
+  4. Las alertas se revisan cada hora sin que nadie abra la app (GitHub Actions llamando a la ruta protegida, con respaldo), y Supabase no se pausa por inactividad
+**Plans**: TBD
+**UI hint**: yes
+**Research**: sí — Declarative Web Push en iOS, feed CAP del SMN, repo público o privado (vencimiento de `schedule` en Actions)
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Fundaciones y Ahora | 0/TBD | Not started | - |
+| 2. Pronóstico núcleo | 0/TBD | Not started | - |
+| 3. Cielo vivo | 0/TBD | Not started | - |
+| 4. Los modelos opinan | 0/TBD | Not started | - |
+| 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
+| 6. PWA instalable y offline | 0/TBD | Not started | - |
+| 7. Alertas Web Push | 0/TBD | Not started | - |

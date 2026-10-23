@@ -100,12 +100,49 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| NOW-01 | Phase 1 | Pending |
+| NOW-02 | Phase 1 | Pending |
+| NOW-03 | Phase 2 | Pending |
+| FCST-01 | Phase 2 | Pending |
+| FCST-02 | Phase 2 | Pending |
+| FCST-03 | Phase 4 | Pending |
+| FCST-04 | Phase 4 | Pending |
+| MODL-01 | Phase 4 | Pending |
+| MODL-02 | Phase 4 | Pending |
+| MODL-03 | Phase 4 | Pending |
+| RAIN-01 | Phase 5 | Pending |
+| RAIN-02 | Phase 5 | Pending |
+| RAIN-03 | Phase 5 | Pending |
+| SAT-01 | Phase 5 | Pending |
+| SAT-02 | Phase 5 | Pending |
+| ASTRO-01 | Phase 5 | Pending |
+| ASTRO-02 | Phase 5 | Pending |
+| SKY-01 | Phase 3 | Pending |
+| SKY-02 | Phase 3 | Pending |
+| SKY-03 | Phase 3 | Pending |
+| SKY-04 | Phase 3 | Pending |
+| SKY-05 | Phase 3 | Pending |
+| SKY-06 | Phase 3 | Pending |
+| PWA-01 | Phase 6 | Pending |
+| PWA-02 | Phase 6 | Pending |
+| PWA-03 | Phase 6 | Pending |
+| ALRT-01 | Phase 7 | Pending |
+| ALRT-02 | Phase 7 | Pending |
+| ALRT-03 | Phase 7 | Pending |
+| ALRT-04 | Phase 7 | Pending |
+| ALRT-05 | Phase 7 | Pending |
+| ALRT-06 | Phase 7 | Pending |
+| OPS-01 | Phase 1 | Pending |
 
 **Coverage:**
 - v1 requirements: 37 total
-- Mapped to phases: 0
-- Unmapped: 37 ⚠️
+- Mapped to phases: 37
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-23*
-*Last updated: 2026-10-23 after initial definition*
+*Last updated: 2026-10-23 after roadmap creation (traceability)*
