@@ -85,6 +85,23 @@
   --accent: #b9b7f0;
 }
 
+/* The tab bar lives in the root layout, outside the page's <main data-sky>: take the accent from
+   the page sky when there is one (WR-06). Falls back to <html data-sky> (solar phase) otherwise. */
+html:has(main[data-sky="noche"]),
+html:has(main[data-sky="dia"]),
+html:has(main[data-sky="cubierto"]) {
+  --accent: #8ecae6;
+}
+
+html:has(main[data-sky="amanecer"]),
+html:has(main[data-sky="atardecer"]) {
+  --accent: #f4c06a;
+}
+
+html:has(main[data-sky="tormenta"]) {
+  --accent: #b9b7f0;
+}
+
 /* One gradient over the whole hero. Structural contrast rule: the content zone is S1 -> S3
    (dark); the light S4/S5 live only in the 240px horizon band, whose bottom (the horizon line)
    sits on top of the tab bar. Below the horizon: ground color. */

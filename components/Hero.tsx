@@ -4,11 +4,17 @@
 import type { ReactNode } from 'react'
 import { PampaHorizon } from '@/components/PampaHorizon'
 import { SkyBackdrop } from '@/components/client/SkyBackdrop'
-import type { SkyState } from '@/lib/sky/state'
+import { type SkyState, skyToken } from '@/lib/sky/state'
 
 export function Hero({ sky, children }: { sky: SkyState; children: ReactNode }) {
   return (
-    <main className="relative isolate flex min-h-svh flex-col bg-ground pb-[calc(56px+env(safe-area-inset-bottom))]">
+    // data-sky here (WR-06): the weather-aware token is in the server HTML, so the accent of the
+    // content (diamond, focus ring) and, through globals.css :has(), of the tab bar is right
+    // before hydration. <SkyBackdrop live> keeps it current afterwards.
+    <main
+      data-sky={skyToken(sky)}
+      className="relative isolate flex min-h-svh flex-col bg-ground pb-[calc(56px+env(safe-area-inset-bottom))]"
+    >
       {/* One gradient behind the whole hero: S1 → S3 in the content zone, S3 → S5 in the band. */}
       <SkyBackdrop state={sky} live />
 

@@ -2,7 +2,7 @@
 // Phase-1 sky: the six static CSS-gradient token sets of the UI-SPEC, crossfaded between two
 // layers (gradients do not interpolate). Single replacement point for the phase-3 WebGL canvas,
 // which keeps these tokens as its no-WebGL fallback (UI-SPEC "Contrato con la fase 3").
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { resolveSkyState, type SkyState, type SkyToken, skyToken } from '@/lib/sky/state'
 
 const RECOMPUTE_MS = 60_000
@@ -22,6 +22,7 @@ export function SkyBackdrop({
   // Identical on server and client: layer A visible with the server token.
   const [layers, setLayers] = useState<Layers>({ a: initial, b: initial, active: 'a' })
   const weather = state.weather
+  const rootRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!live) return
@@ -35,8 +36,10 @@ export function SkyBackdrop({
           ? { a: cur.a, b: next, active: 'b' }
           : { a: next, b: cur.b, active: 'a' }
       })
-      // --accent (tab bar, diamond, focus ring) follows the sky.
+      // --accent (tab bar, diamond, focus ring) follows the sky: <html> and the hosting <main>.
       document.documentElement.dataset.sky = next
+      const host = rootRef.current?.parentElement
+      if (host?.hasAttribute('data-sky')) host.dataset.sky = next
     }
     const first = window.setTimeout(tick, 0)
     const id = window.setInterval(tick, RECOMPUTE_MS)
@@ -47,7 +50,7 @@ export function SkyBackdrop({
   }, [live, weather])
 
   return (
-    <div aria-hidden="true" className={`absolute inset-0 -z-10 overflow-hidden ${className}`}>
+    <div ref={rootRef} aria-hidden="true" className={`absolute inset-0 -z-10 overflow-hidden ${className}`}>
       <div
         data-sky={layers.a}
         className="sky-layer absolute inset-0"
