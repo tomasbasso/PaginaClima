@@ -6,8 +6,11 @@
 //                          [--expect-commit <sha7>] [--expect-404 /path]...
 //
 //   --start            spawn `npx next start -p <port>` (port from baseUrl) and stop it at the end
-//   --expect-region    /api/weather `region` must equal this value
-//   --expect-commit    poll /api/weather every 10 s (max 300 s) until `commit` equals this value
+//   --expect-region    /api/health `region` must equal this value
+//   --expect-commit    poll /api/health every 10 s (max 300 s) until `commit` equals this value
+//
+// region/commit come from the dynamic /api/health, never from the ISR /api/weather, whose
+// render may come from the build or an older regeneration (WR-04).
 //   --expect-404       this path must return 404 (repeatable)
 //
 // Reused by plans 01-02 (first deploy) and 01-07 (phase close).
@@ -149,7 +152,7 @@ async function main() {
     const deadline = Date.now() + 300_000
     let seen
     for (;;) {
-      const r = await getJson('/api/weather').catch(() => null)
+      const r = await getJson('/api/health').catch(() => null)
       seen = r?.json?.commit
       if (seen === expectCommit) break
       if (Date.now() > deadline) break
@@ -178,14 +181,17 @@ async function main() {
     if (typeof a.json.now?.tempC === 'number') pass(`now.tempC = ${a.json.now.tempC}`)
     else if (sa?.status === 'error') warn(`open-meteo status=error (${sa.errorCode ?? '?'}), now is null`)
     else fail('now.tempC is not a number and source status is not error')
-
-    if (expectRegion) {
-      if (a.json.region === expectRegion) pass(`region = ${expectRegion}`)
-      else fail(`region = ${a.json.region} (expected ${expectRegion})`)
-    }
   }
 
-  // 4. Paths that must not exist.
+  // 4. Optional: function region, from the dynamic health route (WR-04).
+  if (expectRegion) {
+    const h = await getJson('/api/health')
+    if (h.status !== 200 || !h.json) fail(`GET /api/health -> ${h.status} (expected 200 JSON)`)
+    else if (h.json.region === expectRegion) pass(`region = ${expectRegion}`)
+    else fail(`region = ${h.json.region} (expected ${expectRegion})`)
+  }
+
+  // 5. Paths that must not exist.
   for (const p of expect404) {
     const r = await get(p)
     if (r.status === 404) pass(`GET ${p} -> 404`)
