@@ -12,7 +12,7 @@ El camino arranca con una página real publicada en Vercel desde el día uno: la
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel
+- [x] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel (completed 2026-10-23)
 - [ ] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial
 - [ ] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
 - [ ] **Phase 4: Los modelos opinan** - Comparación ECMWF/GFS/ICON/GEM, semáforo de coincidencia, MET Norway aparte y probabilidad real de ensemble
@@ -36,12 +36,12 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 7 plans
 Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07):
 - [x] 01-01-PLAN.md — Walking skeleton: scaffold Next 16.4.3, Vitest, Open-Meteo vía unstable_cache, snapshot, página ISR y /api/weather
-- [ ] 01-02-PLAN.md — Deploy: push a main (con aprobación), vinculación con Vercel (gru1) y smoke en producción
+- [x] 01-02-PLAN.md — Deploy: push a main (con aprobación), vinculación con Vercel (gru1) y smoke en producción
 - [x] 01-03-PLAN.md — Pantalla Ahora completa: hora argentina, viento, WMO rioplatense, temperatura, horizonte pampeano
 - [x] 01-04-PLAN.md — Cielo por hora y tiempo (data-sky, SkyBackdrop con crossfade) y barra de pestañas
 - [x] 01-05-PLAN.md — Frescura "actualizado hace X min", aviso de dato viejo, crédito Open-Meteo y MET Norway cacheado
 - [x] 01-06-PLAN.md — Fallas: refresco read-through, estado por fuente según resultado real, WEATHER_FAULT, Fuente caída / Sin datos / Cargando / error.tsx
-- [ ] 01-07-PLAN.md — /dev/estados y verificación final en producción tras el push
+- [x] 01-07-PLAN.md — /dev/estados y verificación final en producción tras el push
 **UI hint**: yes
 
 ### Phase 2: Pronóstico núcleo
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Fundaciones y Ahora | 5/7 | In Progress|  |
+| 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 0/TBD | Not started | - |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
