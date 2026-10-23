@@ -12,9 +12,18 @@ export const TTL = {
   page: 600,
 } as const
 
+export const DEFAULT_USER_AGENT = 'ClimaWinifreda/1.0 github.com/tomasbasso/PaginaClima'
+
+/**
+ * Empty or whitespace-only overrides fall back to the default (WR-02): dotenv loads
+ * `WEATHER_USER_AGENT=` as '', and MET Norway rejects requests without an identifying UA.
+ */
+export function resolveUserAgent(raw: string | undefined): string {
+  return raw?.trim() || DEFAULT_USER_AGENT
+}
+
 /** Identifies the app to upstream APIs. Repo URL only, no personal contact committed (D-12). */
-export const USER_AGENT =
-  process.env.WEATHER_USER_AGENT ?? 'ClimaWinifreda/1.0 github.com/tomasbasso/PaginaClima'
+export const USER_AGENT = resolveUserAgent(process.env.WEATHER_USER_AGENT)
 
 /**
  * MET Norway compact (D-05, 2nd source, not displayed in phase 1). ToS: ≤ 4 decimals, so 2 here.
