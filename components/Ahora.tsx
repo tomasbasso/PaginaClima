@@ -3,8 +3,8 @@
 import type { ReactNode } from 'react'
 import { NoData } from '@/components/NoData'
 import { Notice } from '@/components/Notice'
+import { Header } from '@/components/Header'
 import { Freshness } from '@/components/client/Freshness'
-import { LiveClock } from '@/components/client/LiveClock'
 import { RetryButton } from '@/components/client/RetryButton'
 import { getSolarPhase } from '@/lib/sky/phase'
 import { formatHHmm } from '@/lib/time'
@@ -17,18 +17,8 @@ import { describeWeather } from '@/lib/weather/wmo'
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
 const BODY = 'text-[15px] leading-[1.6]'
 const HEADING = 'font-serif text-[24px] leading-[1.33]'
-
-function Header({ renderedAt }: { renderedAt: string }) {
-  return (
-    <header className="flex flex-col items-center text-center">
-      <p className="text-[12px] font-semibold leading-[1.33] tracking-[0.18em] text-ink">
-        WINIFREDA, LA PAMPA
-      </p>
-      <div className="my-2 h-px w-40 bg-ink/30" aria-hidden="true" />
-      <LiveClock renderedAt={renderedAt} />
-    </header>
-  )
-}
+// UI-SPEC fallback applied: 32/1.19 overflowed the 390×844 first screen with iPhone insets (02-01).
+const HEADLINE = 'font-serif text-[28px] italic leading-[1.21] tracking-[-0.01em]'
 
 function DataItem({
   label,
@@ -172,11 +162,14 @@ function NowBlock({
   const [windValue, ...windRest] = wind.value.split(' ')
   const windUnit = windRest.length ? windRest.join(' ') : undefined
 
+  const hasHeadline = typeof headline === 'string' && headline.length > 0
+
   return (
-    <div className="mt-12 flex flex-col">
-      {headline && (
-        <p className="mb-6 font-serif text-[24px] italic leading-[1.33] text-ink">{headline}</p>
-      )}
+    // 24px header → headline when there is one; phase-1 48px otherwise (UI-SPEC "Ajustes de Ahora").
+    <div className={`${hasHeadline ? 'mt-6' : 'mt-12'} flex flex-col`}>
+      {hasHeadline ? (
+        <p className={`mb-4 ${HEADLINE} text-ink [text-wrap:balance]`}>{headline}</p>
+      ) : null}
 
       {/* justify-between: when the state column wraps onto its own line it sits at the left */}
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
@@ -208,7 +201,7 @@ function NowBlock({
       </div>
       {weather.label ? <p className="sr-only">{weather.label}</p> : null}
 
-      <dl className="mt-8 grid grid-cols-3 border-y border-ink/20">
+      <dl className="mt-6 grid grid-cols-3 border-y border-ink/20">
         <DataItem
           first
           label="HUMEDAD"

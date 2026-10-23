@@ -23,7 +23,7 @@ export function Hero({ sky, children }: { sky: SkyState; children: ReactNode }) 
           {children}
         </div>
 
-        <div className="min-h-16 flex-1" />
+        <div className="min-h-4 flex-1" />
       </div>
 
       <div className="relative h-(--band-h) w-full shrink-0" aria-hidden="true">

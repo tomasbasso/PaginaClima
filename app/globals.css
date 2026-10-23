@@ -28,12 +28,12 @@
   --sky-5: #a9d6ea;
   --accent: #8ecae6;
   /* Horizon band height (UAT-01): up to 240px, shrinking so that a normal Ahora screen fits the
-     first viewport on a 390×844 iPhone, safe areas included. 632px = 24 top padding + ~487 content
-     + 64 minimum spacer + 56 tab bar. Never below the 120px silhouette; if the content still does
+     first viewport on a 390×844 iPhone, safe areas included. 644px = 24 top padding + ~548 content
+     (Ahora with a 2-line headline) + 16 minimum spacer + 56 tab bar. Never below the 120px silhouette; if the content still does
      not fit, the hero grows and scrolls (UI-SPEC). */
   --band-h: clamp(
     120px,
-    calc(100svh - 632px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
+    calc(100svh - 644px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
     240px
   );
 }
