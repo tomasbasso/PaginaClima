@@ -1,25 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, Plus_Jakarta_Sans } from "next/font/google";
 import type React from "react";
 import { skyFromSnapshot, skyToken } from "@/lib/sky/state";
 import { getWeatherSnapshot } from "@/lib/weather/snapshot";
 import { TabBar } from "@/components/TabBar";
+import { jakarta, playfair } from "./fonts";
 import "./globals.css";
-
-const playfair = Playfair_Display({
-  weight: ["400"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-playfair",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  weight: ["400", "600"],
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-jakarta",
-});
 
 export const metadata: Metadata = {
   title: "Clima en Winifreda",
