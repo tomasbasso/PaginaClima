@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-23T15:53:20.962Z"
-last_activity: 2026-10-23 -- Phase 1 planning complete
+last_updated: "2026-10-23T17:36:08.911Z"
+last_activity: 2026-10-23
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 0
+  completed_plans: 1
   percent: 0
 ---
 
@@ -24,12 +24,12 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 
 ## Current Position
 
-Phase: 1 of 7 (Fundaciones y Ahora)
-Plan: 0 of TBD in current phase
+Phase: 1 (Fundaciones y Ahora) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-10-23 -- Phase 1 planning complete
+Last activity: 2026-10-23
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 14%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 10 min | 3 tasks | 25 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 - [Roadmap]: Modo MVP vertical — cada fase entrega algo visible y desplegado en Vercel (región gru1) desde la fase 1
 - [Roadmap]: Antes de construir pantallas hay una etapa de diseño/identidad (mockups en Stitch + /gsd-ui-phase); todas las fases tienen UI hint
 - [Roadmap]: Fases con investigación propia: 3 (cielo/WebGL en Safari), 4 (modelos/GEM/ensemble), 5 (GIBS/ERA5), 7 (Web Push iOS/cron)
+- [Phase 1]: 01-01: Source adapters use unstable_cache(fetchRaw, ['<source>','v1']) returning { data, fetchedAt }; page and route call getWeatherSnapshot() directly and never throw
+- [Phase 1]: 01-01: RootLayout typed explicitly (not generated LayoutProps) so tsc --noEmit works before next typegen
+- [Phase 1]: 01-01: smoke.mjs --expect-404 needs MSYS_NO_PATHCONV=1 under Git Bash
 
 ### Pending Todos
 
@@ -82,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-23T15:01:42.386Z
+Last session: 2026-10-23T17:35:58.959Z
 Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-fundaciones-y-ahora/01-CONTEXT.md
+Resume file: None

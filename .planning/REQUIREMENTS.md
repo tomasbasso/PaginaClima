@@ -7,14 +7,14 @@
 
 ### Datos y caché (DATA)
 
-- [ ] **DATA-01**: El usuario ve datos que nunca tienen más de 15 minutos de antigüedad respecto de la última corrida disponible, sin que cada visita le pegue a las APIs externas (caché en servidor por fuente)
+- [x] **DATA-01**: El usuario ve datos que nunca tienen más de 15 minutos de antigüedad respecto de la última corrida disponible, sin que cada visita le pegue a las APIs externas (caché en servidor por fuente)
 - [ ] **DATA-02**: El usuario ve "actualizado hace X min" en la pantalla principal
 - [ ] **DATA-03**: Si una fuente falla, el usuario sigue viendo el resto de las secciones y la sección afectada muestra el último dato bueno o un aviso
-- [ ] **DATA-04**: Todos los días y horas se muestran en hora argentina (America/Argentina/Buenos_Aires), sin días cortados por UTC
+- [x] **DATA-04**: Todos los días y horas se muestran en hora argentina (America/Argentina/Buenos_Aires), sin días cortados por UTC
 
 ### Ahora (NOW)
 
-- [ ] **NOW-01**: El usuario ve temperatura actual, sensación térmica, humedad, presión y viento (velocidad, ráfaga y dirección)
+- [x] **NOW-01**: El usuario ve temperatura actual, sensación térmica, humedad, presión y viento (velocidad, ráfaga y dirección)
 - [ ] **NOW-02**: El usuario ve el estado del tiempo descrito en castellano rioplatense
 - [ ] **NOW-03**: El usuario ve un titular editorial generado por reglas que resume el día (ej. "Mañana fresca, lluvia a la tarde")
 
@@ -100,11 +100,11 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| NOW-01 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Complete |
+| NOW-01 | Phase 1 | Complete |
 | NOW-02 | Phase 1 | Pending |
 | NOW-03 | Phase 2 | Pending |
 | FCST-01 | Phase 2 | Pending |
