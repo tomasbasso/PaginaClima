@@ -16,6 +16,15 @@ export const TTL = {
 export const USER_AGENT =
   process.env.WEATHER_USER_AGENT ?? 'ClimaWinifreda/1.0 github.com/tomasbasso/PaginaClima'
 
+/**
+ * MET Norway compact (D-05, 2nd source, not displayed in phase 1). ToS: ≤ 4 decimals, so 2 here.
+ * If-Modified-Since is deliberately not sent: not implementable inside unstable_cache, and the
+ * ToS only recommends it; the 2100 s TTL already exceeds MET's ~30 min `Expires`.
+ */
+export const MET_NORWAY_URL = `https://api.met.no/weatherapi/locationforecast/2.0/compact?${new URLSearchParams(
+  { lat: LAT.toFixed(2), lon: LON.toFixed(2), altitude: String(ALTITUDE_M) },
+).toString()}`
+
 /** One call, best-match model: current + 48 h hourly + 14 days daily (D-04). */
 export const OPEN_METEO_URL = `https://api.open-meteo.com/v1/forecast?${new URLSearchParams({
   latitude: String(LAT),
