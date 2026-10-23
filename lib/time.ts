@@ -75,3 +75,41 @@ export function formatDayMonth(d: Date): string {
   const p = parts(dayMonthFormat, d)
   return `${String(p.day).padStart(2, '0')}/${String(p.month).padStart(2, '0')}`
 }
+
+// Local hour (0–23) in Winifreda, via Intl with timeZone (never the runtime-TZ hour getter).
+export function localHour(d: Date): number {
+  return Number(parts(hhmmFormat, d).hour)
+}
+
+const DAY_MS = 86_400_000
+
+/** Shift a "YYYY-MM-DD" key by n days. Noon UTC keeps the calendar day (Argentina has no DST). */
+export function addDaysToKey(key: string, n: number): string {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d, 12) + n * DAY_MS).toISOString().slice(0, 10)
+}
+
+// Local tables, never ICU short forms (es-AR ICU varies across runtimes: "sá.", "sáb.").
+const WEEKDAY_SHORT = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'] as const
+const WEEKDAY_LONG = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'] as const
+
+function weekdayIndex(key: string): number {
+  return new Date(`${key}T12:00:00Z`).getUTCDay()
+}
+
+/** "sáb" for '2026-10-24'. */
+export function weekdayShort(key: string): string {
+  return WEEKDAY_SHORT[weekdayIndex(key)]
+}
+
+/** "sábado" for '2026-10-24'. */
+export function weekdayLong(key: string): string {
+  return WEEKDAY_LONG[weekdayIndex(key)]
+}
+
+/** 'Hoy' · 'Mañana' · 'dom 25' (sentence case; the UI uppercases with CSS). */
+export function relativeDayLabel(key: string, todayKey: string): string {
+  if (key === todayKey) return 'Hoy'
+  if (key === addDaysToKey(todayKey, 1)) return 'Mañana'
+  return `${weekdayShort(key)} ${Number(key.slice(8, 10))}`
+}
