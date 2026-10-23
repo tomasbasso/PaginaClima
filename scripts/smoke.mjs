@@ -55,6 +55,12 @@ const startServer = args.includes('--start')
 const expectRegion = flagValue('--expect-region')
 const expectCommit = flagValue('--expect-commit')
 const expect404 = flagValues('--expect-404')
+for (const p of expect404) {
+  // Git Bash rewrites "/path" into "C:/Program Files/Git/path"; prefix with MSYS_NO_PATHCONV=1.
+  if (!p.startsWith('/')) {
+    usage(`--expect-404 path must start with "/" (got ${p}); in Git Bash run with MSYS_NO_PATHCONV=1`)
+  }
+}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const url = (path) => new URL(path, base).toString()
@@ -97,11 +103,13 @@ async function getJson(path) {
 async function startNext() {
   const port = base.port || (base.protocol === 'https:' ? '443' : '80')
   console.log(`smoke: starting next start -p ${port}`)
-  child = spawn('npx', ['next', 'start', '-p', port], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    shell: process.platform === 'win32',
-    env: process.env,
-  })
+  if (!/^\d+$/.test(port)) usage(`invalid port ${port}`)
+  const opts = { stdio: ['ignore', 'pipe', 'pipe'], env: process.env }
+  // Windows needs a shell to run npx.cmd; pass one command string (port is digits only).
+  child =
+    process.platform === 'win32'
+      ? spawn(`npx next start -p ${port}`, { ...opts, shell: true })
+      : spawn('npx', ['next', 'start', '-p', port], opts)
   child.stdout.on('data', (d) => process.stdout.write(`[next] ${d}`))
   child.stderr.on('data', (d) => process.stderr.write(`[next] ${d}`))
 
