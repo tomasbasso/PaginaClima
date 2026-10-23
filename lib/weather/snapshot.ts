@@ -6,6 +6,7 @@ import { getOpenMeteoForecast, getOpenMeteoForecastFresh } from '@/lib/sources/o
 import { SourceError } from '@/lib/sources/errors'
 import { readThrough } from '@/lib/sources/readThrough'
 import { normalizeForecast } from './normalize'
+import { applyFault, readFault } from './faults'
 import { deriveSourceStatus } from './status'
 import type { SourceInfo, WeatherSnapshot } from './types'
 
@@ -57,8 +58,15 @@ export const getWeatherSnapshot = cache(async (): Promise<WeatherSnapshot> => {
   }
 
   const sources = [omInfo, metInfo]
+  let built: WeatherSnapshot
   if (om.status === 'fulfilled') {
-    return { generatedAt, ...normalizeForecast(om.value.value.data), sources }
+    built = { generatedAt, ...normalizeForecast(om.value.value.data), sources }
+  } else {
+    built = { generatedAt, now: null, hourly48: [], daily: [], sources }
   }
-  return { generatedAt, now: null, hourly48: [], daily: [], sources }
+  const fault = readFault({
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    WEATHER_FAULT: process.env.WEATHER_FAULT,
+  })
+  return applyFault(built, fault, nowMs)
 })
