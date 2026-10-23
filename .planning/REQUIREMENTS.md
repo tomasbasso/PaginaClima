@@ -9,7 +9,7 @@
 
 - [x] **DATA-01**: El usuario ve datos que nunca tienen más de 15 minutos de antigüedad respecto de la última corrida disponible, sin que cada visita le pegue a las APIs externas (caché en servidor por fuente)
 - [x] **DATA-02**: El usuario ve "actualizado hace X min" en la pantalla principal
-- [ ] **DATA-03**: Si una fuente falla, el usuario sigue viendo el resto de las secciones y la sección afectada muestra el último dato bueno o un aviso
+- [x] **DATA-03**: Si una fuente falla, el usuario sigue viendo el resto de las secciones y la sección afectada muestra el último dato bueno o un aviso
 - [x] **DATA-04**: Todos los días y horas se muestran en hora argentina (America/Argentina/Buenos_Aires), sin días cortados por UTC
 
 ### Ahora (NOW)
@@ -102,7 +102,7 @@
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
 | NOW-01 | Phase 1 | Complete |
 | NOW-02 | Phase 1 | Complete |
