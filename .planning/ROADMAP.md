@@ -53,7 +53,13 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07):
   1. En un iPhone de 390 px el usuario lee un meteograma de 48 h con temperatura, lluvia en mm y viento, sin scroll horizontal forzado ni etiquetas encimadas
   2. El usuario ve el pronóstico diario de 7 a 14 días con máxima, mínima, estado del tiempo y lluvia esperada por día (días locales argentinos)
   3. El usuario ve arriba de todo un titular editorial en rioplatense que resume el día (ej. "Mañana fresca, lluvia a la tarde") y que cambia cuando cambia el pronóstico
-**Plans**: TBD
+**Plans**: 5 plans
+Plans (olas: 1 → 01; 2 → 02; 3 → 03; 4 → 04; 5 → 05):
+- [ ] 02-01-PLAN.md — Titular editorial en Ahora: helpers de hora/día TZ-proof, buildHeadline con tests, rol Headline 32 px y presupuesto de la primera pantalla
+- [ ] 02-02-PLAN.md — Refactor de Hero (caja del cielo, slot below, variante compact) y pronóstico diario 7/14 días en /pronostico con la pestaña habilitada
+- [ ] 02-03-PLAN.md — Meteograma 1: verificación e instalación de d3, geometría pura testeada y SVG de temperatura/lluvia/ejes debajo del horizonte
+- [ ] 02-04-PLAN.md — Meteograma 2: fila de viento cada 3 h, ráfagas fuertes, lectura fija y scrubber táctil/teclado
+- [ ] 02-05-PLAN.md — /dev/estados de la fase 2, gate completo con chequeos a 390×844 y smoke en producción tras el push
 **UI hint**: yes
 
 ### Phase 3: Cielo vivo
@@ -131,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
-| 2. Pronóstico núcleo | 0/TBD | Not started | - |
+| 2. Pronóstico núcleo | 0/5 | Planned | - |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
