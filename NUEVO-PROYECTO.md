@@ -1,6 +1,7 @@
 # Clima Winifreda
 Tipo: propio (uso personal + portfolio, no comercial)
-Etapa actual: 2. Definir y planificar
+Etapa actual: 3. Identidad y diseño
+Repo: https://github.com/tomasbasso/PaginaClima (remote origin, sin push todavía)
 
 ## Decisiones
 - 2026-10-23 GO. Diferencial: diseño único ("cielo vivo"), no otra app de clima aburrida.
@@ -14,7 +15,8 @@ Etapa actual: 2. Definir y planificar
 
 ## Etapas
 - [x] 1. Validar: GO — proyecto propio, diferencial en el diseño, todo gratis en Vercel + Actions + Supabase.
-- [ ] 2. Definir y planificar
+- [x] 2. Definir y planificar: roadmap GSD de 7 fases (37 requisitos) aprobado. Ver .planning/
+- 2026-10-23 Investigación: RainViewer sin cobertura en Argentina → satélite IR GOES + link SMN. MET Norway no vota (usa ECMWF). Modelos: ECMWF, GFS, ICON, GEM. Helada ≤ 2 °C. Offline sí.
 - [ ] 3. Identidad y diseño
 - [ ] 4. Construir (fases de GSD)
 - [ ] 5. Verificar
