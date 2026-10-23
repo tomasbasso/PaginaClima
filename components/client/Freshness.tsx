@@ -2,11 +2,12 @@
 
 // Freshness row (DATA-02): "ACTUALIZADO HACE X MIN · ESTIMADO POR MODELO", ticking every 60 s
 // without refetching, plus the Open-Meteo credit (CC BY 4.0) and the outdated notice.
-// One-shot router.refresh() when the data is older than 15 min (DATA-01).
+// router.refresh() when the data is older than 15 min (DATA-01), retried with a backoff while
+// ISR keeps handing back the same stale entry (CR-01).
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Notice } from '@/components/Notice'
-import { formatFreshness, isOutdated, shouldAutoRefresh } from '@/lib/weather/freshness'
+import { formatFreshness, isOutdated, shouldTriggerAutoRefresh } from '@/lib/weather/freshness'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
 
@@ -24,7 +25,9 @@ export function Freshness({
   const router = useRouter()
   // First render uses the server's renderedAt: SSR and hydration produce the same text.
   const [now, setNow] = useState(() => Date.parse(renderedAt))
-  const refreshed = useRef(false)
+  // Backoff state for the current fetchedAt (CR-01): how many refreshes, and when the last one ran.
+  const attempts = useRef(0)
+  const lastRefreshAt = useRef(0)
 
   useEffect(() => {
     const tick = () => setNow(Date.now())
@@ -34,15 +37,22 @@ export function Freshness({
   }, [])
 
   useEffect(() => {
-    // New fetchedAt = fresh data arrived: allow one more refresh for this value (T-01-19).
-    refreshed.current = false
+    // New fetchedAt = fresh data arrived: restart the backoff for this value (T-01-19).
+    attempts.current = 0
+    lastRefreshAt.current = 0
     if (!autoRefresh) return
     const fetchedAtMs = Date.parse(fetchedAt)
 
     const maybeRefresh = () => {
-      if (refreshed.current) return
-      if (!shouldAutoRefresh(Date.now() - fetchedAtMs)) return
-      refreshed.current = true
+      const nowMs = Date.now()
+      const go = shouldTriggerAutoRefresh({
+        ageMs: nowMs - fetchedAtMs,
+        attempts: attempts.current,
+        sinceLastMs: nowMs - lastRefreshAt.current,
+      })
+      if (!go) return
+      attempts.current += 1
+      lastRefreshAt.current = nowMs
       router.refresh()
     }
     const onVisibility = () => {

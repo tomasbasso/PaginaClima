@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { formatFreshness, isOutdated, shouldAutoRefresh } from './freshness'
+import {
+  autoRefreshBackoffMs,
+  formatFreshness,
+  isOutdated,
+  shouldAutoRefresh,
+  shouldTriggerAutoRefresh,
+} from './freshness'
 
 const MIN = 60_000
 const H = 60 * MIN
@@ -41,5 +47,33 @@ describe('thresholds', () => {
   it('shouldAutoRefresh after 15 min', () => {
     expect(shouldAutoRefresh(15 * MIN)).toBe(false)
     expect(shouldAutoRefresh(15 * MIN + 1)).toBe(true)
+  })
+})
+
+describe('auto-refresh backoff (CR-01)', () => {
+  const OLD = 20 * MIN
+
+  it('backs off 1, 2, 4, 8 min and caps at 15 min', () => {
+    expect(autoRefreshBackoffMs(1)).toBe(1 * MIN)
+    expect(autoRefreshBackoffMs(2)).toBe(2 * MIN)
+    expect(autoRefreshBackoffMs(3)).toBe(4 * MIN)
+    expect(autoRefreshBackoffMs(4)).toBe(8 * MIN)
+    expect(autoRefreshBackoffMs(5)).toBe(15 * MIN)
+    expect(autoRefreshBackoffMs(50)).toBe(15 * MIN)
+  })
+
+  it('never refreshes fresh data', () => {
+    expect(shouldTriggerAutoRefresh({ ageMs: 10 * MIN, attempts: 0, sinceLastMs: Infinity })).toBe(false)
+  })
+
+  it('refreshes old data right away on the first attempt', () => {
+    expect(shouldTriggerAutoRefresh({ ageMs: OLD, attempts: 0, sinceLastMs: 0 })).toBe(true)
+  })
+
+  it('retries after a refresh that returned the same stale entry (no permanent latch)', () => {
+    expect(shouldTriggerAutoRefresh({ ageMs: OLD, attempts: 1, sinceLastMs: 30_000 })).toBe(false)
+    expect(shouldTriggerAutoRefresh({ ageMs: OLD, attempts: 1, sinceLastMs: MIN })).toBe(true)
+    expect(shouldTriggerAutoRefresh({ ageMs: OLD, attempts: 3, sinceLastMs: 3 * MIN })).toBe(false)
+    expect(shouldTriggerAutoRefresh({ ageMs: OLD, attempts: 3, sinceLastMs: 4 * MIN })).toBe(true)
   })
 })
