@@ -456,9 +456,9 @@ Función pura `buildHeadline(snapshot, now): string | null` en `lib/forecast/hea
 
 - [x] Dimension 1 Copywriting: PASS
 - [x] Dimension 2 Visuals: PASS
-- [x] Dimension 3 Color: FLAG (5 tamaños heredados, aceptado)
-- [x] Dimension 4 Typography: FLAG (excepciones justificadas, aceptado)
-- [x] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: FLAG (5 tamaños heredados, aceptado)
+- [x] Dimension 5 Spacing: FLAG (excepciones justificadas, aceptado)
+- [x] Dimension 6 Registry Safety: PASS
 
 **Approval:** pending
