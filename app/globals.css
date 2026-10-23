@@ -19,7 +19,7 @@
   --color-accent: var(--accent);
 }
 
-/* Default sky = 'dia' row. Plan 04 adds the per-state [data-sky] blocks. */
+/* Default sky = 'dia' row; the [data-sky] blocks below override it on any element. */
 :root {
   --sky-1: #1b3456;
   --sky-2: #22466d;
@@ -27,6 +27,87 @@
   --sky-4: #6fa3c9;
   --sky-5: #a9d6ea;
   --accent: #8ecae6;
+}
+
+/* Sky states (UI-SPEC "Estados del cielo"). Plain attribute selectors (not html[data-sky]) so a
+   contained frame such as /dev/estados or a SkyBackdrop layer can override the tokens. */
+[data-sky="noche"] {
+  --sky-1: #070b14;
+  --sky-2: #0c1323;
+  --sky-3: #121c30;
+  --sky-4: #172440;
+  --sky-5: #1d2a44;
+  --accent: #8ecae6;
+}
+
+[data-sky="amanecer"] {
+  --sky-1: #1a2340;
+  --sky-2: #252d4f;
+  --sky-3: #3d3f63;
+  --sky-4: #a9747a;
+  --sky-5: #fcd5ce;
+  --accent: #f4c06a;
+}
+
+[data-sky="dia"] {
+  --sky-1: #1b3456;
+  --sky-2: #22466d;
+  --sky-3: #284f75;
+  --sky-4: #6fa3c9;
+  --sky-5: #a9d6ea;
+  --accent: #8ecae6;
+}
+
+[data-sky="atardecer"] {
+  --sky-1: #1b1838;
+  --sky-2: #2e2148;
+  --sky-3: #4a2a50;
+  --sky-4: #c25a48;
+  --sky-5: #f6b26b;
+  --accent: #f4c06a;
+}
+
+[data-sky="cubierto"] {
+  --sky-1: #1f2833;
+  --sky-2: #29333f;
+  --sky-3: #36424f;
+  --sky-4: #56626f;
+  --sky-5: #7d8894;
+  --accent: #8ecae6;
+}
+
+[data-sky="tormenta"] {
+  --sky-1: #121326;
+  --sky-2: #1d1f38;
+  --sky-3: #2b2d4d;
+  --sky-4: #33365a;
+  --sky-5: #3d4066;
+  --accent: #b9b7f0;
+}
+
+/* One gradient over the whole hero. Structural contrast rule: the content zone is S1 -> S3
+   (dark); the light S4/S5 live only in the 240px horizon band, whose bottom (the horizon line)
+   sits on top of the tab bar. Below the horizon: ground color. */
+.sky-layer {
+  --bar-h: calc(56px + env(safe-area-inset-bottom));
+  --band-top: calc(100% - var(--bar-h) - 240px);
+  --horizon: calc(100% - var(--bar-h));
+  background: linear-gradient(
+    to bottom,
+    var(--sky-1) 0%,
+    var(--sky-2) calc(var(--band-top) * 0.4),
+    var(--sky-3) var(--band-top),
+    var(--sky-4) calc(var(--horizon) - 96px),
+    var(--sky-5) var(--horizon),
+    #0e131c var(--horizon)
+  );
+  transition: opacity 1200ms ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-layer {
+    transition: none;
+  }
 }
 
 html {
@@ -37,7 +118,6 @@ html {
 body {
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100svh;
-  background: linear-gradient(to bottom, var(--sky-1) 0%, var(--sky-2) 40%, var(--sky-3) 100%);
   -webkit-font-smoothing: antialiased;
 }
 
