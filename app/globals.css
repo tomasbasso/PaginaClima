@@ -1,1 +1,60 @@
 @import "tailwindcss";
+
+/* Pampa Cielo Editorial tokens (01-UI-SPEC). Radius 0, no shadows, no blur. */
+@theme {
+  --font-serif: var(--font-playfair);
+  --font-sans: var(--font-jakarta);
+
+  --color-ink: #fbfbf2;          /* texto crema (parchment) */
+  --color-ground: #0e131c;       /* zona de tierra / fondo base */
+  --color-silhouette: #0f141d;   /* relleno de la silueta pampeana */
+  --color-bar: #090e17;          /* barra de pestañas */
+  --color-azure: #8ecae6;        /* acento día/noche/cubierto */
+  --color-sun: #f4c06a;          /* acento amanecer/atardecer */
+  --color-storm: #b9b7f0;        /* acento tormenta */
+  --color-peach: #fcd5ce;        /* avisos (desactualizado / fuente caída) */
+}
+
+@theme inline {
+  --color-accent: var(--accent);
+}
+
+/* Default sky = 'dia' row. Plan 04 adds the per-state [data-sky] blocks. */
+:root {
+  --sky-1: #1b3456;
+  --sky-2: #22466d;
+  --sky-3: #284f75;
+  --sky-4: #6fa3c9;
+  --sky-5: #a9d6ea;
+  --accent: #8ecae6;
+}
+
+html {
+  background: #0e131c;
+  color: #fbfbf2;
+}
+
+body {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  min-height: 100svh;
+  background: linear-gradient(to bottom, var(--sky-1) 0%, var(--sky-2) 40%, var(--sky-3) 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+.nums {
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
