@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07):
 - [x] 01-01-PLAN.md — Walking skeleton: scaffold Next 16.4.3, Vitest, Open-Meteo vía unstable_cache, snapshot, página ISR y /api/weather
 - [ ] 01-02-PLAN.md — Deploy: push a main (con aprobación), vinculación con Vercel (gru1) y smoke en producción
-- [ ] 01-03-PLAN.md — Pantalla Ahora completa: hora argentina, viento, WMO rioplatense, temperatura, horizonte pampeano
+- [x] 01-03-PLAN.md — Pantalla Ahora completa: hora argentina, viento, WMO rioplatense, temperatura, horizonte pampeano
 - [ ] 01-04-PLAN.md — Cielo por hora y tiempo (data-sky, SkyBackdrop con crossfade) y barra de pestañas
 - [ ] 01-05-PLAN.md — Frescura "actualizado hace X min", aviso de dato viejo, crédito Open-Meteo y MET Norway cacheado
 - [ ] 01-06-PLAN.md — Fallas: refresco read-through, estado por fuente según resultado real, WEATHER_FAULT, Fuente caída / Sin datos / Cargando / error.tsx
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Fundaciones y Ahora | 1/7 | In Progress|  |
+| 1. Fundaciones y Ahora | 2/7 | In Progress|  |
 | 2. Pronóstico núcleo | 0/TBD | Not started | - |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
