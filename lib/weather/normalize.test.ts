@@ -62,3 +62,23 @@ describe('ForecastDto parallel-array length guard (WR-03)', () => {
     expect(r.error?.issues[0].path).toEqual(['hourly', 'wind_gusts_10m'])
   })
 })
+
+describe('nullable secondary current fields (WR-09)', () => {
+  it('keeps the response when a secondary current field is null', () => {
+    const copy = structuredClone(fixture) as unknown as { current: Record<string, unknown> }
+    copy.current.wind_gusts_10m = null
+    copy.current.pressure_msl = null
+    const r = normalizeForecast(ForecastDto.parse(copy))
+    expect(r.now!.gustKmh).toBeNull()
+    expect(r.now!.pressureHpa).toBeNull()
+    expect(r.now!.tempC).toBe(fixture.current.temperature_2m)
+  })
+
+  it('still rejects a null temperature, weather code or is_day', () => {
+    for (const key of ['temperature_2m', 'weather_code', 'is_day']) {
+      const copy = structuredClone(fixture) as unknown as { current: Record<string, unknown> }
+      copy.current[key] = null
+      expect(ForecastDto.safeParse(copy).success).toBe(false)
+    }
+  })
+})

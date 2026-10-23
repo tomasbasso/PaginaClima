@@ -158,7 +158,9 @@ function NowBlock({
   const weather = describeWeather(now.weatherCode, { night })
   const wind = describeWind(now.windKmh, now.windDirDeg, now.gustKmh)
   const temp = formatTemp(now.tempC)
-  const feels = formatTemp(now.feelsC)
+  // Secondary fields may be null upstream (WR-09): "—" in the data row, no sensación line.
+  const feels = now.feelsC === null ? null : formatTemp(now.feelsC)
+  const dash = (n: number | null) => (n === null ? '—' : formatInt(n))
 
   // "18 km/h NE" → value "18" + unit "km/h NE"; "Calma" stays a single value.
   const [windValue, ...windRest] = wind.value.split(' ')
@@ -174,7 +176,11 @@ function NowBlock({
       <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         <p
           className="nums flex items-start font-serif text-ink"
-          aria-label={`${temp} grados, sensación térmica ${feels} grados`}
+          aria-label={
+            feels === null
+              ? `${temp} grados`
+              : `${temp} grados, sensación térmica ${feels} grados`
+          }
         >
           <span className="text-[112px] leading-none tracking-[-0.03em]">{temp}</span>
           <span className="ml-1 mt-3.5 text-[24px] leading-[1.33]">°</span>
@@ -187,17 +193,30 @@ function NowBlock({
               {weather.label}
             </p>
           ) : null}
-          <p className={`${BODY} nums text-ink/75`}>
-            sensación <span className="text-ink">{feels}°</span>
-          </p>
+          {feels !== null ? (
+            <p className={`${BODY} nums text-ink/75`}>
+              sensación <span className="text-ink">{feels}°</span>
+            </p>
+          ) : null}
         </div>
       </div>
       {weather.label ? <p className="sr-only">{weather.label}</p> : null}
 
       <dl className="mt-8 grid grid-cols-3 border-y border-ink/20">
-        <DataItem first label="HUMEDAD" value={formatInt(now.humidityPct)} unit="%" />
-        <DataItem label="PRESIÓN" value={formatInt(now.pressureHpa)} unit="hPa" />
-        <DataItem label="VIENTO" value={windValue} unit={windUnit} />
+        <DataItem
+          first
+          label="HUMEDAD"
+          value={dash(now.humidityPct)}
+          unit={now.humidityPct === null ? undefined : '%'}
+          muted={now.humidityPct === null}
+        />
+        <DataItem
+          label="PRESIÓN"
+          value={dash(now.pressureHpa)}
+          unit={now.pressureHpa === null ? undefined : 'hPa'}
+          muted={now.pressureHpa === null}
+        />
+        <DataItem label="VIENTO" value={windValue} unit={windUnit} muted={now.windKmh === null} />
       </dl>
 
       {wind.gustLine ? <p className={`${BODY} pt-4 text-ink/75`}>{wind.gustLine}</p> : null}

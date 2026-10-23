@@ -14,15 +14,19 @@ export function windSector(deg: number): { short: WindSectorShort; long: string 
 
 const CALM_KMH = 2
 
+/** Missing values (WR-09): no speed → "—"; no direction → speed only; either → no gust line. */
 export function describeWind(
-  kmh: number,
-  deg: number,
-  gustKmh: number,
+  kmh: number | null,
+  deg: number | null,
+  gustKmh: number | null,
 ): { value: string; gustLine: string | null } {
+  if (kmh === null) return { value: '—', gustLine: null }
   if (kmh < CALM_KMH) return { value: 'Calma', gustLine: null }
+  if (deg === null) return { value: `${Math.round(kmh)} km/h`, gustLine: null }
   const { short, long } = windSector(deg)
   return {
     value: `${Math.round(kmh)} km/h ${short}`,
-    gustLine: `Ráfagas de ${Math.round(gustKmh)} km/h · viento del ${long}`,
+    gustLine:
+      gustKmh === null ? null : `Ráfagas de ${Math.round(gustKmh)} km/h · viento del ${long}`,
   }
 }

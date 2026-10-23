@@ -38,4 +38,11 @@ describe('describeWind', () => {
   it('2 km/h is not calm', () => {
     expect(describeWind(2, 90, 5).value).toBe('2 km/h E')
   })
+
+  it('handles missing values (WR-09)', () => {
+    expect(describeWind(null, 90, 30)).toEqual({ value: '—', gustLine: null })
+    expect(describeWind(18, null, 32)).toEqual({ value: '18 km/h', gustLine: null })
+    expect(describeWind(18, 45, null)).toEqual({ value: '18 km/h NE', gustLine: null })
+    expect(describeWind(1, null, null)).toEqual({ value: 'Calma', gustLine: null })
+  })
 })

@@ -13,18 +13,19 @@ export interface SourceInfo {
   errorCode?: string
 }
 
+/** tempC, weatherCode and isDay are always present; the rest may be null upstream (WR-09). */
 export interface NowData {
   time: string // ISO with -03:00 offset
   tempC: number
-  feelsC: number
-  humidityPct: number
-  pressureHpa: number // pressure_msl
-  windKmh: number
-  gustKmh: number
-  windDirDeg: number
+  feelsC: number | null
+  humidityPct: number | null
+  pressureHpa: number | null // pressure_msl
+  windKmh: number | null
+  gustKmh: number | null
+  windDirDeg: number | null
   weatherCode: number
   isDay: 0 | 1
-  precipMm: number
+  precipMm: number | null
 }
 
 export interface HourlyPoint {

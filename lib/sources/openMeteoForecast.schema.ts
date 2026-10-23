@@ -4,6 +4,8 @@ import { TZ } from '@/lib/config'
 
 const localDT = z.iso.datetime({ local: true }) // "2026-10-23T12:00" (naive local time)
 const nums = z.array(z.number().nullable())
+/** Secondary current fields: Open-Meteo sometimes sends a lone null (WR-09); not a schema change. */
+const optNum = z.number().nullable()
 
 /**
  * Parallel arrays must all match `time` (WR-03). Shorter arrays would otherwise turn into
@@ -27,16 +29,18 @@ export const ForecastDto = z.object({
   current: z.object({
     time: localDT,
     interval: z.number(),
+    // Strict: without these there is no "Ahora" worth showing.
     temperature_2m: z.number(),
-    apparent_temperature: z.number(),
-    relative_humidity_2m: z.number(),
-    pressure_msl: z.number(),
-    wind_speed_10m: z.number(),
-    wind_gusts_10m: z.number(),
-    wind_direction_10m: z.number(),
     weather_code: z.number().int(),
     is_day: z.union([z.literal(0), z.literal(1)]),
-    precipitation: z.number(),
+    // Secondary: a null renders as "—" instead of discarding the whole response.
+    apparent_temperature: optNum,
+    relative_humidity_2m: optNum,
+    pressure_msl: optNum,
+    wind_speed_10m: optNum,
+    wind_gusts_10m: optNum,
+    wind_direction_10m: optNum,
+    precipitation: optNum,
   }),
   hourly: z.object({
     time: z.array(localDT),
