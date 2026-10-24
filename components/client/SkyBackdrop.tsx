@@ -22,6 +22,7 @@ export function SkyBackdrop({
   bufferScale,
   onStats,
   onStatus,
+  lightningKey,
 }: {
   state: SkyState
   live?: boolean
@@ -42,6 +43,8 @@ export function SkyBackdrop({
   onStats?: (s: SkyStats) => void
   /** /dev/sky: 'ok' on the first frame, or the failure reason (the CSS fallback stays). */
   onStatus?: (s: 'ok' | SkyFailReason, message?: string) => void
+  /** /dev/sky: every change (after the first value) forces one lightning pulse. */
+  lightningKey?: number
 }) {
   const rendererMode = renderer ?? (live ? 'auto' : 'off')
   const initial = skyToken(state)
@@ -146,6 +149,14 @@ export function SkyBackdrop({
   useEffect(() => {
     handleRef.current?.setPaused(paused)
   }, [paused])
+
+  // /dev/sky "FORZAR RELÁMPAGO": the initial value never fires, only later changes.
+  const lightningKeyRef = useRef(lightningKey)
+  useEffect(() => {
+    if (lightningKey === lightningKeyRef.current) return
+    lightningKeyRef.current = lightningKey
+    handleRef.current?.forceLightning()
+  }, [lightningKey])
 
   // New server state (router.refresh() with new data or a new render): redraw.
   useEffect(() => {

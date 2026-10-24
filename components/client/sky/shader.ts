@@ -48,6 +48,9 @@ uniform float uFogOffset; // CSS px, wrapped in CPU to [0, FOG_PERIOD)
 uniform float uRain;    // rain density 0..1, interpolated (halved at governor level 2)
 uniform float uRainTilt; // radians from the vertical, + = falling towards the right
 uniform vec2 uRainOffset; // CSS px along the fall, near / far layer, wrapped in CPU to [0, RAIN_PERIOD)
+uniform vec3 uFlash;    // lightning: x (0..1 of the width), amplitude (lightningEnvelope), radius (buffer px)
+uniform vec3 uFlashColor; // FLASH_RGB_LINEAR (storm + ink, not pure white)
+uniform float uFlashContent; // CONTENT_FLASH_FACTOR: share of the flash allowed over the content zone
 
 // C-1 cap with a margin under 0.075 (grain and rounding).
 const float LMAX = 0.073;
@@ -191,6 +194,7 @@ void main() {
   // far one slower. Day/twilight: a touch lighter than the sky, the lower part in the band lit from
   // below with S4/S5. Night: at most +0.01 of L over the background. The clamp keeps them <= S3 in
   // the content zone.
+  float cloudA = 0.0; // cloud alpha at this pixel, reused by the lightning (light from inside)
   if (uCover > 0.001 && y < uHorizon) {
     vec3 nightCol = c + vec3(0.01);
     vec3 topCol = mix(uS2, uS3, 0.6) * 1.12 + 0.003;
@@ -199,11 +203,14 @@ void main() {
 
     float nF = fbm(vec2((pc.x + uCloudOffset.y) / CLOUD_CELL_FAR, pc.y / 150.0 + 31.7), CLOUD_PERIOD / CLOUD_CELL_FAR);
     vec3 colF = mix(mix(topCol, under, 0.85 * bandT * (1.0 - 0.5 * nF)), nightCol, uNight);
-    c = mix(c, colF, 0.6 * aMax * cloudDensity(nF));
+    float aF = 0.6 * aMax * cloudDensity(nF);
+    c = mix(c, colF, aF);
 
     float nN = fbm(vec2((pc.x + uCloudOffset.x) / CLOUD_CELL_NEAR, pc.y / 120.0), CLOUD_PERIOD / CLOUD_CELL_NEAR);
     vec3 colN = mix(mix(topCol, under, 0.85 * bandT * (1.0 - 0.5 * nN)), nightCol, uNight);
-    c = mix(c, colN, aMax * cloudDensity(nN));
+    float aN = aMax * cloudDensity(nN);
+    c = mix(c, colN, aN);
+    cloudA = max(aF, aN);
   }
 
   // Fog (capa 5, D-13): low haze in ink rising from the horizon up to the band edge and fading,
@@ -257,7 +264,22 @@ void main() {
     }
   }
 
-  // Later plans add here, AFTER the clamp: lightning (C-5), with its own cap.
+  // Lightning AFTER the clamp (C-5 exception, D-07): a diffuse brightening centred inside the band
+  // that spills upwards with a soft falloff. No bolt, no zigzag, no full-screen flash. The added
+  // luminance is lum(uFlashColor) × amplitude × falloff × zone ≤ FLASH_MAX_DELTA_L (< 0.08) since
+  // every factor is ≤ 1; over the content zone the zone factor is uFlashContent (≤ 0.10 absolute).
+  // Clouds there light up a bit more (from inside) without exceeding the cap. The SVG silhouette
+  // sits in front of the canvas, so it stays in backlight without changing colour (D-13).
+  if (uFlash.y > 0.0 && y < uHorizon) {
+    float bandH = max(uHorizon - uBandTop, 1.0);
+    vec2 fc = vec2(uFlash.x * uRes.x, uBandTop + 0.55 * bandH);
+    float dy = y - fc.y;
+    float ry = dy < 0.0 ? 1.6 * uFlash.z : 0.6 * bandH;
+    vec2 q = vec2((p.x - fc.x) / max(uFlash.z, 1.0), dy / max(ry, 1.0));
+    float g = exp(-2.0 * dot(q, q));
+    float zone = mix(uFlashContent, 1.0, smoothstep(uBandTop - 24.0 * uScale, uBandTop + 0.25 * bandH, y));
+    c += uFlashColor * (uFlash.y * g * zone * mix(0.7, 1.0, cloudA));
+  }
 
   gl_FragColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0);
 }

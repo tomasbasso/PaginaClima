@@ -135,6 +135,7 @@ export function SkyLab({
   const [lab, setLab] = useState<SkyLabState>(initial)
   const [paused, setPaused] = useState(false)
   const [showContent, setShowContent] = useState(true)
+  const [lightningKey, setLightningKey] = useState(0)
   const [stats, setStats] = useState<SkyStats | null>(null)
   const [status, setStatus] = useState<{ s: 'ok' | SkyFailReason; message?: string } | null>(null)
 
@@ -337,6 +338,9 @@ export function SkyLab({
           <Toggle pressed={showContent} onClick={() => setShowContent((v) => !v)}>
             MOSTRAR CONTENIDO
           </Toggle>
+          <button type="button" className={BUTTON} onClick={() => setLightningKey((k) => k + 1)}>
+            FORZAR RELÁMPAGO
+          </button>
         </div>
 
         <p className={`${BODY} m-0`} aria-live="off">
@@ -360,6 +364,7 @@ export function SkyLab({
             bufferScale={lab.escala}
             onStats={setStats}
             onStatus={(s, message) => setStatus({ s, message })}
+            lightningKey={lightningKey}
           />
         </Frame>
         <Frame

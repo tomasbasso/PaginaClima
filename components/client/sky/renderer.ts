@@ -23,6 +23,17 @@ import {
   wrapTime,
 } from '@/lib/sky/loop'
 import { moonGlow, starsAlpha, sunGlow } from '@/lib/sky/glow'
+import {
+  CONTENT_FLASH_FACTOR,
+  FLASH_RGB_LINEAR,
+  forcedLightningPlan,
+  type LightningPlan,
+  type LightningSample,
+  lightningEnvelope,
+  lightningPlan,
+  peakAmplitude,
+  RISE_MS,
+} from '@/lib/sky/lightning'
 import { skyPalette, smoothstep } from '@/lib/sky/palette'
 import { type SkyParams, skyParams } from '@/lib/sky/params'
 import type { SkyState } from '@/lib/sky/state'
@@ -53,6 +64,12 @@ const RAIN_SPEED_NEAR_PX_S = 600
 const RAIN_SPEED_FAR_PX_S = 400
 /** Governor level 2: half the rain streaks (UI-SPEC "Rendimiento"). */
 const RAIN_QUALITY2_FACTOR = 0.5
+/** Lightning plan window (s): regenerated with the next seed when it runs out. */
+const LIGHTNING_WINDOW_S = 600
+/** Flash radius (horizontal) as a share of the buffer width. */
+const FLASH_RADIUS_SHARE = 0.4
+/** Decay of the forced /dev/sky pulse (ms, middle of 300–500). */
+const FORCED_DECAY_MS = 400
 
 // Weather scalars interpolated over WEATHER_TRANSITION_MS (index into the Float64Arrays below).
 const P_COVER = 0
@@ -95,6 +112,12 @@ export type SkyRendererHandle = {
   setState(state: SkyState, astro: SkyAstro): void
   /** Manual pause (/dev/sky). Has no effect in static mode. */
   setPaused(paused: boolean): void
+  /**
+   * /dev/sky: one full-amplitude pulse now. If the canvas is manually paused, draws a single frame
+   * with the envelope at its peak and leaves it still (eyedropper measurement, C-6). No effect in
+   * static mode (reduced motion, forced static, governor level 3: no lightning, D-09).
+   */
+  forceLightning(): void
   dispose(): void
 }
 
@@ -135,6 +158,9 @@ const UNIFORMS = [
   'uRain',
   'uRainTilt',
   'uRainOffset',
+  'uFlash',
+  'uFlashColor',
+  'uFlashContent',
 ] as const
 type UniformName = (typeof UNIFORMS)[number]
 
@@ -301,6 +327,52 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     pFrom.set(pTo)
     pCur.set(pTo)
     let nightF = 0
+    // Lightning (D-07, C-5): a seeded plan over LIGHTNING_WINDOW_S, sampled with a time of its own
+    // (dt-based, starts at 0, wrapped per window) so no large value ever reaches the envelope.
+    // Only with 'tormenta' (and rain > 0) in animated mode; static frames get 0 (D-09).
+    let lightningSeed = Date.now() >>> 0
+    let stormI = 0
+    let plan: LightningPlan | null = null
+    let lightT = 0
+    let forced: LightningPlan | null = null
+    let forcedT = 0
+    const autoS: LightningSample = { amp: 0, x: 0.5 }
+    const forcedS: LightningSample = { amp: 0, x: 0.5 }
+    let flashAmp = 0
+    let flashX = 0.5
+    const peakAmp = peakAmplitude()
+    const stormIntensity = (s: SkyState) => {
+      const p = skyParams(s)
+      return s.weather === 'tormenta' && p.rain > 0 ? p.intensity : 0
+    }
+    const syncStorm = () => {
+      const next = stormIntensity(state)
+      if (next === stormI && (plan !== null || next === 0)) return
+      stormI = next
+      plan = next > 0 ? lightningPlan(lightningSeed, next, LIGHTNING_WINDOW_S) : null
+    }
+    /** Advances the lightning clocks by dtS and samples both envelopes into flashAmp / flashX. */
+    const stepLightning = (dtS: number) => {
+      flashAmp = 0
+      if (plan) {
+        lightT += dtS
+        if (lightT >= plan.durationS) {
+          lightT -= plan.durationS
+          lightningSeed = (lightningSeed + 0x9e3779b9) >>> 0
+          plan = lightningPlan(lightningSeed, stormI, LIGHTNING_WINDOW_S)
+        }
+        lightningEnvelope(plan, lightT, autoS)
+        flashAmp = autoS.amp
+        flashX = autoS.x
+      }
+      if (forced) {
+        forcedT += dtS
+        lightningEnvelope(forced, forcedT, forcedS)
+        if (forcedS.amp > flashAmp) flashX = forcedS.x
+        flashAmp = Math.min(peakAmp, flashAmp + forcedS.amp)
+        if (forcedT > forced.durationS) forced = null
+      }
+    }
 
     let lost = false
     let restoredOnce = false
@@ -420,6 +492,11 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       gl.uniform1f(loc.uRain, gov.level >= 2 ? pCur[P_RAIN] * RAIN_QUALITY2_FACTOR : pCur[P_RAIN])
       gl.uniform1f(loc.uRainTilt, (pCur[P_TILT] * Math.PI) / 180)
       gl.uniform2f(loc.uRainOffset, rainNear, rainFar)
+      // No lightning in static frames (reduced motion, forced static, governor level 3; D-09).
+      const fa = staticFrame || isStatic() ? 0 : flashAmp
+      gl.uniform3f(loc.uFlash, flashX, fa, w * FLASH_RADIUS_SHARE)
+      gl.uniform3f(loc.uFlashColor, FLASH_RGB_LINEAR[0], FLASH_RGB_LINEAR[1], FLASH_RGB_LINEAR[2])
+      gl.uniform1f(loc.uFlashContent, CONTENT_FLASH_FACTOR)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       if (!firstFrame) {
         firstFrame = true
@@ -489,6 +566,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       fogOff = wrapTime(fogOff + dtS * fogSpeed, FOG_PERIOD_PX)
       rainNear = wrapTime(rainNear + dtS * RAIN_SPEED_NEAR_PX_S, RAIN_PERIOD_PX)
       rainFar = wrapTime(rainFar + dtS * RAIN_SPEED_FAR_PX_S, RAIN_PERIOD_PX)
+      stepLightning(dtS)
       try {
         render(ts, false)
       } catch (err) {
@@ -606,6 +684,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       mq.addEventListener('change', onMotionPref)
     }
 
+    syncStorm()
     measure()
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(() => {
@@ -638,6 +717,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
           writeParams(pTo, skyParams(next))
           pFrom.set(pTo)
           pCur.set(pTo)
+          syncStorm()
           paramsDirty = true
           drawStatic()
           return
@@ -660,6 +740,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
         }
         state = next
         astro = nextAstro
+        syncStorm()
         paramsDirty = true
         if (!raf) redraw()
       },
@@ -667,6 +748,22 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
         manualPaused = paused
         if (paused) pause()
         else resume()
+      },
+      forceLightning() {
+        if (disposed || lost || isStatic()) return
+        forced = forcedLightningPlan(0, 0.5, FORCED_DECAY_MS)
+        if (manualPaused || !raf) {
+          // Paused: freeze the envelope at its peak and draw that single frame.
+          forcedT = RISE_MS / 1000
+          stepLightning(0)
+          try {
+            render(now(), false)
+          } catch (err) {
+            handleError(err)
+          }
+          return
+        }
+        forcedT = 0
       },
       dispose() {
         if (disposed) return
