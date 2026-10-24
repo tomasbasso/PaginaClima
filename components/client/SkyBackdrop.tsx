@@ -4,9 +4,9 @@
 // no-WebGL fallback (D-02); on top, after hydration, the phase-3 WebGL renderer is loaded with
 // import() and draws the continuous sky into its own canvas (single replacement point, D-01).
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { astroAt } from '@/lib/sky/astro'
+import { astroAt, type SkyAstro } from '@/lib/sky/astro'
 import { refreshSolar, type SkyState, type SkyToken, skyToken } from '@/lib/sky/state'
-import type { SkyRendererHandle } from './sky/renderer'
+import type { SkyFailReason, SkyRendererHandle, SkyStats } from './sky/renderer'
 
 const RECOMPUTE_MS = 60_000
 
@@ -17,6 +17,11 @@ export function SkyBackdrop({
   live = false,
   renderer,
   className = '',
+  astro,
+  paused = false,
+  bufferScale,
+  onStats,
+  onStatus,
 }: {
   state: SkyState
   live?: boolean
@@ -27,6 +32,16 @@ export function SkyBackdrop({
    */
   renderer?: 'auto' | 'static' | 'off'
   className?: string
+  /** /dev/sky: forced sun side/moon instead of astroAt(new Date()). */
+  astro?: SkyAstro
+  /** /dev/sky: manual pause of the animated canvas. */
+  paused?: boolean
+  /** /dev/sky: canvas buffer scale (0.5 default, 0.75 max). Changing it recreates the renderer. */
+  bufferScale?: 0.5 | 0.75
+  /** /dev/sky: fps / ms / quality reading. */
+  onStats?: (s: SkyStats) => void
+  /** /dev/sky: 'ok' on the first frame, or the failure reason (the CSS fallback stays). */
+  onStatus?: (s: 'ok' | SkyFailReason, message?: string) => void
 }) {
   const rendererMode = renderer ?? (live ? 'auto' : 'off')
   const initial = skyToken(state)
@@ -41,10 +56,20 @@ export function SkyBackdrop({
   const hostRef = useRef<HTMLDivElement>(null)
   const stateRef = useRef(state)
   const handleRef = useRef<SkyRendererHandle | null>(null)
+  // Dev props live in refs so new callbacks / a new astro object never recreate the renderer.
+  const astroRef = useRef(astro)
+  const pausedRef = useRef(paused)
+  const onStatsRef = useRef(onStats)
+  const onStatusRef = useRef(onStatus)
+  const astroNow = () => astroRef.current ?? astroAt(new Date())
 
   useLayoutEffect(() => {
     stateRef.current = state
-  }, [state])
+    astroRef.current = astro
+    pausedRef.current = paused
+    onStatsRef.current = onStats
+    onStatusRef.current = onStatus
+  })
 
   // Layout effect: runs after React patched the server attributes and before paint, so the
   // accent never shows a stale token, not even for one frame.
@@ -95,24 +120,36 @@ export function SkyBackdrop({
         if (disposed || !hostRef.current) return
         handle = createSkyRenderer(hostRef.current, {
           state: stateRef.current,
-          astro: astroAt(new Date()),
+          astro: astroNow(),
           mode: rendererMode === 'static' ? 'static' : 'animated',
+          bufferScale,
+          onFirstFrame: () => onStatusRef.current?.('ok'),
+          onFail: (reason, message) => onStatusRef.current?.(reason, message),
+          onStats: (s) => onStatsRef.current?.(s),
         })
         handleRef.current = handle
+        if (handle && pausedRef.current) handle.setPaused(true)
       })
-      .catch(() => {
+      .catch((err: unknown) => {
         // ChunkLoadError or similar: the fallback stays.
+        onStatusRef.current?.('error', err instanceof Error ? err.message : undefined)
       })
     return () => {
       disposed = true
       handle?.dispose()
       handleRef.current = null
     }
-  }, [rendererMode])
+    // astroNow only reads refs: it is deliberately not a dependency.
+  }, [rendererMode, bufferScale])
+
+  // /dev/sky manual pause.
+  useEffect(() => {
+    handleRef.current?.setPaused(paused)
+  }, [paused])
 
   // New server state (router.refresh() with new data or a new render): redraw.
   useEffect(() => {
-    handleRef.current?.setState(stateRef.current, astroAt(new Date()))
+    handleRef.current?.setState(stateRef.current, astroNow())
   }, [
     state.weather,
     state.sunAltitude,
@@ -121,6 +158,11 @@ export function SkyBackdrop({
     state.windKmh,
     state.windDirDeg,
     state.cloudCover,
+    astro?.morning,
+    astro?.sunAzimuth,
+    astro?.moonAltitude,
+    astro?.moonAzimuth,
+    astro?.moonFraction,
   ])
 
   // data-sky-weather / data-sky-night: the static weather layer of the CSS fallback (SKY-05).
