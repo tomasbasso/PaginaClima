@@ -139,6 +139,70 @@ html:has(main[data-sky="tormenta"]) {
   }
 }
 
+/* Weather layer of the CSS fallback (UI-SPEC "Capa de clima del fallback", SKY-05): static, no
+   animation, no accent. SkyBackdrop sets data-sky-weather (closed SkyWeather union) and
+   data-sky-night (phase noche) on both .sky-layer elements, in the SSR HTML too, so the sky shows
+   the weather without WebGL, without JS and before hydration. cubierto adds nothing (the token
+   already does it). Plain attribute selectors, like the tokens above. */
+.sky-layer[data-sky-weather="lluvia"]::after,
+.sky-layer[data-sky-weather="tormenta"]::after,
+.sky-layer[data-sky-weather="niebla"]::after,
+.sky-layer[data-sky-weather="despejado"][data-sky-night]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Rain: 1px ink strokes at 6 %, ~10deg from the vertical, every ~12px over the whole box. */
+.sky-layer[data-sky-weather="lluvia"]::after,
+.sky-layer[data-sky-weather="tormenta"]::after {
+  background: repeating-linear-gradient(
+    100deg,
+    rgb(251 251 242 / 0.06) 0 1px,
+    transparent 1px 12px
+  );
+}
+
+/* Fog: haze in the band, transparent at its top edge to ink 18 % on the horizon. */
+.sky-layer[data-sky-weather="niebla"]::after {
+  background: linear-gradient(
+    to bottom,
+    transparent var(--band-top),
+    rgb(251 251 242 / 0.18) var(--horizon),
+    transparent var(--horizon)
+  );
+}
+
+/* Clear night: 24 fixed 1px stars in ink 50 %, upper half only. */
+.sky-layer[data-sky-weather="despejado"][data-sky-night]::after {
+  background:
+    radial-gradient(circle at 3.0% 27.8%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 30.2% 7.9%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 71.6% 16.9%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 34.0% 23.1%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 74.0% 17.2%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 67.3% 19.8%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 79.8% 8.8%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38.2% 21.8%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 68.6% 3.5%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 67.3% 15.1%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 89.7% 24.6%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 14.5% 16.4%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 89.8% 21.3%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 63.5% 18.2%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 88.7% 27.4%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 38.0% 11.4%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 81.7% 11.3%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 17.3% 35.4%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 43.3% 35.3%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 91.1% 40.0%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 71.6% 45.8%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 8.5% 34.9%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 55.7% 39.2%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px),
+    radial-gradient(circle at 42.6% 33.5%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px);
+}
+
 html {
   background: #0e131c;
   color: #fbfbf2;

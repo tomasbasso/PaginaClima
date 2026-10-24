@@ -113,8 +113,18 @@ export function SkyBackdrop({
   // New server state (router.refresh() with new data or a new render): redraw.
   useEffect(() => {
     handleRef.current?.setState(stateRef.current, astroAt(new Date()))
-  }, [state.weather, state.sunAltitude, state.phase])
+  }, [
+    state.weather,
+    state.sunAltitude,
+    state.phase,
+    state.intensity,
+    state.windKmh,
+    state.windDirDeg,
+    state.cloudCover,
+  ])
 
+  // data-sky-weather / data-sky-night: the static weather layer of the CSS fallback (SKY-05).
+  // Closed unions only (SkyWeather, phase === 'noche'), identical on server and client.
   return (
     <div
       ref={rootRef}
@@ -124,11 +134,15 @@ export function SkyBackdrop({
     >
       <div
         data-sky={layers.a}
+        data-sky-weather={state.weather}
+        data-sky-night={state.phase === 'noche' ? '' : undefined}
         className="sky-layer absolute inset-0"
         style={{ opacity: layers.active === 'a' ? 1 : 0 }}
       />
       <div
         data-sky={layers.b}
+        data-sky-weather={state.weather}
+        data-sky-night={state.phase === 'noche' ? '' : undefined}
         className="sky-layer absolute inset-0"
         style={{ opacity: layers.active === 'b' ? 1 : 0 }}
       />
