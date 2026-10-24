@@ -32,6 +32,14 @@ export function resolveSkyState(now: Date, group: WeatherGroup | null): SkyState
   return { ...getSolarPhase(now), weather: toSkyWeather(group) }
 }
 
+/**
+ * Client recompute every 60 s (Pitfall 9): refreshes phase and sunAltitude for `now` and keeps
+ * every other field of the server state (weather and any later optional field).
+ */
+export function refreshSolar(state: SkyState, now: Date): SkyState {
+  return { ...state, ...getSolarPhase(now) }
+}
+
 export function skyToken(state: SkyState): SkyToken {
   if (state.weather === 'tormenta') return 'tormenta'
   if (state.weather === 'cubierto' || state.weather === 'lluvia' || state.weather === 'niebla') {

@@ -4,6 +4,7 @@
 // Usage:
 //   node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1]
 //                          [--expect-commit <sha7>] [--expect-404 /path]...
+//                          [--expect-html '/path::regex']... [--reject-html '/path::regex']...
 //
 //   --start            spawn `npx next start -p <port>` (port from baseUrl) and stop it at the end
 //   --expect-region    /api/health `region` must equal this value
@@ -12,6 +13,8 @@
 // region/commit come from the dynamic /api/health, never from the ISR /api/weather, whose
 // render may come from the build or an older regeneration (WR-04).
 //   --expect-404       this path must return 404 (repeatable)
+//   --expect-html '<path>::<regex>'  GET path must be 200 and its body must match regex (repeatable)
+//   --reject-html '<path>::<regex>'  GET path must be 200 and its body must NOT match (repeatable)
 //
 // Reused by plans 01-02 (first deploy) and 01-07 (phase close).
 import { spawn, spawnSync } from 'node:child_process'
@@ -22,13 +25,13 @@ if (!baseArg) usage('missing <baseUrl>')
 
 function isFlagValue(a) {
   const i = args.indexOf(a)
-  return i > 0 && ['--expect-region', '--expect-commit', '--expect-404'].includes(args[i - 1])
+  return i > 0 && ['--expect-region', '--expect-commit', '--expect-404', '--expect-html', '--reject-html'].includes(args[i - 1])
 }
 
 function usage(msg) {
   console.error(`smoke: ${msg}`)
   console.error(
-    'usage: node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1] [--expect-commit <sha7>] [--expect-404 /path]...',
+    'usage: node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1] [--expect-commit <sha7>] [--expect-404 /path]... [--expect-html /path::regex]... [--reject-html /path::regex]...',
   )
   process.exit(2)
 }
@@ -64,6 +67,27 @@ for (const p of expect404) {
     usage(`--expect-404 path must start with "/" (got ${p}); in Git Bash run with MSYS_NO_PATHCONV=1`)
   }
 }
+
+function htmlChecks(name) {
+  return flagValues(name).map((v) => {
+    const i = v.indexOf('::')
+    if (i === -1) usage(`${name} needs '<path>::<regex>' (got ${v})`)
+    const path = v.slice(0, i)
+    const source = v.slice(i + 2)
+    if (!path.startsWith('/')) {
+      usage(`${name} path must start with "/" (got ${path}); in Git Bash run with MSYS_NO_PATHCONV=1`)
+    }
+    let re
+    try {
+      re = new RegExp(source)
+    } catch (err) {
+      usage(`${name} has an invalid regex (${source}): ${err instanceof Error ? err.message : err}`)
+    }
+    return { path, source, re }
+  })
+}
+const expectHtml = htmlChecks('--expect-html')
+const rejectHtml = htmlChecks('--reject-html')
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const url = (path) => new URL(path, base).toString()
@@ -196,6 +220,20 @@ async function main() {
     const r = await get(p)
     if (r.status === 404) pass(`GET ${p} -> 404`)
     else fail(`GET ${p} -> ${r.status} (expected 404)`)
+  }
+
+  // 6. HTML content checks (server HTML, before hydration).
+  for (const { path, source, re } of expectHtml) {
+    const r = await get(path)
+    if (r.status !== 200) fail(`GET ${path} -> ${r.status} (expected 200)`)
+    else if (re.test(r.text)) pass(`GET ${path} matches /${source}/`)
+    else fail(`GET ${path} -> 200 but HTML does not match /${source}/`)
+  }
+  for (const { path, source, re } of rejectHtml) {
+    const r = await get(path)
+    if (r.status !== 200) fail(`GET ${path} -> ${r.status} (expected 200)`)
+    else if (re.test(r.text)) fail(`GET ${path} -> 200 but HTML matches /${source}/ (must not)`)
+    else pass(`GET ${path} does not match /${source}/`)
   }
 }
 

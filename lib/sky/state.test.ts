@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { WeatherGroup } from '@/lib/weather/wmo'
-import { resolveSkyState, skyFromSnapshot, skyToken } from './state'
+import { refreshSolar, resolveSkyState, type SkyState, skyFromSnapshot, skyToken } from './state'
 
 // Instants proven in phase.test.ts for Winifreda (2026-10-23).
 const DIA = new Date('2026-10-23T15:00:00Z')
@@ -70,5 +70,22 @@ describe('skyFromSnapshot', () => {
   it('falls back to the solar phase without data', () => {
     expect(skyToken(skyFromSnapshot({ now: null }, DIA))).toBe('dia')
     expect(skyToken(skyFromSnapshot({ now: null }, ATARDECER))).toBe('atardecer')
+  })
+})
+
+describe('refreshSolar', () => {
+  it('updates phase and sunAltitude for the new instant', () => {
+    const s = refreshSolar(resolveSkyState(NOCHE, 'lluvia'), DIA)
+    expect(s.phase).toBe('dia')
+    expect(s.sunAltitude).toBe(resolveSkyState(DIA, null).sunAltitude)
+    expect(s.weather).toBe('lluvia')
+  })
+
+  it('keeps any extra field of the server state (Pitfall 9)', () => {
+    const withExtra = { ...resolveSkyState(DIA, 'tormenta'), intensity: 0.8 } as SkyState & { intensity: number }
+    const s = refreshSolar(withExtra, ATARDECER) as SkyState & { intensity?: number }
+    expect(s.intensity).toBe(0.8)
+    expect(s.weather).toBe('tormenta')
+    expect(s.phase).toBe('atardecer')
   })
 })
