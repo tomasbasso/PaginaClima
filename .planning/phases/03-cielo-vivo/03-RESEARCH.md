@@ -488,22 +488,26 @@ io.observe(host)
 | A9 | Remote Web Inspector requiere Mac | Pitfall 12 | Nulo para el plan: la medición principal es la lectura en pantalla |
 | A10 | La pérdida de contexto al pasar a segundo plano también puede pasar en la PWA standalone | Pitfall 4 | Bajo: el manejo es el mismo |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **¿0,5× o 0,75× de resolución por defecto?**
    - Qué sabemos: el UI-SPEC fija 0,5× y permite 0,75×. A 0,5× los trazos de 1 px y las estrellas quedan por debajo de 1 px de buffer.
    - Qué no está claro: si a 0,5× la lluvia y las estrellas se ven aceptables en el iPhone real.
    - Recomendación: constante única `BUFFER_SCALE = 0.5`, ancho mínimo de 1 px de buffer con alfa compensado, y decidir en el checkpoint con `/dev/sky`.
+   - RESOLVED: `BUFFER_SCALE = 0.5` por defecto (plan 03-01); la decisión final 0,5×/0,75× se toma en el checkpoint del plan 03-08.
 
 2. **Umbrales exactos del gobernador.**
    - Qué sabemos: el "28 ms" del UI-SPEC no se puede medir tal cual en GPU (Pitfall 5).
    - Recomendación: las dos señales de arriba, con umbrales como constantes testeadas, y anotar la interpretación en el SUMMARY del plan.
+   - RESOLVED: gobernador de dos señales con umbrales como constantes (plan 03-03); se calibran en el checkpoint del plan 03-08.
 
 3. **`cloud_cover`.**
    - Recomendación: no sumarlo en esta fase (Alternatives). Si en la revisión de `/dev/sky` el "algo nublado" no convence, se agrega en una fase posterior subiendo la clave de caché a `v2`.
+   - RESOLVED: no se suma `cloud_cover` en esta fase; la cobertura se deriva del código WMO (plan 03-02).
 
 4. **Overlay de fps en producción (`?sky=debug`).**
    - Recomendación: opcional. Con el preview de Vercel alcanza para el checkpoint.
+   - RESOLVED: sin overlay en producción; la lectura de fps vive solo en `/dev/sky` (plan 03-05).
 
 ## Environment Availability
 

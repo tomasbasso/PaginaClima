@@ -41,7 +41,7 @@ Lo completa el planner/executor con los IDs reales de tarea. Mapa requisito → 
 | Requirement | Behavior | Test Type | Automated Command | File Exists | Status |
 |-------------|----------|-----------|-------------------|-------------|--------|
 | SKY-01 | Paleta continua converge a tokens en −12°/0°/+15°, mañana vs. tarde | unit | `npx vitest run lib/sky/palette.test.ts` | ❌ W0 | ⬜ pending |
-| SKY-01 | `glowX(azimut)`, visibilidad sol/luna | unit | `npx vitest run lib/sky/params.test.ts` | ❌ W0 | ⬜ pending |
+| SKY-01 | `glowX(azimut)`, visibilidad sol/luna | unit | `npx vitest run lib/sky/glow.test.ts` | ❌ W0 | ⬜ pending |
 | SKY-02 | Intensidad por WMO, cobertura, deriva, inclinación | unit | `npx vitest run lib/sky/params.test.ts` | ❌ W0 | ⬜ pending |
 | SKY-02 | `skyFromSnapshot` llena campos nuevos y el recálculo los conserva | unit | `npx vitest run lib/sky/state.test.ts` | ✅ extender | ⬜ pending |
 | SKY-02 | Relámpagos: frecuencia ≤ 2/s, envolvente, ΔL < 0,08 | unit | `npx vitest run lib/sky/lightning.test.ts` | ❌ W0 | ⬜ pending |
@@ -60,7 +60,8 @@ Lo completa el planner/executor con los IDs reales de tarea. Mapa requisito → 
 ## Wave 0 Requirements
 
 - [ ] `lib/sky/palette.test.ts` — anclas, barrido C-1, propiedad C-2
-- [ ] `lib/sky/params.test.ts` — intensidad, cobertura, deriva, inclinación, resplandores
+- [ ] `lib/sky/params.test.ts` — intensidad, cobertura, deriva, inclinación
+- [ ] `lib/sky/glow.test.ts` — resplandores del sol, halo de la luna, estrellas
 - [ ] `lib/sky/lightning.test.ts` — frecuencia, envolvente, amplitud
 - [ ] `lib/sky/loop.test.ts` — limitador y gobernador
 - [ ] `lib/sky/windmill.test.ts` — período
