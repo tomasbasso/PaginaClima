@@ -26,8 +26,8 @@ export const PLOT_H = TEMP_H + RAIN_H
 export const CHART_H = PLOT_H + AXIS_GAP + AXIS_H
 /** Estimated glyph width of 12 px numeric labels. */
 export const CHAR_W = 7
-/** Estimated glyph width of 12 px uppercase day labels with 0.14em tracking. */
-export const DAY_CHAR_W = 9
+/** Estimated glyph width of 12 px uppercase day labels with 0.14em tracking (measured: MAÑANA ≈ 63 px). */
+export const DAY_CHAR_W = 11
 export const LABEL_H = 16
 /** Below this many future hours with temperature the section shows its empty copy. */
 export const MIN_METEOGRAM_HOURS = 12

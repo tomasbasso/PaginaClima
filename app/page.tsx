@@ -1,7 +1,10 @@
 import { Ahora } from '@/components/Ahora'
 import { Hero } from '@/components/Hero'
+import { MeteogramSection } from '@/components/MeteogramSection'
 import { buildHeadline } from '@/lib/forecast/headline'
+import { selectFutureHours } from '@/lib/forecast/hours'
 import { skyFromSnapshot } from '@/lib/sky/state'
+import { localDateKey } from '@/lib/time'
 import { getWeatherSnapshot } from '@/lib/weather/snapshot'
 import { selectAhoraVariant } from '@/lib/weather/status'
 
@@ -18,8 +21,13 @@ export default async function Page() {
   const sky = skyFromSnapshot(snapshot, now)
   const variant = selectAhoraVariant(snapshot)
 
+  // Meteogram under the horizon (D-01); hidden when Ahora is empty: one error message per screen.
+  const below = snapshot.now ? (
+    <MeteogramSection points={selectFutureHours(snapshot.hourly48, now)} todayKey={localDateKey(now)} />
+  ) : undefined
+
   return (
-    <Hero sky={sky}>
+    <Hero sky={sky} below={below}>
       <Ahora snapshot={snapshot} renderedAt={renderedAt} variant={variant} headline={headline} />
     </Hero>
   )
