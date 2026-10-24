@@ -6,8 +6,10 @@ import type { HourlyPoint } from '@/lib/weather/types'
 import { makeHourly } from './__fixtures__/build'
 import {
   AXIS_GAP,
+  CHART_H,
   CHAR_W,
   DAY_CHAR_W,
+  indexAtX,
   LABEL_H,
   layoutMeteogram,
   type MeteogramLayout,
@@ -15,8 +17,13 @@ import {
   MIN_TEMP_SPAN_C,
   PLOT_H,
   RAIN_BAR_MAX,
+  readoutFor,
+  STRONG_GUST_KMH,
+  strongGustLine,
   TEMP_H,
   TEMP_PAD,
+  valueTextFor,
+  windColumns,
 } from './meteogram'
 
 const TODAY = '2026-10-23'
@@ -265,5 +272,124 @@ describe('meteogramSummary', () => {
     expect(meteogramSummary(pts)).toBe(
       'Meteograma de las próximas 48 horas: temperatura entre 20 y 20 grados, sin lluvia, viento de hasta 10 kilómetros por hora.',
     )
+  })
+})
+
+describe('wind row (D-05)', () => {
+  it('makes 16 columns every 3 h with clamped centres and height 220', () => {
+    const pts = makeHourly(START, 48)
+    const cols = windColumns(pts, 342)
+    expect(cols).toHaveLength(16)
+    const l = layoutMeteogram(pts, 342, TODAY)
+    expect(l.height).toBe(220)
+    expect(CHART_H).toBe(220)
+    expect(l.wind).toHaveLength(16)
+    expect(cols[0].x).toBe(8)
+    expect(cols[1].x).toBeCloseTo(l.xs[3])
+    expect(cols[15].x).toBeCloseTo(l.xs[45])
+    for (const c of cols) {
+      expect(c.x).toBeGreaterThanOrEqual(8)
+      expect(c.x).toBeLessThanOrEqual(342 - 8)
+      expect(c.arrowY).toBeGreaterThanOrEqual(PLOT_H + AXIS_GAP + 16)
+      expect(c.textY).toBeGreaterThan(c.arrowY)
+      expect(c.textY + 8).toBeLessThanOrEqual(220)
+    }
+  })
+
+  it('rotates downwind, hides the arrow on calm / null and formats km/h', () => {
+    const speeds: (number | null)[] = [10, 10, 10, 1.5, null, 12.4]
+    const dirs: (number | null)[] = [0, 270, null, 90, 90, 45]
+    const pts = makeHourly(START, 18, (i) => ({
+      windKmh: i % 3 === 0 ? speeds[i / 3] : 10,
+      windDirDeg: i % 3 === 0 ? dirs[i / 3] : 0,
+    }))
+    const cols = windColumns(pts, 342)
+    expect(cols.map((c) => c.rotate)).toEqual([180, 90, null, null, null, 225])
+    expect(cols.map((c) => c.text)).toEqual(['10', '10', '10', '0', '—', '12'])
+  })
+
+  it('flags a column strong when any gust of its 3 h reaches 50', () => {
+    const pts = makeHourly(START, 9, (i) => ({ gustKmh: i === 2 ? 50 : i === 4 ? 49.9 : 20 }))
+    expect(windColumns(pts, 342).map((c) => c.strong)).toEqual([true, false, false])
+    expect(STRONG_GUST_KMH).toBe(50)
+  })
+})
+
+describe('strongGustLine', () => {
+  it('names the max gust with the day word and franja', () => {
+    const tomorrow = makeHourly(START, 48, (i) => ({ gustKmh: i === 25 ? 67.6 : i === 30 ? 55 : 20 }))
+    expect(strongGustLine(tomorrow, TODAY)).toBe('Ráfagas fuertes de hasta 68 km/h mañana a la tarde')
+    const today = makeHourly('2026-10-23T00:00:00-03:00', 48, (i) => ({ gustKmh: i === 3 ? 52 : 20 }))
+    expect(strongGustLine(today, TODAY)).toBe('Ráfagas fuertes de hasta 52 km/h hoy a la madrugada')
+    const sunday = makeHourly('2026-10-24T00:00:00-03:00', 48, (i) => ({ gustKmh: i === 45 ? 61 : 20 }))
+    expect(strongGustLine(sunday, TODAY)).toBe('Ráfagas fuertes de hasta 61 km/h el domingo a la noche')
+  })
+
+  it('returns null without gusts ≥ 50', () => {
+    expect(strongGustLine(makeHourly(START, 48, () => ({ gustKmh: 49.9 })), TODAY)).toBeNull()
+    expect(strongGustLine(makeHourly(START, 48, () => ({ gustKmh: null })), TODAY)).toBeNull()
+  })
+})
+
+describe('readoutFor', () => {
+  const pts = makeHourly(START, 48)
+  it('labels Ahora, Mañana 15:00 and dom 25 09:00', () => {
+    expect(readoutFor(pts, 0, TODAY).timeLabel).toBe('Ahora')
+    expect(readoutFor(pts, 25, TODAY).timeLabel).toBe('Mañana 15:00')
+    expect(readoutFor(pts, 43, TODAY).timeLabel).toBe('dom 25 09:00')
+    expect(readoutFor(pts, 5, TODAY).timeLabel).toBe('Hoy 19:00')
+  })
+
+  it('formats temperature, rain, wind and strong gust', () => {
+    const r = (o: Partial<HourlyPoint>) => readoutFor([{ ...pts[0], ...o }], 0, TODAY)
+    expect(r({ tempC: 18 }).temp).toBe('18°')
+    expect(r({ tempC: -2.4 }).temp).toBe('−2°')
+    expect(r({ tempC: null }).temp).toBe('—')
+    expect(r({ precipMm: 0.05 }).rain).toBe('sin lluvia')
+    expect(r({ precipMm: 0.4 }).rain).toBe('0,4 mm')
+    expect(r({ precipMm: 9.94 }).rain).toBe('9,9 mm')
+    expect(r({ precipMm: 12.3 }).rain).toBe('12 mm')
+    expect(r({ precipMm: null }).rain).toBe('—')
+    expect(r({ windKmh: 12, windDirDeg: 45 }).wind).toBe('12 km/h NE')
+    expect(r({ windKmh: 12, windDirDeg: null }).wind).toBe('12 km/h')
+    expect(r({ windKmh: 1 }).wind).toBe('calma')
+    expect(r({ windKmh: null }).wind).toBe('—')
+    expect(r({ gustKmh: 55 }).gust).toBe('ráfagas 55 km/h')
+    expect(r({ gustKmh: 40 }).gust).toBeNull()
+    expect(r({ gustKmh: null }).gust).toBeNull()
+  })
+})
+
+describe('valueTextFor', () => {
+  const [p] = makeHourly('2026-10-24T15:00:00-03:00', 1, () => ({
+    tempC: 18,
+    precipMm: 0.4,
+    windKmh: 12,
+    windDirDeg: 45,
+    gustKmh: 55,
+  }))
+  it('reads the full hour', () => {
+    expect(valueTextFor(p)).toBe(
+      'sábado 15:00, 18 grados, 0,4 milímetros, viento 12 kilómetros por hora del noreste, ráfagas de 55',
+    )
+  })
+  it('handles dry, calm and missing values', () => {
+    expect(valueTextFor({ ...p, precipMm: 0, windKmh: 1, gustKmh: 20 })).toBe(
+      'sábado 15:00, 18 grados, sin lluvia, viento en calma',
+    )
+    expect(valueTextFor({ ...p, tempC: null, precipMm: null, windKmh: null, gustKmh: null })).toBe(
+      'sábado 15:00, temperatura sin dato, lluvia sin dato, viento sin dato',
+    )
+  })
+})
+
+describe('indexAtX', () => {
+  it('maps and clamps x to an hour index', () => {
+    expect(indexAtX(0, 342, 48)).toBe(0)
+    expect(indexAtX(342, 342, 48)).toBe(47)
+    expect(indexAtX(-20, 342, 48)).toBe(0)
+    expect(indexAtX(9999, 342, 48)).toBe(47)
+    expect(indexAtX(171, 342, 48)).toBe(24)
+    expect(indexAtX(50, 342, 1)).toBe(0)
   })
 })
