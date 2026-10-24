@@ -106,12 +106,16 @@ describe('lightningPlan: frequency (WCAG 2.3.1)', () => {
         .sort((a, b) => a - b)
       let lo = 0
       let hi = 0
-      for (let w = 0; w <= 3600; w += 0.05) {
+      let worst = 0
+      for (let k = 0; k <= 72000; k++) {
+        const w = k * 0.05
         while (lo < starts.length && starts[lo] < w) lo++
         if (hi < lo) hi = lo
         while (hi < starts.length && starts[hi] < w + 1) hi++
-        expect(hi - lo).toBeLessThanOrEqual(2)
+        worst = Math.max(worst, hi - lo)
       }
+      expect(starts.length).toBeGreaterThan(200)
+      expect(worst, `seed ${seed}`).toBeLessThanOrEqual(2)
     }
   })
 })
@@ -152,9 +156,11 @@ describe('lightningEnvelope', () => {
   it('summed pulses never exceed the peak amplitude', () => {
     for (const seed of SEEDS) {
       const p = lightningPlan(seed, 1, 600)
-      for (let t = 0; t < 600; t += 0.005) {
-        expect(lightningEnvelope(p, t).amp).toBeLessThanOrEqual(peak + 1e-12)
-      }
+      const out = { amp: 0, x: 0.5 }
+      let worst = 0
+      for (let k = 0; k < 120000; k++) worst = Math.max(worst, lightningEnvelope(p, k * 0.005, out).amp)
+      expect(worst).toBeGreaterThan(0)
+      expect(worst).toBeLessThanOrEqual(peak + 1e-12)
     }
   })
   it('writes into the out object when given (no per-frame allocation)', () => {
