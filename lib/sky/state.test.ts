@@ -89,3 +89,60 @@ describe('refreshSolar', () => {
     expect(s.phase).toBe('atardecer')
   })
 })
+
+describe('skyFromSnapshot weather fields (D-01, D-08)', () => {
+  it('derives intensity and cloud cover from the code and keeps the wind', () => {
+    const s = skyFromSnapshot(
+      { now: { weatherCode: 63, precipMm: 2, windKmh: 25, windDirDeg: 270 } },
+      DIA,
+    )
+    expect(s.weather).toBe('lluvia')
+    expect(s.intensity).toBe(0.7)
+    expect(s.cloudCover).toBe(90)
+    expect(s.windKmh).toBe(25)
+    expect(s.windDirDeg).toBe(270)
+  })
+
+  it.each([
+    [0, 0],
+    [1, 15],
+    [2, 40],
+    [3, 85],
+    [45, 30],
+    [95, 95],
+  ])('code %s → cloudCover %s', (code, cover) => {
+    expect(skyFromSnapshot({ now: { weatherCode: code } }, DIA).cloudCover).toBe(cover)
+  })
+
+  it('heavy precipitation raises the intensity', () => {
+    expect(skyFromSnapshot({ now: { weatherCode: 61, precipMm: 6 } }, DIA).intensity).toBe(1)
+  })
+
+  it('without data the optional fields stay unset and the token does not change', () => {
+    const s = skyFromSnapshot({ now: null }, DIA)
+    expect(s.intensity).toBeUndefined()
+    expect(s.cloudCover ?? null).toBeNull()
+    expect(s.windKmh ?? null).toBeNull()
+    expect(s.windDirDeg ?? null).toBeNull()
+    expect(skyToken(s)).toBe('dia')
+  })
+
+  it('missing wind upstream stays null', () => {
+    const s = skyFromSnapshot({ now: { weatherCode: 3, windKmh: null, windDirDeg: null } }, DIA)
+    expect(s.windKmh).toBeNull()
+    expect(s.windDirDeg).toBeNull()
+  })
+
+  it('refreshSolar keeps intensity, wind and cloud cover (Pitfall 9)', () => {
+    const s = skyFromSnapshot(
+      { now: { weatherCode: 95, precipMm: 0, windKmh: 40, windDirDeg: 90 } },
+      DIA,
+    )
+    const r = refreshSolar(s, NOCHE)
+    expect(r.phase).toBe('noche')
+    expect(r.intensity).toBe(0.8)
+    expect(r.windKmh).toBe(40)
+    expect(r.windDirDeg).toBe(90)
+    expect(r.cloudCover).toBe(95)
+  })
+})
