@@ -1,13 +1,25 @@
 // Sky state for Winifreda (UI-SPEC "Estados del cielo" steps 1–2 + phase-3 contract). Pure:
 // callers always pass `now`, so server render and client recompute share one code path.
 import { describeWeather, type WeatherGroup } from '@/lib/weather/wmo'
+import { coverFromCode, intensityFromCode } from './params'
 import { getSolarPhase, type SolarPhase } from './phase'
 
 /** Phase-3 weather enum (subset of WeatherGroup: llovizna → lluvia, nieve → cubierto). */
 export type SkyWeather = 'despejado' | 'cubierto' | 'lluvia' | 'tormenta' | 'niebla'
 
-/** Phase-3 contract: `<SkyBackdrop state={SkyState} />`. */
-export type SkyState = { phase: SolarPhase; weather: SkyWeather; sunAltitude: number }
+/**
+ * Phase-3 contract: `<SkyBackdrop state={SkyState} />`. The optional fields feed the weather
+ * layers (UI-SPEC "Contrato del componente", D-01); without them the "Intensidad" means apply.
+ */
+export type SkyState = {
+  phase: SolarPhase
+  weather: SkyWeather
+  sunAltitude: number
+  intensity?: number // 0–1: rain density, cloud darkness, lightning rate
+  windKmh?: number | null // cloud drift, rain tilt, windmill
+  windDirDeg?: number | null // drift direction (east-west component)
+  cloudCover?: number | null // 0–100, derived from the WMO code (no cloud_cover upstream)
+}
 
 /** The six `data-sky` token sets of the UI-SPEC (closed union, never upstream text). */
 export type SkyToken = 'noche' | 'amanecer' | 'dia' | 'atardecer' | 'cubierto' | 'tormenta'
@@ -53,10 +65,28 @@ export function skyToken(state: SkyState): SkyToken {
  * the same state. Without current data the group is null → sky by solar phase only ("Sin datos").
  */
 export function skyFromSnapshot(
-  snapshot: { now: { weatherCode: number | null } | null },
+  snapshot: {
+    now: {
+      weatherCode: number | null
+      precipMm?: number | null
+      windKmh?: number | null
+      windDirDeg?: number | null
+    } | null
+  },
   now: Date,
 ): SkyState {
   const night = getSolarPhase(now).phase === 'noche'
-  const { group } = describeWeather(snapshot.now?.weatherCode ?? null, { night })
-  return resolveSkyState(now, group)
+  const code = snapshot.now?.weatherCode ?? null
+  const { group } = describeWeather(code, { night })
+  const state = resolveSkyState(now, group)
+  if (!snapshot.now) return state
+  // Intensity and cover come from the code, so they are derived here, before it is dropped:
+  // the client recompute (refreshSolar) only ever sees the SkyState (Pitfall 9).
+  return {
+    ...state,
+    intensity: intensityFromCode(code, state.weather, snapshot.now.precipMm),
+    cloudCover: Math.round(coverFromCode(code, state.weather) * 100),
+    windKmh: snapshot.now.windKmh ?? null,
+    windDirDeg: snapshot.now.windDirDeg ?? null,
+  }
 }
