@@ -1,5 +1,5 @@
 // /pronostico (FCST-02): compact sky with the header and title, the 120px Pampa horizon, and the
-// 7/14-day list on ground. ISR over the same cached snapshot as the home: no searchParams (that
+// 7/14-day list on ground. ISR over the same cached snapshot as the home: no query params (that
 // would make the page dynamic and hit the cache per visit), never throws (DATA-03).
 import type { Metadata } from 'next'
 import { Hero } from '@/components/Hero'
