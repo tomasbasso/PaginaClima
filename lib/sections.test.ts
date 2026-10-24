@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { isActiveSection } from './sections'
+import { isActiveSection, SECTIONS } from './sections'
+
+describe('SECTIONS (D-02)', () => {
+  const enabled = (id: string) => SECTIONS.find((s) => s.id === id)?.enabled
+
+  it('enables Pronóstico in phase 2 and keeps Modelos and Cielo disabled', () => {
+    expect(enabled('ahora')).toBe(true)
+    expect(enabled('pronostico')).toBe(true)
+    expect(enabled('modelos')).toBe(false)
+    expect(enabled('cielo')).toBe(false)
+  })
+})
 
 describe('isActiveSection (WR-07)', () => {
   it('matches "/" only on the home route', () => {
