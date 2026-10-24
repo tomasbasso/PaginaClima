@@ -24,8 +24,9 @@ import {
 } from '@/lib/sky/loop'
 import { moonGlow, starsAlpha, sunGlow } from '@/lib/sky/glow'
 import { skyPalette, smoothstep } from '@/lib/sky/palette'
+import { type SkyParams, skyParams } from '@/lib/sky/params'
 import type { SkyState } from '@/lib/sky/state'
-import { FRAGMENT_SRC, VERTEX_SRC } from './shader'
+import { CLOUD_PERIOD_PX, FOG_PERIOD_PX, FRAGMENT_SRC, VERTEX_SRC } from './shader'
 
 /** Default canvas buffer = CSS size × this, whatever the DPR (D-09). */
 export const BUFFER_SCALE = 0.5
@@ -42,6 +43,34 @@ const WEATHER_TRANSITION_MS = 2000
 const STATS_EVERY_MS = 500
 /** EMA weight of the per-frame CPU time. */
 const CPU_EMA = 0.1
+/** The far cloud layer drifts at this fraction of the near one (parallax). */
+const CLOUD_FAR_FACTOR = 0.6
+/** Fog undulation: a quarter of the cloud drift, never above 3 px/s (UI-SPEC "Movimiento"). */
+const FOG_DRIFT_FACTOR = 0.25
+const FOG_DRIFT_MAX_PX_S = 3
+
+// Weather scalars interpolated over WEATHER_TRANSITION_MS (index into the Float64Arrays below).
+const P_COVER = 0
+const P_DRIFT = 1
+const P_RAIN = 2
+const P_FOG = 3
+const P_STARS = 4
+const P_TILT = 5
+const P_COUNT = 6
+
+function writeParams(out: Float64Array, p: SkyParams) {
+  out[P_COVER] = p.cover
+  out[P_DRIFT] = p.driftPxPerS
+  out[P_RAIN] = p.rain
+  out[P_FOG] = p.fog
+  out[P_STARS] = p.starsFactor
+  out[P_TILT] = p.rainTiltDeg
+}
+
+function sameParams(a: Float64Array, b: Float64Array): boolean {
+  for (let i = 0; i < P_COUNT; i++) if (a[i] !== b[i]) return false
+  return true
+}
 
 export type SkyRendererMode = 'animated' | 'static'
 export type SkyFailReason = 'no-webgl' | 'shader' | 'context-lost' | 'error'
@@ -93,6 +122,11 @@ const UNIFORMS = [
   'uSun',
   'uMoon',
   'uStars',
+  'uCover',
+  'uCloudOffset',
+  'uNight',
+  'uFog',
+  'uFogOffset',
 ] as const
 type UniformName = (typeof UNIFORMS)[number]
 
@@ -250,6 +284,15 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     let starsA = 0
     let clearFrom = state.weather === 'despejado' ? 1 : 0
     let curClear = clearFrom
+    // Weather layers (skyParams): target, start of the blend and current value, preallocated.
+    const pTo = new Float64Array(P_COUNT)
+    const pFrom = new Float64Array(P_COUNT)
+    const pCur = new Float64Array(P_COUNT)
+    const pNext = new Float64Array(P_COUNT)
+    writeParams(pTo, skyParams(state))
+    pFrom.set(pTo)
+    pCur.set(pTo)
+    let nightF = 0
 
     let lost = false
     let restoredOnce = false
@@ -266,6 +309,12 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     let lastDrawn = -Infinity
     let prevTs: number | null = null
     let simTime = simTimeStart(Date.now())
+    // Moving offsets (CSS px), always wrapped in CPU (Pattern 4, Pitfall 3). They accumulate dt ×
+    // the interpolated speed, so a wind change never makes the clouds jump; the start depends on
+    // the wall clock (UI-SPEC "Remontaje").
+    let cloudNear = wrapTime(simTime * pCur[P_DRIFT], CLOUD_PERIOD_PX)
+    let cloudFar = wrapTime(simTime * pCur[P_DRIFT] * CLOUD_FAR_FACTOR, CLOUD_PERIOD_PX)
+    let fogOff = wrapTime(simTime * FOG_DRIFT_MAX_PX_S, FOG_PERIOD_PX)
     let gov: GovernorState = createGovernor()
     const sample: GovernorSample = { ts: 0, cpuMs: 0, intervalMs: 0 }
     let cpuAvg = 0
@@ -306,6 +355,9 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       // Sun, moon and stars (SKY-01, UI-SPEC "Resplandores"): from the interpolated altitude.
       const clearTo = state.weather === 'despejado' ? 1 : 0
       curClear = clearFrom + (clearTo - clearFrom) * k
+      for (let i = 0; i < P_COUNT; i++) pCur[i] = k >= 1 ? pTo[i] : pFrom[i] + (pTo[i] - pFrom[i]) * k
+      // Night clouds (UI-SPEC "Clima"): at most +0.01 of L from -12 deg down.
+      nightF = 1 - smoothstep(-12, -8, curSun)
       const sun = sunGlow(curSun, astro.sunAzimuth)
       sunX = sun.x
       sunS = sun.strength
@@ -315,8 +367,8 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       moonY = moon.yFrac
       // The halo belongs to the night sky: it fades out as the sun climbs past the horizon.
       moonS = moon.strength * curClear * (1 - smoothstep(-4, 6, curSun))
-      // 03-04 refines the weather factor with the cloud cover.
-      starsA = starsAlpha(curSun) * curClear
+      // Stars by cloud cover (code 2 → half, more cover → none), interpolated with the weather.
+      starsA = starsAlpha(curSun) * pCur[P_STARS]
       if (pWeather >= 1) weatherBlending = false
       if (pSun >= 1) sunFrom = sunTo
       paramsDirty = moving
@@ -348,6 +400,11 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       gl.uniform3f(loc.uSun, sunX, sunS, 0)
       gl.uniform3f(loc.uMoon, moonX, moonY, moonS)
       gl.uniform1f(loc.uStars, starsA)
+      gl.uniform1f(loc.uCover, pCur[P_COVER])
+      gl.uniform2f(loc.uCloudOffset, cloudNear, cloudFar)
+      gl.uniform1f(loc.uNight, nightF)
+      gl.uniform1f(loc.uFog, pCur[P_FOG])
+      gl.uniform1f(loc.uFogOffset, fogOff)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       if (!firstFrame) {
         firstFrame = true
@@ -408,7 +465,13 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       const intervalMs = prevTs === null ? 0 : ts - prevTs
       prevTs = ts
       lastDrawn = ts
-      simTime += dt / 1000
+      const dtS = dt / 1000
+      simTime += dtS
+      const drift = pCur[P_DRIFT]
+      cloudNear = wrapTime(cloudNear + dtS * drift, CLOUD_PERIOD_PX)
+      cloudFar = wrapTime(cloudFar + dtS * drift * CLOUD_FAR_FACTOR, CLOUD_PERIOD_PX)
+      const fogSpeed = Math.max(-FOG_DRIFT_MAX_PX_S, Math.min(FOG_DRIFT_MAX_PX_S, drift * FOG_DRIFT_FACTOR))
+      fogOff = wrapTime(fogOff + dtS * fogSpeed, FOG_PERIOD_PX)
       try {
         render(ts, false)
       } catch (err) {
@@ -555,6 +618,9 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
           sunFrom = sunTo = next.sunAltitude
           weatherBlending = false
           clearFrom = next.weather === 'despejado' ? 1 : 0
+          writeParams(pTo, skyParams(next))
+          pFrom.set(pTo)
+          pCur.set(pTo)
           paramsDirty = true
           drawStatic()
           return
@@ -564,9 +630,14 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
           sunTo = next.sunAltitude
           sunStart = t
         }
-        if (next.weather !== state.weather) {
+        // Weather change (palette) or new weather layers (cover, rain, fog, wind): blend from the
+        // current values over 2000 ms, by density, never at once (D-09).
+        writeParams(pNext, skyParams(next))
+        if (next.weather !== state.weather || !sameParams(pNext, pTo)) {
           fromStops.set(stops)
           clearFrom = curClear
+          pFrom.set(pCur)
+          pTo.set(pNext)
           weatherStart = t
           weatherBlending = true
         }

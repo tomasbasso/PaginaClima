@@ -9,6 +9,13 @@ void main() {
 }
 `
 
+/**
+ * Periods (CSS px) of the noise fields and of the offsets the renderer wraps in CPU (Pattern 4,
+ * Pitfall 3). The noise lattice repeats exactly every period, so the wrap never shows.
+ */
+export const CLOUD_PERIOD_PX = 1536
+export const FOG_PERIOD_PX = 1024
+
 export const FRAGMENT_SRC = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
@@ -31,6 +38,11 @@ uniform vec3 uMoon;     // x (0..1), yFrac (0 = top, 1 = horizon), strength (0..
 uniform float uStars;   // global star alpha (sun altitude × weather), 0..1
 uniform float uTwinkleT; // seconds, wrapped in CPU to [0, 420) (Pitfall 3)
 uniform float uQuality; // 1 = full, >= 2 = no twinkle (governor level 2, static frames)
+uniform float uCover;   // cloud cover 0..1, interpolated (skyParams)
+uniform vec2 uCloudOffset; // CSS px, near / far cloud layer, wrapped in CPU to [0, CLOUD_PERIOD)
+uniform float uNight;   // 0 = day/twilight, 1 = night (sun <= -12 deg): clouds only +0.01 of L
+uniform float uFog;     // fog 0..1, interpolated
+uniform float uFogOffset; // CSS px, wrapped in CPU to [0, FOG_PERIOD)
 
 // C-1 cap with a margin under 0.075 (grain and rounding).
 const float LMAX = 0.073;
@@ -44,6 +56,14 @@ const float TAU = 6.2831853;
 // density falls linearly downwards (1 − 0.9·y) so ~70 % land in the upper half, ~100 in total.
 const float STAR_CELL = 28.0;
 const float STAR_DENSITY = 0.433;
+// Clouds (UI-SPEC capa 4): two fbm layers, lattice cells in CSS px. CLOUD_PERIOD / cell must be an
+// integer so the noise wraps exactly with the offset.
+const float CLOUD_PERIOD = ${CLOUD_PERIOD_PX}.0;
+const float CLOUD_CELL_NEAR = 192.0; // 8 cells per period
+const float CLOUD_CELL_FAR = 256.0;  // 6 cells per period
+// Fog (capa 5): undulating top edge, 8 cells per period.
+const float FOG_PERIOD = ${FOG_PERIOD_PX}.0;
+const float FOG_CELL = 128.0;
 
 float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
@@ -59,6 +79,41 @@ float hash12(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
   p3 += dot(p3, p3.yzx + 33.33);
   return fract((p3.x + p3.y) * p3.z);
+}
+
+// Value noise, periodic in x every 'per' lattice cells (integer), smooth (C1) interpolation.
+float vnoise(vec2 x, float per) {
+  vec2 i = floor(x);
+  vec2 f = fract(x);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  float i0 = mod(i.x, per);
+  float i1 = mod(i.x + 1.0, per);
+  float a = hash12(vec2(i0, i.y));
+  float b = hash12(vec2(i1, i.y));
+  float c = hash12(vec2(i0, i.y + 1.0));
+  float d = hash12(vec2(i1, i.y + 1.0));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// 4 fixed octaves (no data-dependent loop, T-03-11). Each octave doubles the frequency and the
+// period in cells, so the sum keeps the same period in px. Output normalised to 0..1.
+float fbm(vec2 x, float per) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int k = 0; k < 4; k++) {
+    v += a * vnoise(x, per);
+    x = x * 2.0 + vec2(0.0, 17.3); // shift in y only: keeps the x period
+    per *= 2.0;
+    a *= 0.5;
+  }
+  return v / 0.9375;
+}
+
+// Cloud density for a noise value: nothing at cover 0, a full blanket at cover 1 (D-04: soft
+// fields, no outline).
+float cloudDensity(float n) {
+  float thr = mix(0.85, -0.1, uCover);
+  return smoothstep(thr, thr + 0.35, n) * smoothstep(0.0, 0.08, uCover);
 }
 
 vec3 gradient(float y) {
@@ -93,14 +148,49 @@ void main() {
     c += INK * (0.0207 * exp(-2.5 * dot(q, q)) * uMoon.z);
   }
 
-  // Later plans add here, BEFORE the clamp: clouds, fog, rain.
+  // Content-zone weight (1 above the band, 24 CSS px ramp at its edge); used by the weather layers
+  // and by the C-1 clamp below.
+  float wContent = 1.0 - smoothstep(uBandTop - 24.0 * uScale, uBandTop, y);
+  vec2 pc = p / uScale; // CSS px
+  float bandT = clamp((y - uBandTop) / max(uHorizon - uBandTop, 1.0), 0.0, 1.0);
+
+  // Clouds (capa 4, D-04/D-08): two fbm layers drifting with the real wind (offsets in CPU), the
+  // far one slower. Day/twilight: a touch lighter than the sky, the lower part in the band lit from
+  // below with S4/S5. Night: at most +0.01 of L over the background. The clamp keeps them <= S3 in
+  // the content zone.
+  if (uCover > 0.001 && y < uHorizon) {
+    vec3 nightCol = c + vec3(0.01);
+    vec3 topCol = mix(uS2, uS3, 0.6) * 1.12 + 0.003;
+    vec3 under = mix(uS4, uS5, bandT);
+    float aMax = mix(0.55, 0.9, uCover);
+
+    float nF = fbm(vec2((pc.x + uCloudOffset.y) / CLOUD_CELL_FAR, pc.y / 150.0 + 31.7), CLOUD_PERIOD / CLOUD_CELL_FAR);
+    vec3 colF = mix(mix(topCol, under, 0.85 * bandT * (1.0 - 0.5 * nF)), nightCol, uNight);
+    c = mix(c, colF, 0.6 * aMax * cloudDensity(nF));
+
+    float nN = fbm(vec2((pc.x + uCloudOffset.x) / CLOUD_CELL_NEAR, pc.y / 120.0), CLOUD_PERIOD / CLOUD_CELL_NEAR);
+    vec3 colN = mix(mix(topCol, under, 0.85 * bandT * (1.0 - 0.5 * nN)), nightCol, uNight);
+    c = mix(c, colN, aMax * cloudDensity(nN));
+  }
+
+  // Fog (capa 5, D-13): low haze in ink rising from the horizon up to the band edge and fading,
+  // undulating slowly. It sits behind the SVG silhouette (the canvas is behind). Over the content
+  // zone only a veil <= +0.01 of L, never a layer in front of the text.
+  if (uFog > 0.001 && y < uHorizon) {
+    float fx = (pc.x + uFogOffset) / FOG_CELL;
+    float wave = 0.65 * vnoise(vec2(fx, 3.1), FOG_PERIOD / FOG_CELL) + 0.35 * vnoise(vec2(fx * 2.0, 9.7), 2.0 * FOG_PERIOD / FOG_CELL);
+    float fogA = uFog * mix(0.10, 0.25, bandT) * smoothstep(0.0, 0.55, bandT + 0.2 * (wave - 0.5)) * (1.0 - wContent);
+    c = mix(c, INK, fogA);
+    c += vec3(0.008 * uFog * wContent);
+  }
+
+  // Later plans add here, BEFORE the clamp: rain.
 
   // Fixed grain, ±1.5 % of luminance, applied before the clamp (Pitfall 8).
   c *= 1.0 + (hash12(gl_FragCoord.xy) - 0.5) * 0.03 * uGrain;
 
   // C-1: scale the content zone down to LMAX without changing hue; 24 CSS px ramp at the band edge.
   float L = lum(c);
-  float wContent = 1.0 - smoothstep(uBandTop - 24.0 * uScale, uBandTop, y);
   c *= mix(1.0, min(1.0, LMAX / max(L, 1e-5)), wContent);
 
   // Stars AFTER the clamp (C-4 exception: their limit is size and alpha). Sky zone only.
