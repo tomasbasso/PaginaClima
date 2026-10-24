@@ -66,7 +66,8 @@ export function Meteogram({ points, todayKey }: { points: HourlyPoint[]; todayKe
 
   const selectAt = (e: PointerEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
-    setSel(indexAtX(e.clientX - rect.left, layout.width, n))
+    // rect.width, not layout.width: they differ until the ResizeObserver catches up (WR-01).
+    setSel(indexAtX(e.clientX - rect.left, rect.width, n))
   }
 
   const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
@@ -134,7 +135,7 @@ export function Meteogram({ points, todayKey }: { points: HourlyPoint[]; todayKe
           height={layout.height}
           role="img"
           aria-label={summary}
-          className="block select-none"
+          className="block max-w-full select-none"
         >
           {layout.nightBands.map((b, k) => (
             <rect key={`n${k}`} x={b.x} y={0} width={b.w} height={PLOT_H} className="fill-ink/5" />

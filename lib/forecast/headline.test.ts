@@ -3,7 +3,7 @@ import fixture from '@/lib/sources/__fixtures__/open-meteo-forecast.json'
 import { ForecastDto } from '@/lib/sources/openMeteoForecast.schema'
 import { normalizeForecast } from '@/lib/weather/normalize'
 import type { HourlyPoint } from '@/lib/weather/types'
-import { makeHourly } from './__fixtures__/build'
+import { makeDaily, makeHourly } from './__fixtures__/build'
 import { buildHeadline, MAX_CHARS, MAX_WORDS } from './headline'
 
 type Over = (i: number, hour: number) => Partial<HourlyPoint>
@@ -249,5 +249,13 @@ describe('buildHeadline (NOW-03, D-13..D-16) under TZ=UTC', () => {
     const h = buildHeadline({ hourly48 }, new Date('2026-10-23T17:30:00Z'))
     expect(h).not.toBeNull()
     withinLimits(h!)
+  })
+
+  it('judges the day max with the daily max, not only the remaining hours (WR-02)', () => {
+    // 20:00 on a warm day: the evening hours are 10°, but the day reached 24°.
+    const s = { ...snap('2026-10-23T20', () => ({ tempC: 10 })), daily: makeDaily('2026-10-23', 3) }
+    s.daily[0].tMaxC = 24
+    expect(buildHeadline(s, at('2026-10-23T20:00'))).not.toMatch(/frío/i)
+    expect(buildHeadline({ hourly48: s.hourly48 }, at('2026-10-23T20:00'))).toMatch(/frío/i)
   })
 })

@@ -92,11 +92,13 @@ function buildEvent(window: HourlyPoint[], isNow: boolean): string | null {
   return timing(kind, rainy, window, isNow)
 }
 
-function buildContext(window: HourlyPoint[], prefix: boolean): string | null {
+// dayMaxC: the target day's daily max (WR-02). The remaining hours alone would call a warm
+// day 'frío' in the evening; frost keeps using the window because only a coming low matters.
+function buildContext(window: HourlyPoint[], prefix: boolean, dayMaxC: number | null): string | null {
   const temps = nums(window.map((p) => p.tempC))
   if (temps.length > 0) {
     const min = Math.min(...temps)
-    const max = Math.max(...temps)
+    const max = Math.max(dayMaxC ?? -Infinity, ...temps)
     if (min <= STRONG_FROST_C) return 'helada fuerte'
     if (min <= FROST_C) return 'helada'
     if (max >= STRONG_HEAT_C) return 'calor fuerte'
@@ -161,7 +163,10 @@ function fits(body: string, prefix: boolean): boolean {
   return text.split(/\s+/).length <= MAX_WORDS && text.length <= MAX_CHARS
 }
 
-export function buildHeadline(s: Pick<WeatherSnapshot, 'hourly48'>, now: Date): string | null {
+export function buildHeadline(
+  s: Pick<WeatherSnapshot, 'hourly48'> & Partial<Pick<WeatherSnapshot, 'daily'>>,
+  now: Date,
+): string | null {
   const h = localHour(now)
   const todayKey = localDateKey(now)
   const prefix = h >= 21
@@ -172,7 +177,8 @@ export function buildHeadline(s: Pick<WeatherSnapshot, 'hourly48'>, now: Date): 
 
   const isNow = target === todayKey && hourOf(window[0].time) === h
   const event = buildEvent(window, isNow)
-  const context = buildContext(window, prefix)
+  const dayMaxC = s.daily?.find((d) => d.date === target)?.tMaxC ?? null
+  const context = buildContext(window, prefix, dayMaxC)
 
   const candidates: string[] = []
   if (event && context) candidates.push(`${context}, ${event}`, event, context)

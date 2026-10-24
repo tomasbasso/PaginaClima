@@ -398,6 +398,9 @@ describe('valueTextFor', () => {
       'sábado 15:00, temperatura sin dato, lluvia sin dato, viento sin dato',
     )
   })
+  it('uses the singular for exactly 1 mm', () => {
+    expect(valueTextFor({ ...p, precipMm: 1, gustKmh: 20 })).toContain('1,0 milímetro,')
+  })
 })
 
 describe('indexAtX', () => {

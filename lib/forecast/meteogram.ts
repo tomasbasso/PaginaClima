@@ -399,7 +399,7 @@ export function valueTextFor(p: HourlyPoint): string {
   if (p.precipMm === null) parts.push('lluvia sin dato')
   else {
     const amount = rainAmount(p.precipMm)
-    parts.push(amount === null ? 'sin lluvia' : `${amount} ${amount === '1' ? 'milímetro' : 'milímetros'}`)
+    parts.push(amount === null ? 'sin lluvia' : `${amount} ${amount === '1,0' ? 'milímetro' : 'milímetros'}`)
   }
   if (p.windKmh === null) parts.push('viento sin dato')
   else if (p.windKmh < CALM_KMH) parts.push('viento en calma')
