@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-24T00:11:51.992Z"
-last_activity: 2026-10-23
+last_updated: "2026-10-24T00:20:47.670Z"
+last_activity: 2026-10-24
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 8
+  completed_plans: 9
   percent: 14
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 2 (Pronóstico núcleo) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Ready to execute
-Last activity: 2026-10-23
+Last activity: 2026-10-24
 
-Progress: [███████░░░] 67%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -56,6 +56,7 @@ Progress: [███████░░░] 67%
 | Phase 01 P05 | 9 min | 3 tasks | 12 files |
 | Phase 01 P06 | 9min | 3 tasks | 18 files |
 | Phase 02 P01 | 25 min | 3 tasks | 12 files |
+| Phase 02 P02 | 10 min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,8 @@ Recent decisions affecting current work:
 - [Phase 01]: 01-06: WEATHER_FAULT allowlist ignored when VERCEL_ENV=production; Hero shell shared in components/Hero.tsx
 - [Phase 02]: Rol Headline: fallback UI-SPEC 28px/1.21 aplicado (32/1.19 desbordaba 0,8 px a 390x844 con insets); /pronostico usa el mismo rol
 - [Phase 02]: Titular: MAX_WORDS=7, MAX_CHARS=34, prefijo Mañana: desde las 21:00
+- [Phase 02]: 02-02: Hero = caja del cielo (full: 100svh-barra; compact: banda 120 px) + slot below sobre ground; --bar-h en :root y 0px dentro de la caja
+- [Phase 02]: 02-02: titulo de /pronostico en Headline 28/1.21; escalas 7/14 calculadas en el servidor, la isla solo elige bar7/bar14
 
 ### Pending Todos
 
@@ -97,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-23T23:41:21.839Z
-Stopped at: Phase 2 UI-SPEC approved
+Last session: 2026-10-24T00:20:47.646Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
