@@ -13,7 +13,7 @@ El camino arranca con una página real publicada en Vercel desde el día uno: la
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel (completed 2026-10-23)
-- [ ] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial
+- [x] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial (completed 2026-10-24)
 - [ ] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
 - [ ] **Phase 4: Los modelos opinan** - Comparación ECMWF/GFS/ICON/GEM, semáforo de coincidencia, MET Norway aparte y probabilidad real de ensemble
 - [ ] **Phase 5: Lluvia, satélite y astros** - Lluvia acumulada contra la normal, satélite IR GOES-East, link al radar del SMN, sol y luna
@@ -59,7 +59,7 @@ Plans (olas: 1 → 01; 2 → 02; 3 → 03; 4 → 04; 5 → 05):
 - [x] 02-02-PLAN.md — Refactor de Hero (caja del cielo, slot below, variante compact) y pronóstico diario 7/14 días en /pronostico con la pestaña habilitada
 - [x] 02-03-PLAN.md — Meteograma 1: verificación e instalación de d3, geometría pura testeada y SVG de temperatura/lluvia/ejes debajo del horizonte
 - [x] 02-04-PLAN.md — Meteograma 2: fila de viento cada 3 h, ráfagas fuertes, lectura fija y scrubber táctil/teclado
-- [ ] 02-05-PLAN.md — /dev/estados de la fase 2, gate completo con chequeos a 390×844 y smoke en producción tras el push
+- [x] 02-05-PLAN.md — /dev/estados de la fase 2, gate completo con chequeos a 390×844 y smoke en producción tras el push
 **UI hint**: yes
 
 ### Phase 3: Cielo vivo
@@ -137,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
-| 2. Pronóstico núcleo | 4/5 | In Progress|  |
+| 2. Pronóstico núcleo | 5/5 | Complete   | 2026-10-24 |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
