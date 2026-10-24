@@ -1,9 +1,12 @@
 // Static Pampa horizon silhouette (UI-SPEC "Silueta"): llanura, alambrado, molino, two caldenes.
-// One inline SVG, flat #0f141d, no shadows or gradients. Reused by phase 3.
+// One inline SVG, flat #0f141d, no shadows or gradients, always above the sky canvas (D-12).
+// Server component: only the windmill rotor is a client island that turns with the wind (D-13).
 //
 // The root has no viewBox: ground, wires and fence posts span 100% of the width at 1:1 px,
 // and the windmill and trees are nested SVGs anchored at x = 8 % / 78 % / 88 % so they keep
 // their place on any screen width without being cropped or stretched.
+
+import { WindmillRotor } from '@/components/client/WindmillRotor'
 
 const FILL = '#0f141d'
 const GROUND_Y = 104 // 16px ground strip at the bottom of a 120px band
@@ -18,10 +21,9 @@ function Calden({ scale = 1 }: { scale?: number }) {
   )
 }
 
-function Windmill() {
+function Windmill({ windKmh }: { windKmh?: number | null }) {
   // ~112px tall: lattice tower, 12-blade rotor and tail vane. Base at y = 0.
   // Drawn 115 units tall, scaled 0.83 so the rotor tip sits at y ≈ 8 (≈112px above the band bottom).
-  const blades = Array.from({ length: 12 }, (_, i) => i * 30)
   return (
     <g transform="scale(0.83)">
       {/* tower legs */}
@@ -36,13 +38,11 @@ function Windmill() {
       </g>
       {/* platform */}
       <rect x={-6} y={-90} width={12} height={4} />
-      {/* rotor */}
+      {/* rotor (blades + hub turn with the wind; the SVG transform of this <g> stays as an
+          attribute, a CSS transform on it would replace it) */}
       <g transform="translate(0 -98)">
-        {blades.map((a) => (
-          <path key={a} d="M-1 -4 L-2.5 -17 L2.5 -17 L1 -4 Z" transform={`rotate(${a})`} />
-        ))}
-        <circle r={3.5} />
-        {/* tail vane */}
+        <WindmillRotor windKmh={windKmh} />
+        {/* tail vane (does not turn) */}
         <path d="M2 -1 L26 -1 L26 1 L2 1 Z" />
         <path d="M22 -8 L32 -6 L32 6 L22 8 Z" />
       </g>
@@ -50,7 +50,7 @@ function Windmill() {
   )
 }
 
-export function PampaHorizon() {
+export function PampaHorizon({ windKmh }: { windKmh?: number | null } = {}) {
   return (
     <svg
       width="100%"
@@ -78,7 +78,7 @@ export function PampaHorizon() {
         <Calden />
       </svg>
       <svg x="78%" y={GROUND_Y} width={1} height={1} overflow="visible">
-        <Windmill />
+        <Windmill windKmh={windKmh} />
       </svg>
       <svg x="88%" y={GROUND_Y} width={1} height={1} overflow="visible">
         <Calden scale={0.8} />

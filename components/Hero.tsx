@@ -48,7 +48,7 @@ export function Hero({
 
         <div data-sky-band className="relative h-(--band-h) w-full shrink-0" aria-hidden="true">
           <div className="absolute inset-x-0 bottom-0">
-            <PampaHorizon />
+            <PampaHorizon windKmh={sky.windKmh} />
           </div>
         </div>
       </div>
