@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-24T23:19:56.063Z"
+last_updated: "2026-10-24T23:30:19.446Z"
 last_activity: 2026-10-24
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 20
-  completed_plans: 14
+  completed_plans: 15
   percent: 29
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 3 (cielo-vivo) — EXECUTING
-Plan: 3 of 8
+Plan: 4 of 8
 Status: Ready to execute
 Last activity: 2026-10-24
 
-Progress: [███████░░░] 70%
+Progress: [████████░░] 75%
 
 ## Performance Metrics
 
@@ -61,6 +61,7 @@ Progress: [███████░░░] 70%
 | Phase 02 P04 | 30 min | 2 tasks | 5 files |
 | Phase 03 P01 | 7 min | 3 tasks | 11 files |
 | Phase 03 P02 | 6 min | 3 tasks | 11 files |
+| Phase 03 P03 | 7 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-01: night storm darkening (0.5 towards noche S1) ramps in between -12 and -18 deg
 - [Phase 03-02]: cobertura de nubes derivada del código WMO (sin cloud_cover upstream); intensity/cloudCover se calculan en skyFromSnapshot antes de descartar el código
 - [Phase 03-02]: molino con una Web Animation y updatePlaybackRate(1/clamp(36/km/h,1.5,12)); quieto con calma, sin dato o reduced-motion leído en JS
+- [Phase 03]: 03-03: gobernador de dos señales (CPU EMA > 28 ms o intervalo > 45 ms, 2 s tras 2 s de calentamiento, nunca sube); umbrales a calibrar en 03-08
+- [Phase 03]: 03-03: estrellas y halo de luna se desvanecen con el factor de despejado interpolado en 2000 ms; halo de luna atenuado de día
 
 ### Pending Todos
 
@@ -112,6 +115,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-24T23:19:56.041Z
+Last session: 2026-10-24T23:30:06.256Z
 Stopped at: Completed 03-02-PLAN.md
 Resume file: None
