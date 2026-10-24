@@ -29,7 +29,7 @@ findings:
   warning: 2
   info: 3
   total: 5
-status: issues_found
+status: fixed
 ---
 
 # Phase 2: Code Review Report
@@ -86,3 +86,8 @@ Mantener `layout.width` solo para dibujar.
 _Reviewed: 2026-10-23_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
+
+## Fixes aplicados (2026-10-24)
+
+- WR-01, WR-02, IN-01 e IN-02 corregidos en `fix(02): apply code review warnings`, con tests nuevos para WR-02 (máxima diaria) e IN-01 (singular).
+- IN-03 (`Math.min/max` con spread) queda como está: con 48 y 14 puntos es seguro.

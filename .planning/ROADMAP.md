@@ -137,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
-| 2. Pronóstico núcleo | 5/5 | Complete   | 2026-10-24 |
+| 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 0/TBD | Not started | - |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
