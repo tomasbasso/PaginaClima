@@ -22,7 +22,8 @@ import {
   TIME_PERIOD_S,
   wrapTime,
 } from '@/lib/sky/loop'
-import { skyPalette } from '@/lib/sky/palette'
+import { moonGlow, starsAlpha, sunGlow } from '@/lib/sky/glow'
+import { skyPalette, smoothstep } from '@/lib/sky/palette'
 import type { SkyState } from '@/lib/sky/state'
 import { FRAGMENT_SRC, VERTEX_SRC } from './shader'
 
@@ -89,6 +90,9 @@ const UNIFORMS = [
   'uGrain',
   'uQuality',
   'uTwinkleT',
+  'uSun',
+  'uMoon',
+  'uStars',
 ] as const
 type UniformName = (typeof UNIFORMS)[number]
 
@@ -236,6 +240,16 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     let weatherStart = -Infinity
     let weatherBlending = false
     let paramsDirty = true
+    // Glow uniforms (scalars, recomputed with the palette). clear = 1 with 'despejado', 0 otherwise,
+    // blended over the weather transition so stars and moon fade instead of popping.
+    let sunX = 0.5
+    let sunS = 0
+    let moonX = 0.5
+    let moonY = 1
+    let moonS = 0
+    let starsA = 0
+    let clearFrom = state.weather === 'despejado' ? 1 : 0
+    let curClear = clearFrom
 
     let lost = false
     let restoredOnce = false
@@ -289,6 +303,20 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
           stops[o] = k >= 1 ? col[j] : fromStops[o] + (col[j] - fromStops[o]) * k
         }
       }
+      // Sun, moon and stars (SKY-01, UI-SPEC "Resplandores"): from the interpolated altitude.
+      const clearTo = state.weather === 'despejado' ? 1 : 0
+      curClear = clearFrom + (clearTo - clearFrom) * k
+      const sun = sunGlow(curSun, astro.sunAzimuth)
+      sunX = sun.x
+      sunS = sun.strength
+      // During a weather blend the halo is computed as if clear and faded with curClear.
+      const moon = moonGlow(astro, pWeather < 1 ? 'despejado' : state.weather)
+      moonX = moon.x
+      moonY = moon.yFrac
+      // The halo belongs to the night sky: it fades out as the sun climbs past the horizon.
+      moonS = moon.strength * curClear * (1 - smoothstep(-4, 6, curSun))
+      // 03-04 refines the weather factor with the cloud cover.
+      starsA = starsAlpha(curSun) * curClear
       if (pWeather >= 1) weatherBlending = false
       if (pSun >= 1) sunFrom = sunTo
       paramsDirty = moving
@@ -317,6 +345,9 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       // Static frames freeze motion: twinkle off (C-4), rain frozen (later plans).
       gl.uniform1f(loc.uQuality, staticFrame ? Math.max(2, gov.level) : gov.level)
       gl.uniform1f(loc.uTwinkleT, wrapTime(simTime, TIME_PERIOD_S))
+      gl.uniform3f(loc.uSun, sunX, sunS, 0)
+      gl.uniform3f(loc.uMoon, moonX, moonY, moonS)
+      gl.uniform1f(loc.uStars, starsA)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       if (!firstFrame) {
         firstFrame = true
@@ -523,6 +554,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
           astro = nextAstro
           sunFrom = sunTo = next.sunAltitude
           weatherBlending = false
+          clearFrom = next.weather === 'despejado' ? 1 : 0
           paramsDirty = true
           drawStatic()
           return
@@ -534,6 +566,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
         }
         if (next.weather !== state.weather) {
           fromStops.set(stops)
+          clearFrom = curClear
           weatherStart = t
           weatherBlending = true
         }
