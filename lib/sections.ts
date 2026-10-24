@@ -9,7 +9,7 @@ export const SECTIONS: ReadonlyArray<{
   enabled: boolean
 }> = [
   { id: 'ahora', label: 'Ahora', href: '/', enabled: true },
-  { id: 'pronostico', label: 'Pronóstico', href: '/pronostico', enabled: false },
+  { id: 'pronostico', label: 'Pronóstico', href: '/pronostico', enabled: true },
   { id: 'modelos', label: 'Modelos', href: '/modelos', enabled: false },
   { id: 'cielo', label: 'Cielo', href: '/cielo', enabled: false },
 ]
