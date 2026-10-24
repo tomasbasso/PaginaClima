@@ -75,7 +75,7 @@ Plans (olas: 1 → 01; 2 → 02; 3 → 03; 4 → 04; 5 → 05):
 **Plans**: 8 plans
 Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08):
 - [x] 03-01-PLAN.md — Cielo WebGL continuo según el sol: paleta pura con tests de contraste, renderer + shader sin dependencias, montado en SkyBackdrop sobre el fallback
-- [ ] 03-02-PLAN.md — El clima real llega al cielo: SkyState con intensidad/viento/cobertura, molino que gira con el viento, fallback CSS con capa de clima
+- [x] 03-02-PLAN.md — El clima real llega al cielo: SkyState con intensidad/viento/cobertura, molino que gira con el viento, fallback CSS con capa de clima
 - [ ] 03-03-PLAN.md — El cielo cobra vida: loop de 30 fps con pausas, reducir movimiento, gobernador, sol/luna/estrellas
 - [ ] 03-04-PLAN.md — Nubes, niebla y lluvia procedurales moduladas por el dato real
 - [ ] 03-05-PLAN.md — /dev/sky: forzar estados, 3 cuadros, presets y lectura de FPS/MS/calidad
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
-| 3. Cielo vivo | 1/8 | In Progress|  |
+| 3. Cielo vivo | 2/8 | In Progress|  |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
