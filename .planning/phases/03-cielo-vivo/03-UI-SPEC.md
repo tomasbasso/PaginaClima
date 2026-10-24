@@ -119,7 +119,7 @@ La caja del cielo se divide igual que en la fase 1: **zona de contenido** (desde
 
 | Regla | Límite | Cómo se verifica |
 |-------|--------|------------------|
-| C-1 Luminancia de la zona de contenido | Luminancia relativa WCAG **≤ 0,075** en todo píxel de la zona de contenido (lo mismo que S3 de `dia`, `#284f75` ≈ 0,073), con todas las capas compuestas. Excepciones: estrellas (C-4) y relámpago (C-5) | Test de Vitest sobre la función pura `skyPalette` (barrido de `sunAltitude` de −20° a +70° cada 0,5° × los 5 climas) + **clamp final de luminancia** en el renderer para la zona de contenido, más una transición de 24 px en el borde de la banda para que el clamp no deje una línea |
+| C-1 Luminancia de la zona de contenido | Luminancia relativa WCAG **≤ 0,075** en todo píxel de la zona de contenido (lo mismo que S3 de `dia`, `#284f75` ≈ 0,073), con todas las capas compuestas. **El clamp tiene precedencia sobre las capas aditivas** (halo de luna, velo de niebla): sus incrementos solo se ven donde la base queda por debajo del tope. Excepciones: estrellas (C-4) y relámpago (C-5) | Test de Vitest sobre la función pura `skyPalette` (barrido de `sunAltitude` de −20° a +70° cada 0,5° × los 5 climas) + **clamp final de luminancia** en el renderer para la zona de contenido, más una transición de 24 px en el borde de la banda para que el clamp no deje una línea |
 | C-2 Interpolación | Los colores se mezclan en **RGB lineal** (no en sRGB ni HSL). Así la luminancia de una mezcla nunca supera la del extremo más claro, y C-1 se cumple por construcción | Test |
 | C-3 Banda del horizonte | Sin límite de claridad (ahí viven S4/S5, el resplandor del sol, la niebla). No lleva texto | — |
 | C-4 Estrellas | Puntos de ≤ 1,5 px CSS, alfa máx. 0,6 en ink. Densidad baja (ver "Capas"). No se exige dejar libre el área del texto: el límite son el alfa y el tamaño | Revisión visual en `/dev/sky` |
@@ -305,7 +305,7 @@ CIELO · /dev/sky                                         Label 12/600 ink/75
 │ INTENSIDAD  [────●───]  0,6                               │
 │ VIENTO      [──●─────]  18 km/h   DIRECCIÓN [select 8 rumbos]│
 │ NUBES       [──────●─]  85 %  (o "SEGÚN CÓDIGO")          │
-│ [FORZAR RELÁMPAGO] [PAUSAR] [MOSTRAR CONTENIDO ✓]         │
+│ [FORZAR RELÁMPAGO] [PAUSAR CIELO] [MOSTRAR CONTENIDO ✓]         │
 │ 30 FPS · 6,2 MS POR FRAME · CALIDAD 1                     │  Body 15 ink/75 .nums
 └─────────────────────────────────────────────────────────┘
 32px
@@ -364,7 +364,7 @@ La fase 3 **no agrega copy para el usuario final**: el cielo no tiene texto y lo
 | CTA principal de la fase | no aplica para el usuario final. En `/dev/sky`: **Forzar relámpago** (botón: `FORZAR RELÁMPAGO`) |
 | Título / `<title>` de `/dev/sky` | `CIELO · /dev/sky` / `Cielo — Clima en Winifreda` |
 | Etiquetas de controles | `ALTURA DEL SOL` · `MAÑANA` / `TARDE` · `ATAJOS` · `CLIMA` · `CÓDIGO WMO` · `INTENSIDAD` · `VIENTO` · `DIRECCIÓN` · `NUBES` (`SEGÚN CÓDIGO` cuando no se fuerza) · `PRESETS` |
-| Botones | `NOCHE` · `AMANECER` · `DÍA` · `ATARDECER` · `AHORA REAL` · `DESPEJADO` · `CUBIERTO` · `LLUVIA` · `TORMENTA` · `NIEBLA` · `FORZAR RELÁMPAGO` · `PAUSAR` / `REANUDAR` · `MOSTRAR CONTENIDO` |
+| Botones | `NOCHE` · `AMANECER` · `DÍA` · `ATARDECER` · `AHORA REAL` · `DESPEJADO` · `CUBIERTO` · `LLUVIA` · `TORMENTA` · `NIEBLA` · `FORZAR RELÁMPAGO` · `PAUSAR CIELO` / `REANUDAR CIELO` · `MOSTRAR CONTENIDO` |
 | Leyendas de los cuadros | `CANVAS` · `ESTÁTICO (REDUCIR MOVIMIENTO)` · `FALLBACK CSS · DATA-SKY {token}` · `BANDA COMPACTA` |
 | Lectura de rendimiento | `{n} FPS · {x,x} MS POR FRAME · CALIDAD {1\|2\|3}` |
 | Vacío / sin WebGL en `/dev/sky` | En el cuadro `CANVAS`: `ESTE NAVEGADOR NO TIENE WEBGL. SE VE EL FALLBACK.` (Label 12/600 ink/75, centrado, 16 px desde arriba) |
@@ -401,11 +401,11 @@ La fase 3 **no agrega copy para el usuario final**: el cielo no tiene texto y lo
 
 ## Checker Sign-Off
 
-- [x] Dimension 1 Copywriting: PASS
-- [x] Dimension 2 Visuals: PASS (FLAG: precedencia del clamp en C-1, corregido)
-- [x] Dimension 3 Color: PASS (FLAG: 5 tamaños app-wide heredados de la fase 2; la fase 3 no suma)
-- [x] Dimension 4 Typography: PASS
+- [x] Dimension 1 Copywriting: PASS (FLAG: botones dev sin sustantivo, corregido)
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS (FLAG: precedencia del clamp en C-1, corregido)
+- [x] Dimension 4 Typography: PASS (FLAG: 5 tamaños app-wide heredados de la fase 2; la fase 3 no suma)
 - [x] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-24
