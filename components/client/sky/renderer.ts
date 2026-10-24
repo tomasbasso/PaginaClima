@@ -26,7 +26,7 @@ import { moonGlow, starsAlpha, sunGlow } from '@/lib/sky/glow'
 import { skyPalette, smoothstep } from '@/lib/sky/palette'
 import { type SkyParams, skyParams } from '@/lib/sky/params'
 import type { SkyState } from '@/lib/sky/state'
-import { CLOUD_PERIOD_PX, FOG_PERIOD_PX, FRAGMENT_SRC, VERTEX_SRC } from './shader'
+import { CLOUD_PERIOD_PX, FOG_PERIOD_PX, FRAGMENT_SRC, RAIN_PERIOD_PX, VERTEX_SRC } from './shader'
 
 /** Default canvas buffer = CSS size × this, whatever the DPR (D-09). */
 export const BUFFER_SCALE = 0.5
@@ -48,6 +48,11 @@ const CLOUD_FAR_FACTOR = 0.6
 /** Fog undulation: a quarter of the cloud drift, never above 3 px/s (UI-SPEC "Movimiento"). */
 const FOG_DRIFT_FACTOR = 0.25
 const FOG_DRIFT_MAX_PX_S = 3
+/** Rain fall speeds (CSS px/s, UI-SPEC capa 6: 400–600). */
+const RAIN_SPEED_NEAR_PX_S = 600
+const RAIN_SPEED_FAR_PX_S = 400
+/** Governor level 2: half the rain streaks (UI-SPEC "Rendimiento"). */
+const RAIN_QUALITY2_FACTOR = 0.5
 
 // Weather scalars interpolated over WEATHER_TRANSITION_MS (index into the Float64Arrays below).
 const P_COVER = 0
@@ -127,6 +132,9 @@ const UNIFORMS = [
   'uNight',
   'uFog',
   'uFogOffset',
+  'uRain',
+  'uRainTilt',
+  'uRainOffset',
 ] as const
 type UniformName = (typeof UNIFORMS)[number]
 
@@ -315,6 +323,8 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     let cloudNear = wrapTime(simTime * pCur[P_DRIFT], CLOUD_PERIOD_PX)
     let cloudFar = wrapTime(simTime * pCur[P_DRIFT] * CLOUD_FAR_FACTOR, CLOUD_PERIOD_PX)
     let fogOff = wrapTime(simTime * FOG_DRIFT_MAX_PX_S, FOG_PERIOD_PX)
+    let rainNear = wrapTime(simTime * RAIN_SPEED_NEAR_PX_S, RAIN_PERIOD_PX)
+    let rainFar = wrapTime(simTime * RAIN_SPEED_FAR_PX_S, RAIN_PERIOD_PX)
     let gov: GovernorState = createGovernor()
     const sample: GovernorSample = { ts: 0, cpuMs: 0, intervalMs: 0 }
     let cpuAvg = 0
@@ -394,7 +404,8 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       gl.uniform1f(loc.uScale, scale)
       // Level 2+: no grain (UI-SPEC "Rendimiento"). Reduced motion keeps the fixed grain.
       gl.uniform1f(loc.uGrain, gov.level >= 2 ? 0 : 1)
-      // Static frames freeze motion: twinkle off (C-4), rain frozen (later plans).
+      // Static frames freeze motion: twinkle off (C-4); offsets only advance in frame(), so clouds,
+      // fog and rain stay frozen.
       gl.uniform1f(loc.uQuality, staticFrame ? Math.max(2, gov.level) : gov.level)
       gl.uniform1f(loc.uTwinkleT, wrapTime(simTime, TIME_PERIOD_S))
       gl.uniform3f(loc.uSun, sunX, sunS, 0)
@@ -405,6 +416,10 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       gl.uniform1f(loc.uNight, nightF)
       gl.uniform1f(loc.uFog, pCur[P_FOG])
       gl.uniform1f(loc.uFogOffset, fogOff)
+      // Rain density: halved from governor quality level 2 on (T-03-11).
+      gl.uniform1f(loc.uRain, gov.level >= 2 ? pCur[P_RAIN] * RAIN_QUALITY2_FACTOR : pCur[P_RAIN])
+      gl.uniform1f(loc.uRainTilt, (pCur[P_TILT] * Math.PI) / 180)
+      gl.uniform2f(loc.uRainOffset, rainNear, rainFar)
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       if (!firstFrame) {
         firstFrame = true
@@ -472,6 +487,8 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       cloudFar = wrapTime(cloudFar + dtS * drift * CLOUD_FAR_FACTOR, CLOUD_PERIOD_PX)
       const fogSpeed = Math.max(-FOG_DRIFT_MAX_PX_S, Math.min(FOG_DRIFT_MAX_PX_S, drift * FOG_DRIFT_FACTOR))
       fogOff = wrapTime(fogOff + dtS * fogSpeed, FOG_PERIOD_PX)
+      rainNear = wrapTime(rainNear + dtS * RAIN_SPEED_NEAR_PX_S, RAIN_PERIOD_PX)
+      rainFar = wrapTime(rainFar + dtS * RAIN_SPEED_FAR_PX_S, RAIN_PERIOD_PX)
       try {
         render(ts, false)
       } catch (err) {

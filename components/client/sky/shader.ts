@@ -15,6 +15,8 @@ void main() {
  */
 export const CLOUD_PERIOD_PX = 1536
 export const FOG_PERIOD_PX = 1024
+/** Rain offsets wrap here; it is a multiple of both layers' streak spacing (600 and 400 px). */
+export const RAIN_PERIOD_PX = 1200
 
 export const FRAGMENT_SRC = `
 #ifdef GL_FRAGMENT_PRECISION_HIGH
@@ -43,6 +45,9 @@ uniform vec2 uCloudOffset; // CSS px, near / far cloud layer, wrapped in CPU to 
 uniform float uNight;   // 0 = day/twilight, 1 = night (sun <= -12 deg): clouds only +0.01 of L
 uniform float uFog;     // fog 0..1, interpolated
 uniform float uFogOffset; // CSS px, wrapped in CPU to [0, FOG_PERIOD)
+uniform float uRain;    // rain density 0..1, interpolated (halved at governor level 2)
+uniform float uRainTilt; // radians from the vertical, + = falling towards the right
+uniform vec2 uRainOffset; // CSS px along the fall, near / far layer, wrapped in CPU to [0, RAIN_PERIOD)
 
 // C-1 cap with a margin under 0.075 (grain and rounding).
 const float LMAX = 0.073;
@@ -64,6 +69,14 @@ const float CLOUD_CELL_FAR = 256.0;  // 6 cells per period
 // Fog (capa 5): undulating top edge, 8 cells per period.
 const float FOG_PERIOD = ${FOG_PERIOD_PX}.0;
 const float FOG_CELL = 128.0;
+// Rain (capa 6, D-07): streaks in columns of the rotated space, one streak every RAIN_REP px of a
+// column. Visible streaks ≈ area / (column × spacing) × density, rotation-invariant: at 390 × 844
+// near 390·844/(8·600) ≈ 69 + far 390·844/(10·400) ≈ 82 → ≈ 151 ≤ 160 at intensity 1 (T-03-11).
+const float RAIN_COL_NEAR = 8.0;
+const float RAIN_REP_NEAR = 600.0;
+const float RAIN_COL_FAR = 10.0;
+const float RAIN_REP_FAR = 400.0;
+const float RAIN_DENSITY_MAX = 1.0;
 
 float lum(vec3 c) { return dot(c, vec3(0.2126, 0.7152, 0.0722)); }
 
@@ -114,6 +127,26 @@ float fbm(vec2 x, float per) {
 float cloudDensity(float n) {
   float thr = mix(0.85, -0.1, uCover);
   return smoothstep(thr, thr + 0.35, n) * smoothstep(0.0, 0.08, uCover);
+}
+
+// Alpha of one rain layer at r (rotated CSS px: x across the fall, y along it). Each column is on
+// or off by hash, with its own phase, length (12–24 CSS px), lateral jitter and base alpha.
+float rainLayer(vec2 r, float off, float colW, float rep, float seed) {
+  float col = floor(r.x / colW);
+  if (hash12(vec2(col, seed)) >= uRain * RAIN_DENSITY_MAX) return 0.0;
+  float len = 12.0 + 12.0 * hash12(vec2(col, seed + 1.7));
+  float phase = rep * hash12(vec2(col, seed + 3.1));
+  float v = mod(r.y - off - phase, rep); // 0 = tail end … len = head of the streak
+  if (v > len) return 0.0;
+  float cx = (col + 0.2 + 0.6 * hash12(vec2(col, seed + 5.9))) * colW;
+  // 1 CSS px wide: at least 1 buffer px, alpha compensated by coverage, smoothstep AA (Pitfall 6).
+  float wBuf = uScale;
+  float halfW = max(0.5, 0.5 * wBuf);
+  float dBuf = abs(r.x - cx) * uScale;
+  float mask = 1.0 - smoothstep(halfW - 0.5, halfW + 0.5, dBuf);
+  float ends = smoothstep(0.0, 4.0, v) * (1.0 - smoothstep(len - 2.0, len, v));
+  float a = 0.10 + 0.15 * hash12(vec2(col, seed + 7.3)); // 0.10–0.25 in ink
+  return a * min(1.0, wBuf) * mask * ends;
 }
 
 vec3 gradient(float y) {
@@ -184,7 +217,18 @@ void main() {
     c += vec3(0.008 * uFog * wContent);
   }
 
-  // Later plans add here, BEFORE the clamp: rain.
+  // Rain (capa 6, D-07/D-08): thin straight streaks tilted by the wind, two depth layers (near
+  // faster and brighter). Density ∝ real intensity. Capped at 0.18 alpha over the content zone
+  // (0.25 × 0.72). Frozen when the offsets do not move (static frames). Still 1 draw call.
+  if (uRain > 0.001 && y < uHorizon) {
+    float sT = sin(uRainTilt);
+    float cT = cos(uRainTilt);
+    // Fall direction (sT, cT) in screen space (y down) maps to r = (0, 1).
+    vec2 r = vec2(pc.x * cT - pc.y * sT, pc.x * sT + pc.y * cT);
+    float aR = rainLayer(r, uRainOffset.x, RAIN_COL_NEAR, RAIN_REP_NEAR, 11.0);
+    aR = max(aR, 0.6 * rainLayer(r + vec2(3.7, 0.0), uRainOffset.y, RAIN_COL_FAR, RAIN_REP_FAR, 23.0));
+    c = mix(c, INK, aR * mix(1.0, 0.72, wContent));
+  }
 
   // Fixed grain, ±1.5 % of luminance, applied before the clamp (Pitfall 8).
   c *= 1.0 + (hash12(gl_FragCoord.xy) - 0.5) * 0.03 * uGrain;
