@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-24T00:35:29.192Z"
+last_updated: "2026-10-24T00:46:44.229Z"
 last_activity: 2026-10-24
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
   percent: 14
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 2 (Pronóstico núcleo) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-10-24
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -58,6 +58,7 @@ Progress: [████████░░] 83%
 | Phase 02 P01 | 25 min | 3 tasks | 12 files |
 | Phase 02 P02 | 10 min | 3 tasks | 12 files |
 | Phase 02 P03 | 25 min | 3 tasks | 7 files |
+| Phase 02 P04 | 30 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,8 @@ Recent decisions affecting current work:
 - [Phase 02]: 02-02: titulo de /pronostico en Headline 28/1.21; escalas 7/14 calculadas en el servidor, la isla solo elige bar7/bar14
 - [Phase 02]: 02-03: rótulos de día del meteograma estimados en 11 px/carácter (DAY_CHAR_W); numéricos 7 px
 - [Phase 02]: 02-03: mayúsculas de los rótulos SVG en JS, no con text-transform CSS
+- [Phase 02]: 02-04: columnas de viento con clamp en [7, ancho−7] y separación mínima de 18 px entre centros (adaptativa en anchos chicos)
+- [Phase 02]: 02-04: la selección del scrubber vuelve a Ahora con datos nuevos mediante un key de remount en MeteogramSection, sin efecto
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-24T00:35:18.069Z
+Last session: 2026-10-24T00:46:28.913Z
 Stopped at: Completed 02-02-PLAN.md
 Resume file: None
