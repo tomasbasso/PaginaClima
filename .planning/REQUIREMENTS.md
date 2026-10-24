@@ -49,12 +49,12 @@
 
 ### Cielo vivo (SKY)
 
-- [ ] **SKY-01**: El usuario ve un fondo animado generativo que refleja la posición real del sol (noche, amanecer, día, atardecer)
+- [x] **SKY-01**: El usuario ve un fondo animado generativo que refleja la posición real del sol (noche, amanecer, día, atardecer)
 - [ ] **SKY-02**: El fondo cambia según el estado del tiempo (despejado, nublado, lluvia, tormenta, niebla, noche estrellada)
 - [ ] **SKY-03**: El usuario ve la silueta del horizonte pampeano en la parte inferior
-- [ ] **SKY-04**: El texto se lee con buen contraste sobre cualquier estado del cielo
+- [x] **SKY-04**: El texto se lee con buen contraste sobre cualquier estado del cielo
 - [ ] **SKY-05**: El usuario con "reducir movimiento" activado ve una versión estática del cielo
-- [ ] **SKY-06**: La animación corre fluida en un iPhone real sin calentar el teléfono (30 fps máx., pausa en segundo plano, fallback si no hay WebGL)
+- [x] **SKY-06**: La animación corre fluida en un iPhone real sin calentar el teléfono (30 fps máx., pausa en segundo plano, fallback si no hay WebGL)
 
 ### PWA (PWA)
 
@@ -121,12 +121,12 @@
 | SAT-02 | Phase 5 | Pending |
 | ASTRO-01 | Phase 5 | Pending |
 | ASTRO-02 | Phase 5 | Pending |
-| SKY-01 | Phase 3 | Pending |
+| SKY-01 | Phase 3 | Complete |
 | SKY-02 | Phase 3 | Pending |
 | SKY-03 | Phase 3 | Pending |
-| SKY-04 | Phase 3 | Pending |
+| SKY-04 | Phase 3 | Complete |
 | SKY-05 | Phase 3 | Pending |
-| SKY-06 | Phase 3 | Pending |
+| SKY-06 | Phase 3 | Complete |
 | PWA-01 | Phase 6 | Pending |
 | PWA-02 | Phase 6 | Pending |
 | PWA-03 | Phase 6 | Pending |
