@@ -36,6 +36,9 @@
     calc(100svh - 644px - env(safe-area-inset-top) - env(safe-area-inset-bottom)),
     240px
   );
+  /* Tab bar height. Hero's sky box resets it to 0px on itself, so .sky-layer inside it puts the
+     horizon on the box's bottom edge; /dev/estados frames do the same (they have no tab bar). */
+  --bar-h: calc(56px + env(safe-area-inset-bottom));
 }
 
 /* Sky states (UI-SPEC "Estados del cielo"). Plain attribute selectors (never scoped to the root element) so a
@@ -111,11 +114,11 @@ html:has(main[data-sky="tormenta"]) {
   --accent: #b9b7f0;
 }
 
-/* One gradient over the whole hero. Structural contrast rule: the content zone is S1 -> S3
-   (dark); the light S4/S5 live only in the 240px horizon band, whose bottom (the horizon line)
-   sits on top of the tab bar. Below the horizon: ground color. */
+/* One gradient over the sky box. Structural contrast rule: the content zone is S1 -> S3 (dark);
+   the light S4/S5 live only in the horizon band. --bar-h is inherited (0px inside Hero's sky box
+   since phase 2), so the horizon line is the box's bottom edge, which in the full variant sits on
+   top of the tab bar. Below the horizon: ground color. */
 .sky-layer {
-  --bar-h: calc(56px + env(safe-area-inset-bottom));
   --band-top: calc(100% - var(--bar-h) - var(--band-h));
   --horizon: calc(100% - var(--bar-h));
   background: linear-gradient(

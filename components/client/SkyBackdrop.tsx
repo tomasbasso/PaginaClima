@@ -37,8 +37,9 @@ export function SkyBackdrop({
     const applyAccent = (token: SkyToken) => {
       // --accent (tab bar, diamond, focus ring) follows the sky: <html> and the hosting <main>.
       document.documentElement.dataset.sky = token
-      const host = rootRef.current?.parentElement
-      if (host?.hasAttribute('data-sky')) host.dataset.sky = token
+      // closest(): after the phase-2 Hero refactor the backdrop's parent is the sky box, not <main>.
+      const host = rootRef.current?.parentElement?.closest<HTMLElement>('[data-sky]')
+      if (host) host.dataset.sky = token
     }
     applyAccent(current())
     const tick = () => {

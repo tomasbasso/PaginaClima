@@ -42,8 +42,9 @@ function Frame({
         aria-label={name}
         data-sky={token}
         // Frames are always 844px tall and have no tab bar, so the band keeps its full 240px
-        // instead of following the window's viewport height.
-        className="relative isolate flex h-[844px] w-[390px] shrink-0 flex-col overflow-hidden bg-ground [--band-h:240px]"
+        // instead of following the window's viewport height, and --bar-h is 0px (the gradient's
+        // horizon sits on the band bottom).
+        className="relative isolate flex h-[844px] w-[390px] shrink-0 flex-col overflow-hidden bg-ground [--band-h:240px] [--bar-h:0px]"
       >
         <SkyBackdrop state={sky} />
         <div className="flex flex-1 flex-col pt-[24px]">
