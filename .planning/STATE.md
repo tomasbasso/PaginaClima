@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-24T23:38:46.829Z"
+last_updated: "2026-10-24T23:47:11.804Z"
 last_activity: 2026-10-24
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 20
-  completed_plans: 16
+  completed_plans: 17
   percent: 29
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 3 (cielo-vivo) — EXECUTING
-Plan: 5 of 8
+Plan: 6 of 8
 Status: Ready to execute
 Last activity: 2026-10-24
 
-Progress: [████████░░] 80%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -62,6 +62,7 @@ Progress: [████████░░] 80%
 | Phase 03 P01 | 7 min | 3 tasks | 11 files |
 | Phase 03 P02 | 6 min | 3 tasks | 11 files |
 | Phase 03 P03 | 7 min | 3 tasks | 6 files |
+| Phase 03 P05 | 9 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,8 @@ Recent decisions affecting current work:
 - [Phase 03-02]: molino con una Web Animation y updatePlaybackRate(1/clamp(36/km/h,1.5,12)); quieto con calma, sin dato o reduced-motion leído en JS
 - [Phase 03]: 03-03: gobernador de dos señales (CPU EMA > 28 ms o intervalo > 45 ms, 2 s tras 2 s de calentamiento, nunca sube); umbrales a calibrar en 03-08
 - [Phase 03]: 03-03: estrellas y halo de luna se desvanecen con el factor de despejado interpolado en 2000 ms; halo de luna atenuado de día
+- [Phase 03]: 03-05: /dev/sky alt range −30…70 (presets −30/−25 round-trip); query validated by parseSkyLabParams, never echoed
+- [Phase 03]: 03-05: SkyBackdrop dev props (astro, paused, bufferScale, onStats, onStatus) in refs; only bufferScale recreates the renderer
 
 ### Pending Todos
 
@@ -115,6 +118,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-24T23:38:46.808Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-10-24T23:47:11.784Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
