@@ -24,6 +24,7 @@ import {
   TEMP_PAD,
   valueTextFor,
   windColumns,
+  WIND_MIN_GAP,
 } from './meteogram'
 
 const TODAY = '2026-10-23'
@@ -284,12 +285,28 @@ describe('wind row (D-05)', () => {
     expect(l.height).toBe(220)
     expect(CHART_H).toBe(220)
     expect(l.wind).toHaveLength(16)
-    expect(cols[0].x).toBe(8)
-    expect(cols[1].x).toBeCloseTo(l.xs[3])
+    expect(cols[0].x).toBe(7)
+    // the clamped first column pushes the second just enough to keep two digits apart
+    expect(cols[1].x).toBe(7 + WIND_MIN_GAP)
+    expect(cols[2].x).toBeCloseTo(l.xs[6])
     expect(cols[15].x).toBeCloseTo(l.xs[45])
+    for (const w of [342, 560, 327]) {
+      const cs = windColumns(pts, w)
+      for (let k = 1; k < cs.length; k++) expect(cs[k].x - cs[k - 1].x).toBeGreaterThanOrEqual(WIND_MIN_GAP - 1e-9)
+    }
+    // a 272 px chart (320 px phone) cannot fit 18 px gaps: columns stay inside, evenly squeezed
+    const narrow = windColumns(pts, 272)
+    for (const c of narrow) {
+      expect(c.x).toBeGreaterThanOrEqual(7 - 1e-9)
+      expect(c.x).toBeLessThanOrEqual(272 - 7 + 1e-9)
+    }
+    // 48 points ending at index 47: last column (45) stays inside the right edge
+    const tail = windColumns(makeHourly(START, 46), 342)
+    expect(tail[15].x).toBeLessThanOrEqual(342 - 7)
+    expect(tail[15].x - tail[14].x).toBeGreaterThanOrEqual(WIND_MIN_GAP)
     for (const c of cols) {
-      expect(c.x).toBeGreaterThanOrEqual(8)
-      expect(c.x).toBeLessThanOrEqual(342 - 8)
+      expect(c.x).toBeGreaterThanOrEqual(7)
+      expect(c.x).toBeLessThanOrEqual(342 - 7)
       expect(c.arrowY).toBeGreaterThanOrEqual(PLOT_H + AXIS_GAP + 16)
       expect(c.textY).toBeGreaterThan(c.arrowY)
       expect(c.textY + 8).toBeLessThanOrEqual(220)

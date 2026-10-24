@@ -30,8 +30,14 @@ export const ARROW_H = 16
 export const KMH_H = 16
 /** One wind column every this many hours (16 columns over 48 h). */
 export const WIND_EVERY = 3
-/** Wind column centres stay this far from the edges. */
-export const WIND_EDGE = 8
+/** Wind column centres stay this far from the edges (the 12 px arrow needs 6). */
+export const WIND_EDGE = 7
+/**
+ * Minimum distance between wind column centres: two 12 px tabular digits measure ≈ 14.4 px, so the
+ * edge-clamped first column would touch the second (x ≈ 21.8 at 342 px). Measured with CDP.
+ * On very narrow charts the gap shrinks to what fits between the edges.
+ */
+export const WIND_MIN_GAP = 18
 /** Gusts from this speed are flagged (peach + text). Distinct from the headline's 60 on purpose. */
 export const STRONG_GUST_KMH = 50
 export const CHART_H = PLOT_H + AXIS_GAP + AXIS_H + WIND_GAP + ARROW_H + KMH_H
@@ -323,6 +329,13 @@ export function windColumns(points: HourlyPoint[], width: number): WindColumn[] 
       text,
       strong,
     })
+  }
+  // Push neighbours apart only where the edge clamp squeezed them (first/last columns).
+  const gap = out.length > 1 ? Math.min(WIND_MIN_GAP, (width - 2 * WIND_EDGE) / (out.length - 1)) : 0
+  for (let k = 1; k < out.length; k++) out[k].x = Math.max(out[k].x, out[k - 1].x + gap)
+  for (let k = out.length - 2; k >= 0; k--) {
+    if (out[k + 1].x > width - WIND_EDGE) out[k + 1].x = Math.max(WIND_EDGE, width - WIND_EDGE)
+    out[k].x = Math.min(out[k].x, out[k + 1].x - gap)
   }
   return out
 }
