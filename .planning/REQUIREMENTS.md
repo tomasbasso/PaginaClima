@@ -20,7 +20,7 @@
 
 ### Pronóstico (FCST)
 
-- [ ] **FCST-01**: El usuario ve un meteograma de las próximas 48 h con temperatura, lluvia (mm) y viento, legible en un iPhone de 390 px
+- [x] **FCST-01**: El usuario ve un meteograma de las próximas 48 h con temperatura, lluvia (mm) y viento, legible en un iPhone de 390 px
 - [x] **FCST-02**: El usuario ve el pronóstico diario de 7 a 14 días con máxima, mínima, estado y lluvia esperada
 - [ ] **FCST-03**: El usuario ve la probabilidad de lluvia de cada día calculada desde los miembros del ensemble (≥ 1 mm en el día local)
 - [ ] **FCST-04**: El usuario ve el rango de incertidumbre (p10–p90) de temperatura y lluvia en los días lejanos
@@ -107,7 +107,7 @@
 | NOW-01 | Phase 1 | Complete |
 | NOW-02 | Phase 1 | Complete |
 | NOW-03 | Phase 2 | Complete |
-| FCST-01 | Phase 2 | Pending |
+| FCST-01 | Phase 2 | Complete |
 | FCST-02 | Phase 2 | Complete |
 | FCST-03 | Phase 4 | Pending |
 | FCST-04 | Phase 4 | Pending |
