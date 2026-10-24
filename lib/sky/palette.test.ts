@@ -96,7 +96,9 @@ describe('skyPalette anchors (D-06)', () => {
     for (let i = 0; i < 5; i++) expect(luminance(night[i])).toBeLessThan(luminance(storm[i]))
   })
 
-  it('is continuous in sunAltitude (no jumps between 0.1° steps)', () => {
+  // A token switch moves a channel by ~100; near black the sRGB curve is steep, so a 0.1° step
+  // may move a channel by a few units. ≤ 6 rules out jumps without fighting the transfer curve.
+    it('is continuous in sunAltitude (no jumps between 0.1° steps)', () => {
     for (const w of WEATHERS) {
       for (const morning of [true, false]) {
         for (let a = -25; a <= 30; a += 0.1) {
@@ -104,7 +106,7 @@ describe('skyPalette anchors (D-06)', () => {
           const q = skyPalette(a + 0.1, w, morning).srgb
           for (let i = 0; i < 5; i++) {
             for (let ch = 0; ch < 3; ch++) {
-              expect(Math.abs(p[i][ch] - q[i][ch]), `${w} ${a.toFixed(1)}° S${i + 1}`).toBeLessThanOrEqual(3)
+              expect(Math.abs(p[i][ch] - q[i][ch]), `${w} ${a.toFixed(1)}° S${i + 1}`).toBeLessThanOrEqual(6)
             }
           }
         }
