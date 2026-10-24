@@ -12,7 +12,7 @@ export function windSector(deg: number): { short: WindSectorShort; long: string 
   return { short: SHORT[i], long: LONG[i] }
 }
 
-const CALM_KMH = 2
+export const CALM_KMH = 2
 
 /** Missing values (WR-09): no speed → "—"; no direction → speed only; either → no gust line. */
 export function describeWind(

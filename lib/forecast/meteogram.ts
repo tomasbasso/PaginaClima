@@ -2,9 +2,10 @@
 // x is the hour INDEX (never a time scale); local hour and day come from the -03:00 strings.
 import { scaleLinear } from 'd3-scale'
 import { area, curveMonotoneX, line } from 'd3-shape'
-import { dayKeyOf, hourOf } from '@/lib/forecast/hours'
-import { relativeDayLabel } from '@/lib/time'
+import { DAY_PART_PHRASE, dayKeyOf, dayPart, hourOf } from '@/lib/forecast/hours'
+import { addDaysToKey, relativeDayLabel, weekdayLong } from '@/lib/time'
 import { formatInt, formatTemp } from '@/lib/weather/format'
+import { CALM_KMH, windSector } from '@/lib/weather/wind'
 import type { HourlyPoint } from '@/lib/weather/types'
 
 /** Temperature panel height; the curve lives between TEMP_PAD and TEMP_H − TEMP_PAD. */
@@ -23,7 +24,17 @@ export const AXIS_GAP = 4
 export const AXIS_H = 16
 /** Temperature + rain: the scrubber's touch zone in plan 04. */
 export const PLOT_H = TEMP_H + RAIN_H
-export const CHART_H = PLOT_H + AXIS_GAP + AXIS_H
+/** Wind rows under the hour axis (D-05): 8 px gap, 16 px arrows, 16 px km/h. */
+export const WIND_GAP = 8
+export const ARROW_H = 16
+export const KMH_H = 16
+/** One wind column every this many hours (16 columns over 48 h). */
+export const WIND_EVERY = 3
+/** Wind column centres stay this far from the edges. */
+export const WIND_EDGE = 8
+/** Gusts from this speed are flagged (peach + text). Distinct from the headline's 60 on purpose. */
+export const STRONG_GUST_KMH = 50
+export const CHART_H = PLOT_H + AXIS_GAP + AXIS_H + WIND_GAP + ARROW_H + KMH_H
 /** Estimated glyph width of 12 px numeric labels. */
 export const CHAR_W = 7
 /** Estimated glyph width of 12 px uppercase day labels with 0.14em tracking (measured: MAÑANA ≈ 63 px). */
@@ -64,8 +75,23 @@ export interface MeteogramLayout {
   /** x = label centre, y = top of the box. */
   tempLabels: { x: number; y: number; text: string; kind: 'max' | 'min' }[]
   zeroY: number | null
+  /** Wind row columns (every WIND_EVERY hours). */
+  wind: WindColumn[]
   /** No temperature at all. */
   empty: boolean
+}
+
+export interface WindColumn {
+  /** Column centre. */
+  x: number
+  /** Centre of the 16 px arrow row. */
+  arrowY: number
+  /** Centre of the 16 px km/h row. */
+  textY: number
+  /** Arrow rotation in degrees (points downwind); null = no arrow. */
+  rotate: number | null
+  text: string
+  strong: boolean
 }
 
 interface Box {
@@ -268,8 +294,114 @@ export function layoutMeteogram(points: HourlyPoint[], width: number, todayKey: 
     hourTicks,
     tempLabels,
     zeroY,
+    wind: windColumns(points, width),
     empty,
   }
+}
+
+const WIND_TOP = PLOT_H + AXIS_GAP + AXIS_H + WIND_GAP
+
+/** 16 wind columns at indices 0, 3, …; the arrow points where the air goes (SMN). */
+export function windColumns(points: HourlyPoint[], width: number): WindColumn[] {
+  const n = points.length
+  const x = scaleLinear().domain([0, Math.max(1, n - 1)]).range([0, width])
+  const out: WindColumn[] = []
+  for (let i = 0; i < n; i += WIND_EVERY) {
+    const p = points[i]
+    const kmh = p.windKmh
+    const calm = kmh !== null && kmh < CALM_KMH
+    const rotate = kmh === null || calm || p.windDirDeg === null ? null : (p.windDirDeg + 180) % 360
+    const text = kmh === null ? '—' : calm ? '0' : formatInt(kmh)
+    const strong = points
+      .slice(i, i + WIND_EVERY)
+      .some((q) => q.gustKmh !== null && q.gustKmh >= STRONG_GUST_KMH)
+    out.push({
+      x: Math.min(Math.max(x(i), WIND_EDGE), Math.max(WIND_EDGE, width - WIND_EDGE)),
+      arrowY: WIND_TOP + ARROW_H / 2,
+      textY: WIND_TOP + ARROW_H + KMH_H / 2,
+      rotate,
+      text,
+      strong,
+    })
+  }
+  return out
+}
+
+/** 'Ráfagas fuertes de hasta 68 km/h mañana a la tarde', or null without gusts ≥ 50. */
+export function strongGustLine(points: HourlyPoint[], todayKey: string): string | null {
+  let best = -1
+  for (let i = 0; i < points.length; i++) {
+    const g = points[i].gustKmh
+    if (g === null) continue
+    if (best < 0 || g > (points[best].gustKmh as number)) best = i
+  }
+  if (best < 0) return null
+  const max = points[best].gustKmh as number
+  if (max < STRONG_GUST_KMH) return null
+  const key = dayKeyOf(points[best].time)
+  const day = key === todayKey ? 'hoy' : key === addDaysToKey(todayKey, 1) ? 'mañana' : `el ${weekdayLong(key)}`
+  const franja = DAY_PART_PHRASE[dayPart(hourOf(points[best].time))]
+  return `Ráfagas fuertes de hasta ${formatInt(max)} km/h ${day} ${franja}`
+}
+
+export interface Readout {
+  /** Sentence case ('Ahora', 'Mañana 15:00'); the UI uppercases with CSS. */
+  timeLabel: string
+  temp: string
+  rain: string
+  wind: string
+  /** Only for gusts ≥ STRONG_GUST_KMH. */
+  gust: string | null
+}
+
+const hh = (time: string) => `${String(hourOf(time)).padStart(2, '0')}:00`
+
+/** null = no rain worth naming; otherwise '0,4' or '12' (comma decimal under 10). */
+function rainAmount(mm: number): string | null {
+  if (mm < RAIN_MIN_MM) return null
+  const one = Math.round(mm * 10) / 10
+  return one < 10 ? one.toFixed(1).replace('.', ',') : formatInt(mm)
+}
+
+/** Fixed readout line above the chart for the selected hour (UI-SPEC "Lectura"). */
+export function readoutFor(points: HourlyPoint[], i: number, todayKey: string): Readout {
+  const p = points[i]
+  const timeLabel = i === 0 ? 'Ahora' : `${relativeDayLabel(dayKeyOf(p.time), todayKey)} ${hh(p.time)}`
+  const temp = p.tempC === null ? '—' : `${formatTemp(p.tempC)}°`
+  const amount = p.precipMm === null ? undefined : rainAmount(p.precipMm)
+  const rain = amount === undefined ? '—' : amount === null ? 'sin lluvia' : `${amount} mm`
+  let wind: string
+  if (p.windKmh === null) wind = '—'
+  else if (p.windKmh < CALM_KMH) wind = 'calma'
+  else if (p.windDirDeg === null) wind = `${formatInt(p.windKmh)} km/h`
+  else wind = `${formatInt(p.windKmh)} km/h ${windSector(p.windDirDeg).short}`
+  const gust = p.gustKmh !== null && p.gustKmh >= STRONG_GUST_KMH ? `ráfagas ${formatInt(p.gustKmh)} km/h` : null
+  return { timeLabel, temp, rain, wind, gust }
+}
+
+/** aria-valuetext of the scrubber slider (UI-SPEC copy). */
+export function valueTextFor(p: HourlyPoint): string {
+  const parts = [`${weekdayLong(dayKeyOf(p.time))} ${hh(p.time)}`]
+  parts.push(p.tempC === null ? 'temperatura sin dato' : `${formatTemp(p.tempC)} grados`)
+  if (p.precipMm === null) parts.push('lluvia sin dato')
+  else {
+    const amount = rainAmount(p.precipMm)
+    parts.push(amount === null ? 'sin lluvia' : `${amount} ${amount === '1' ? 'milímetro' : 'milímetros'}`)
+  }
+  if (p.windKmh === null) parts.push('viento sin dato')
+  else if (p.windKmh < CALM_KMH) parts.push('viento en calma')
+  else {
+    const dir = p.windDirDeg === null ? '' : ` del ${windSector(p.windDirDeg).long}`
+    parts.push(`viento ${formatInt(p.windKmh)} kilómetros por hora${dir}`)
+  }
+  if (p.gustKmh !== null && p.gustKmh >= STRONG_GUST_KMH) parts.push(`ráfagas de ${formatInt(p.gustKmh)}`)
+  return parts.join(', ')
+}
+
+/** Pointer x (relative to the chart) → hour index; same mapping as x.invert, clamped to [0, n − 1]. */
+export function indexAtX(px: number, width: number, n: number): number {
+  if (n <= 1 || width <= 0) return 0
+  return Math.min(n - 1, Math.max(0, Math.round((px / width) * (n - 1))))
 }
 
 /** aria-label copy of the chart (UI-SPEC "Copy"). */
