@@ -79,7 +79,7 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08)
 - [x] 03-03-PLAN.md — El cielo cobra vida: loop de 30 fps con pausas, reducir movimiento, gobernador, sol/luna/estrellas
 - [x] 03-04-PLAN.md — Nubes, niebla y lluvia procedurales moduladas por el dato real
 - [x] 03-05-PLAN.md — /dev/sky: forzar estados, 3 cuadros, presets y lectura de FPS/MS/calidad
-- [ ] 03-06-PLAN.md — Relámpagos con límites de fotosensibilidad, contraluz de la silueta y FORZAR RELÁMPAGO
+- [x] 03-06-PLAN.md — Relámpagos con límites de fotosensibilidad, contraluz de la silueta y FORZAR RELÁMPAGO
 - [ ] 03-07-PLAN.md — Gate, revisión de escritorio, push a main con smoke de producción y preview para el iPhone
 - [ ] 03-08-PLAN.md — Checkpoint en iPhone real y decisión de resolución (0,5×/0,75×) y umbrales del gobernador
 **UI hint**: yes
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
-| 3. Cielo vivo | 5/8 | In Progress|  |
+| 3. Cielo vivo | 6/8 | In Progress|  |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
