@@ -3,7 +3,7 @@
 // island of the page: it toggles between 7 and 14 days (D-08). Rows arrive precomputed and plain
 // (lib/forecast/daily.ts); both range scales come from the server, so expanding only swaps
 // bar7 → bar14 (D-09, no animation). Rows are static: no links, buttons or hover (D-11).
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { DailyBar, DailyRow } from '@/lib/forecast/daily'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
@@ -43,9 +43,18 @@ function Row({ row, bar, first }: { row: DailyRow; bar: DailyBar | null; first: 
   )
 }
 
-export function DailyList({ rows }: { rows: DailyRow[] }) {
-  // SSR-stable initial state: always collapsed on the server and on hydration.
-  const [expanded, setExpanded] = useState(false)
+export function DailyList({
+  rows,
+  initialExpanded = false,
+}: {
+  rows: DailyRow[]
+  /** Only the /dev/estados 14-day frame passes true; the real page always starts collapsed. */
+  initialExpanded?: boolean
+}) {
+  // SSR-stable initial state: the same value on the server and on hydration.
+  const [expanded, setExpanded] = useState(initialExpanded)
+  // Unique per instance: /dev/estados renders several lists on one page.
+  const tailId = `dias-8-14-${useId().replace(/:/g, '')}`
   const head = rows.slice(0, 7)
   const tail = rows.slice(7)
   const barOf = (r: DailyRow) => (expanded ? r.bar14 : r.bar7)
@@ -59,7 +68,7 @@ export function DailyList({ rows }: { rows: DailyRow[] }) {
       </ol>
       {tail.length > 0 ? (
         <>
-          <div id="dias-8-14" hidden={!expanded}>
+          <div id={tailId} hidden={!expanded}>
             <p className={`${LABEL} border-t border-ink/20 py-4 text-ink/75`}>
               DEL DÍA 8 EN ADELANTE, ORIENTATIVO
             </p>
@@ -73,7 +82,7 @@ export function DailyList({ rows }: { rows: DailyRow[] }) {
           <button
             type="button"
             aria-expanded={expanded}
-            aria-controls="dias-8-14"
+            aria-controls={tailId}
             onClick={() => setExpanded((v) => !v)}
             className={`${BUTTON} mt-6 w-full`}
           >

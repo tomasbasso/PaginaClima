@@ -1,7 +1,10 @@
 // Fixtures for /dev/estados (D-14). Pure: every snapshot is built relative to `nowMs`, so the
 // "ACTUALIZADO HACE X MIN" ages and the Desactualizado threshold stay meaningful on each request.
+import { buildHeadline } from '@/lib/forecast/headline'
+import { makeDaily, makeHourly } from '@/lib/forecast/__fixtures__/build'
 import type { SkyState, SkyToken } from '@/lib/sky/state'
-import type { NowData, SourceInfo, WeatherSnapshot } from '@/lib/weather/types'
+import { addDaysToKey, localDateKey } from '@/lib/time'
+import type { DailyPoint, HourlyPoint, NowData, SourceInfo, WeatherSnapshot } from '@/lib/weather/types'
 
 const MIN = 60_000
 
@@ -33,12 +36,14 @@ function snapshot(
   nowMs: number,
   now: NowData | null,
   sources: SourceInfo[],
+  hourly48: HourlyPoint[] = [],
+  daily: DailyPoint[] = [],
 ): WeatherSnapshot {
   return {
     generatedAt: new Date(nowMs).toISOString(),
     now,
-    hourly48: [],
-    daily: [],
+    hourly48,
+    daily,
     sources,
   }
 }
@@ -126,4 +131,121 @@ export function buildFixtures(nowMs: number): {
   ]
 
   return { states: { normal, desactualizado, fuenteCaida, sinDatos }, skies }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 2 (headline, meteogram, daily list). Hourly fixtures start at the current local hour
+// (except `degradado`, which starts 5 h earlier and is filtered by selectFutureHours on the page);
+// daily fixtures start today (ART) except `pasados`. Headlines are evaluated at fixed instants.
+
+export type HourlyFixtureKey = 'lluviaTormenta' | 'helada' | 'rafagas' | 'nulos' | 'degradado' | 'vacio'
+export type DailyFixtureKey = 'semana' | 'nulos' | 'pasados'
+
+/** Smooth daily cycle: `min` at 05 h, `max` at 15 h (cosine, local hour). */
+function cycle(hour: number, min: number, max: number): number {
+  const mid = (min + max) / 2
+  const amp = (max - min) / 2
+  return Math.round((mid + amp * Math.cos(((hour - 15) / 24) * 2 * Math.PI)) * 10) / 10
+}
+
+/** Day index (0 = the start day) of point i for a series whose first local hour is `h0`. */
+const dayIndex = (h0: number, i: number) => Math.floor((h0 + i) / 24)
+
+export function buildForecastFixtures(nowMs: number): {
+  hourly: Record<HourlyFixtureKey, HourlyPoint[]>
+  daily: Record<DailyFixtureKey, DailyPoint[]>
+  headlines: { largo: string | null; manana: string | null }
+} {
+  const start = localIso(nowMs)
+  const h0 = Number(start.slice(11, 13))
+  const todayKey = localDateKey(new Date(nowMs))
+
+  const lluviaTormenta = makeHourly(start, 48, (_i, h) => ({
+    tempC: cycle(h, 14, 27),
+    feelsC: cycle(h, 13, 28),
+    ...(h >= 14 && h <= 18
+      ? { precipMm: [1, 2.5, 6, 3.5, 1.2][h - 14], weatherCode: h === 16 ? 63 : 61 }
+      : {}),
+    ...(h >= 21 && h <= 23 ? { precipMm: 4, weatherCode: 95, windKmh: 28, gustKmh: 46 } : {}),
+    windDirDeg: 315,
+  }))
+
+  const helada = makeHourly(start, 48, (_i, h) => ({
+    tempC: cycle(h, -3, 9),
+    feelsC: cycle(h, -6, 8),
+    weatherCode: 0,
+    windKmh: 6,
+    gustKmh: 11,
+    windDirDeg: 200,
+  }))
+
+  const rafagas = makeHourly(start, 48, (i, h) => {
+    const tomorrowAfternoon = dayIndex(h0, i) === 1 && h >= 14 && h <= 19
+    return {
+      tempC: cycle(h, 12, 24),
+      windDirDeg: 250,
+      ...(tomorrowAfternoon
+        ? { windKmh: 34 + (h - 14) * 2, gustKmh: 55 + Math.round(((h - 14) * 13) / 5), weatherCode: 3 }
+        : {}),
+    }
+  })
+
+  const nulos = makeHourly(start, 48, (i, h) => ({
+    tempC: i >= 20 && i < 26 ? null : cycle(h, 10, 22),
+    ...(i === 9 || i === 12 ? { windKmh: null } : {}),
+    ...(i === 30 ? { windDirDeg: null } : {}),
+  }))
+
+  const degradado = makeHourly(localIso(nowMs - 5 * 60 * MIN), 48, (_i, h) => ({
+    tempC: cycle(h, 11, 23),
+    weatherCode: 2,
+  }))
+
+  const vacio = makeHourly(start, 8, (_i, h) => ({ tempC: cycle(h, 11, 23) }))
+
+  const codes = [0, 1, 2, 3, 61, 63, 95, 45, 80, 0, 2, 3, 61, 0]
+  const semana = makeDaily(todayKey, 14, (i) => ({
+    weatherCode: codes[i],
+    tMaxC: [27, 29, 24, 18, 12, 15, 22, 20, 26, 31, 28, 21, 17, 23][i],
+    tMinC: [12, 14, 9, 6, -2, 3, 11, 8, 10, 15, 13, 9, 5, 7][i],
+    precipSumMm: i === 4 ? 4 : i === 6 ? 12 : i === 8 ? 0.6 : 0,
+  }))
+
+  const dailyNulos = makeDaily(todayKey, 7, (i) =>
+    i === 2 || i === 4 ? { tMaxC: null, tMinC: null, weatherCode: null } : { weatherCode: i % 2 ? 2 : 0 },
+  )
+
+  const pasados = makeDaily(addDaysToKey(todayKey, -2), 9, (i) => ({
+    weatherCode: i < 2 ? 95 : 1,
+    tMaxC: 22 + i,
+    tMinC: 8 + (i % 3),
+    precipSumMm: i < 2 ? 20 : 0,
+  }))
+
+  // Fixed instants: 10:00 ART (34-character headline) and 21:30 ART ("Mañana: …").
+  const largoAt = new Date('2026-10-23T10:00:00-03:00')
+  const largo = buildHeadline(
+    {
+      hourly48: makeHourly('2026-10-23T10:00:00-03:00', 48, (i, h) => ({
+        ...(i < 14 && h === 15 ? { tempC: 36 } : {}),
+        ...(i < 14 && h === 21 ? { weatherCode: 95 } : {}),
+      })),
+    },
+    largoAt,
+  )
+  const mananaAt = new Date('2026-10-23T21:30:00-03:00')
+  const manana = buildHeadline(
+    {
+      hourly48: makeHourly('2026-10-23T21:00:00-03:00', 48, (i, h) =>
+        i >= 3 && i < 27 && h === 15 ? { weatherCode: 95 } : {},
+      ),
+    },
+    mananaAt,
+  )
+
+  return {
+    hourly: { lluviaTormenta, helada, rafagas, nulos, degradado, vacio },
+    daily: { semana, nulos: dailyNulos, pasados },
+    headlines: { largo, manana },
+  }
 }
