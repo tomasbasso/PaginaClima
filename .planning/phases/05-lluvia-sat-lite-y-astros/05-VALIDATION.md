@@ -53,9 +53,9 @@ IDs reales de las tareas de los planes 05-01 a 05-05. Gate de cierre (05-05-T2, 
 | 05-04-T3 | SAT-01, SAT-02 | Bloque Satélite en `/cielo`; link al SMN con `target=_blank` y `rel="noopener noreferrer"` | smoke | `MSYS_NO_PATHCONV=1 node scripts/smoke.mjs http://localhost:3107 --start --expect-satellite --expect-html '/cielo::Satélite' --expect-html '/cielo::href="https://www.smn.gob.ar/radar"'` | ✅ | ✅ green |
 | 05-05-T1 | RAIN-01..03, SAT-01, ASTRO-01/02 | Galería `/dev/estados` (#luna, #sol, #lluvia, #satelite) con todos los estados y sin URLs de GIBS | smoke | `MSYS_NO_PATHCONV=1 node scripts/smoke.mjs http://localhost:3107 --start --expect-html '/dev/estados::Cuarto creciente' … --reject-html '/dev/estados::gibs\.earthdata'` | ✅ | ✅ green |
 | 05-05-T2 | todas | Gate completo + smoke local de `/cielo` | gate + smoke | `npm test && npm run typecheck && npm run lint && npm run build && MSYS_NO_PATHCONV=1 node scripts/smoke.mjs http://localhost:3107 --start --expect-satellite --expect-html '/cielo::Mirando para arriba' --expect-html '/cielo::Lluvia acumulada' --expect-html '/cielo::Satélite' --expect-html '/cielo::href="https://www.smn.gob.ar/radar"' --expect-html '/::href="/cielo"'` | ✅ | ✅ green |
-| — | RAIN-03 | Aclaración siempre visible con números | manual / `/dev/estados` | revisión visual | — | ⬜ pending (revisión visual del orquestador) |
-| — | ASTRO-02 | Creciente vista iluminada a la izquierda | manual (`/dev/estados#luna`) | revisión visual | — | ⬜ pending (revisión visual del orquestador) |
-| — | SAT-01 | Imagen satelital centrada y legible | manual (`/cielo`, `/dev/estados#satelite`) | revisión visual | — | ⬜ pending (revisión visual del orquestador) |
+| — | RAIN-03 | Aclaración siempre visible con números | manual / `/dev/estados` | revisión visual | — | ✅ green (revisión visual del orquestador, 2026-10-25) |
+| — | ASTRO-02 | Creciente vista iluminada a la izquierda | manual (`/dev/estados#luna`) | revisión visual | — | ✅ green (revisión visual del orquestador, 2026-10-25) |
+| — | SAT-01 | Imagen satelital centrada y legible | manual (`/cielo`, `/dev/estados#satelite`) | revisión visual | — | ✅ green (revisión visual del orquestador, 2026-10-25) |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -73,9 +73,9 @@ IDs reales de las tareas de los planes 05-01 a 05-05. Gate de cierre (05-05-T2, 
 
 | Behavior | Requirement | Why Manual | Test Instructions | Status |
 |----------|-------------|------------|-------------------|--------|
-| Aclaración de reanálisis visible | RAIN-03 | Composición visual | `/cielo` y `/dev/estados#lluvia`: con números siempre aparece "Estimado por reanálisis, no pluviómetro" | ⬜ pending (revisión visual del orquestador) |
-| Luna creciente iluminada a la izquierda | ASTRO-02 | Orientación visual del dibujo | `/dev/estados#luna`, grilla de 8 fases | ⬜ pending (revisión visual del orquestador) |
-| Imagen satelital centrada y legible | SAT-01 | Juicio visual | `/cielo` en 390 px: marcador en el centro, hora ART del pase, sin salto de layout; `/dev/estados#satelite` | ⬜ pending (revisión visual del orquestador) |
+| Aclaración de reanálisis visible | RAIN-03 | Composición visual | `/cielo` y `/dev/estados#lluvia`: con números siempre aparece "Estimado por reanálisis, no pluviómetro" | ✅ green (revisión visual del orquestador, 2026-10-25) |
+| Luna creciente iluminada a la izquierda | ASTRO-02 | Orientación visual del dibujo | `/dev/estados#luna`, grilla de 8 fases | ✅ green (revisión visual del orquestador, 2026-10-25) |
+| Imagen satelital centrada y legible | SAT-01 | Juicio visual | `/cielo` en 390 px: marcador en el centro, hora ART del pase, sin salto de layout; `/dev/estados#satelite` | ✅ green (revisión visual del orquestador, 2026-10-25) |
 
 ---
 
