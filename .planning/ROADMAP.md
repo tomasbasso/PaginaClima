@@ -109,7 +109,13 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08)
   1. El usuario ve la lluvia acumulada de la semana, el mes y el año, cada una comparada contra el promedio 1991–2020 prorrateado a la misma fecha, con la aclaración "estimado por reanálisis, no pluviómetro"
   2. El usuario ve una imagen satelital infrarroja reciente de GOES-East centrada en Winifreda (carga diferida, sin trabar la pantalla principal) y puede abrir el radar del SMN con un link externo
   3. El usuario ve la hora de salida y puesta del sol y la duración del día, y la fase lunar actual dibujada como se ve desde el hemisferio sur
-**Plans**: TBD
+**Plans**: 5 plans
+Plans (olas: 1 → 01; 2 → 02; 3 → 03; 4 → 04; 5 → 05):
+- [ ] 05-01-PLAN.md — /cielo habilitada con Sol y luna: sunDay y moon.ts con tests, disco lunar del hemisferio sur, pestaña Cielo
+- [ ] 05-02-PLAN.md — Lluvia acumulada observada: adapters ERA5 + past_days, costura y períodos de calendario, bloque con aclaración y estados
+- [ ] 05-03-PLAN.md — Lluvia contra lo normal: climatología 1991–2020 commiteada, normal prorrateada, comparación, barra y última lluvia
+- [ ] 05-04-PLAN.md — Satélite IR GOES-East: geometría y stamps, adapter GIBS con fallback, ruta /api/satelite/[stamp], bloque y link al SMN, CLAUDE.md corregido
+- [ ] 05-05-PLAN.md — /dev/estados de la fase 5, gate con revisión visual, push a main y smoke de producción
 **UI hint**: yes
 **Research**: sí — capa exacta y GetCapabilities de NASA GIBS, ToS de OpenFreeMap, costura ERA5 + `past_days`
 
@@ -150,6 +156,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 8/8 | Complete    | 2026-10-25 |
 | 4. Pronóstico con confianza | 0/TBD | Not started | - |
-| 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
+| 5. Lluvia, satélite y astros | 0/5 | Planned | - |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
 | 7. Alertas Web Push | 0/TBD | Not started | - |
