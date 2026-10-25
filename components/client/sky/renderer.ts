@@ -379,7 +379,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     let firstFrame = false
     let cssW = 0
     let cssH = 0
-    let bandH = DEFAULT_BAND_PX
+    let bandTop = 0 // CSS px from the top of the sky box to the top edge of the band
 
     // Loop state.
     let visible = document.visibilityState !== 'hidden'
@@ -415,7 +415,11 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
     const measure = () => {
       cssW = host.clientWidth
       cssH = host.clientHeight
-      bandH = band ? band.getBoundingClientRect().height : DEFAULT_BAND_PX
+      // The band's top edge is measured, not derived from its height: the band can overhang the
+      // bottom of the box (it does in the Hero), and `cssH - height` would leave unclamped content.
+      bandTop = band
+        ? band.getBoundingClientRect().top - host.getBoundingClientRect().top
+        : cssH - DEFAULT_BAND_PX
     }
 
     /** Advances the interpolations to `ts` and rewrites the palette buffer only when needed. */
@@ -471,7 +475,7 @@ export function createSkyRenderer(host: HTMLElement, opts: SkyRendererOptions): 
       gl.uniform3f(loc.uS4, stops[9], stops[10], stops[11])
       gl.uniform3f(loc.uS5, stops[12], stops[13], stops[14])
       gl.uniform2f(loc.uRes, w, h)
-      gl.uniform1f(loc.uBandTop, Math.max(0, cssH - bandH) * scale)
+      gl.uniform1f(loc.uBandTop, Math.min(Math.max(0, bandTop), cssH) * scale)
       gl.uniform1f(loc.uHorizon, cssH * scale)
       gl.uniform1f(loc.uScale, scale)
       // Level 2+: no grain (UI-SPEC "Rendimiento"). Reduced motion keeps the fixed grain.

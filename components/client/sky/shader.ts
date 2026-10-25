@@ -184,9 +184,9 @@ void main() {
     c += INK * (0.0207 * exp(-2.5 * dot(q, q)) * uMoon.z);
   }
 
-  // Content-zone weight (1 above the band, 24 CSS px ramp at its edge); used by the weather layers
-  // and by the C-1 clamp below.
-  float wContent = 1.0 - smoothstep(uBandTop - 24.0 * uScale, uBandTop, y);
+  // Content-zone weight (1 down to the band edge, then a 24 CSS px ramp inside the band, so every
+  // content-zone pixel gets the full C-1 clamp); used by the weather layers and the clamp below.
+  float wContent = 1.0 - smoothstep(uBandTop, uBandTop + 24.0 * uScale, y);
   vec2 pc = p / uScale; // CSS px
   float bandT = clamp((y - uBandTop) / max(uHorizon - uBandTop, 1.0), 0.0, 1.0);
 
@@ -277,7 +277,7 @@ void main() {
     float ry = dy < 0.0 ? 1.6 * uFlash.z : 0.6 * bandH;
     vec2 q = vec2((p.x - fc.x) / max(uFlash.z, 1.0), dy / max(ry, 1.0));
     float g = exp(-2.0 * dot(q, q));
-    float zone = mix(uFlashContent, 1.0, smoothstep(uBandTop - 24.0 * uScale, uBandTop + 0.25 * bandH, y));
+    float zone = mix(uFlashContent, 1.0, smoothstep(uBandTop, uBandTop + 0.25 * bandH, y));
     c += uFlashColor * (uFlash.y * g * zone * mix(0.7, 1.0, cloudA));
   }
 
