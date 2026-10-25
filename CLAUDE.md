@@ -51,7 +51,7 @@ Una web/PWA del clima exclusivamente para Winifreda, La Pampa (Argentina), con u
 | Opción | Estado | Recomendación |
 |--------|--------|---------------|
 | RainViewer Weather Maps API | Sigue viva para "uso personal/educativo": `api.rainviewer.com/public/weather-maps.json` responde. Desde el 01/01/2026 tiene **zoom máximo 7**, **un solo esquema de color** (Universal Blue), **sin nowcast ni satélite** (las claves `nowcast`/`satellite` siguen en el JSON pero no sirven), y un límite de 100 req/IP/min. Los `path` ahora son **hashes** (`/v2/radar/a642cb5f6ba2`) y ya no timestamps, así que siempre hay que leerlos del JSON. **Cobertura sobre Argentina: nula.** | **No usar como radar principal.** |
-| Satélite GOES-East (NASA GIBS WMTS) | Gratis, sin key. Capa `GOES-East_ABI_Band13_Clean_Infrared_v0_NRT_ZENJPEG` en EPSG:3857, cada 10 min, día y noche, cubre toda Argentina. | **Recomendado como reemplazo**: "nubes y tormentas en infrarrojo". Muestra los topes fríos de las tormentas convectivas, que en La Pampa es lo que importa. Antes de implementar hay que verificar el `GetCapabilities` (MEDIUM). |
+| Satélite GOES-East (NASA GIBS WMS/WMTS) | Gratis, sin key. Capa `GOES-East_ABI_Band13_Clean_Infrared` en EPSG:3857, paso de 10 min, día y noche, cubre toda Argentina. WMS GetMap devuelve un JPEG 720×720 recortado al bbox; WMTS sirve PNG hasta el nivel 6 (`GoogleMapsCompatible_Level6`). Paleta gris con realce de color para los topes fríos. | **Recomendado como reemplazo**: "nubes y tormentas en infrarrojo". Muestra los topes fríos de las tormentas convectivas, que en La Pampa es lo que importa. HIGH (GetCapabilities verificado el 2026-10-25). |
 | Imágenes de radar SMN (smn.gob.ar/radar, radar Anguil a ~60 km) | Hay imágenes PNG con ruido (nombres, bordes) y no hay API pública documentada. smn.gob.ar respondió 402 al fetch automático. El radar de Anguil tuvo problemas de disponibilidad. | Como mucho, un link externo "Ver radar SMN". No scrapear. |
 | Lluvia prevista por modelo | Ya la tenemos (Open-Meteo, por hora). | Mostrarla en el meteograma con barras de precipitación por modelo. Esto cubre el "¿llueve en las próximas horas?" mejor que un radar vacío. |
 ### Supporting Libraries
@@ -149,7 +149,7 @@ Una web/PWA del clima exclusivamente para Winifreda, La Pampa (Argentina), con u
 - https://open-meteo.com/en/docs y https://open-meteo.com/en/docs/ensemble-api: modelos, miembros y horizontes. HIGH
 - Next.js 16.3 + TS 7 (achromatic.dev, ecorpit.com y la doc de Next sobre `useTypeScriptCli`). MEDIUM
 - https://webkit.org/?p=16535 (Declarative Web Push), docs de OneSignal/Pushpad sobre iOS. MEDIUM
-- NASA GIBS WMTS, directorio `GOES-East_ABI_Band13_Clean_Infrared_v0_NRT_ZENJPEG` (gibs-a.earthdata.nasa.gov). MEDIUM (verificar GetCapabilities)
+- NASA GIBS WMS/WMTS, capa `GOES-East_ABI_Band13_Clean_Infrared` (gibs.earthdata.nasa.gov). HIGH (GetCapabilities verificado el 2026-10-25)
 - OpenFreeMap (simonwillison.net 2024, guía Nuxt Scripts). MEDIUM (leer https://openfreemap.org/tos/)
 - Windy Community (radar de Argentina no disponible) y el registro de UCAR del radar INTA Anguil. LOW-MEDIUM, como contexto
 - web-push-neo (GitHub ryoppippi). LOW

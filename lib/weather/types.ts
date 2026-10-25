@@ -1,7 +1,7 @@
 // WeatherSnapshot contract: the single shape consumed by the page, /api/weather,
 // the service worker (phase 6) and the alerts cron (phase 7).
 
-export type SourceId = 'open-meteo' | 'met-norway' | 'open-meteo-archive'
+export type SourceId = 'open-meteo' | 'met-norway' | 'open-meteo-archive' | 'nasa-gibs'
 
 /** 'stale' = a refresh attempt actually failed (never mere age). */
 export type SourceStatus = 'ok' | 'stale' | 'error'

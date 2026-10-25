@@ -13,6 +13,10 @@ export const TTL = {
   /** ERA5 updates once a day: 6 h keeps the ~455-day archive request cheap (D-10). */
   openMeteoArchive: 21_600,
   openMeteoRecentRain: 1_800,
+  /** Latest GOES-East pass (DescribeDomains + blank-step fallback); new passes every 10 min (D-07). */
+  gibsLatest: 600,
+  /** One frame per stamp never changes: 1 day in the Data Cache, the CDN keeps it immutable. */
+  gibsFrame: 86_400,
 } as const
 
 export const DEFAULT_USER_AGENT = 'ClimaWinifreda/1.0 github.com/tomasbasso/PaginaClima'
@@ -105,3 +109,18 @@ export const OPEN_METEO_RECENT_RAIN_URL = `https://api.open-meteo.com/v1/forecas
   forecast_days: '1',
   timezone: TZ,
 }).toString()}`
+
+/**
+ * GOES-East clean IR (10.3 µm, band 13) on NASA GIBS (D-07, SAT-01). The old name
+ * `…_v0_NRT_ZENJPEG` no longer exists (verified in GetCapabilities 2026-10-25).
+ */
+export const GIBS_LAYER = 'GOES-East_ABI_Band13_Clean_Infrared'
+
+/** EPSG:3857 bbox (minx, miny, maxx, maxy): 800 km on a side, centered on Winifreda. */
+export const GIBS_BBOX_3857 = [-7645928, -4828193, -6654173, -3836438] as const
+
+export const SATELLITE_SIZE_PX = 720
+export const SATELLITE_SIDE_KM = 800
+
+/** External link only (SAT-02): nothing from the SMN is scraped or embedded. */
+export const SMN_RADAR_URL = 'https://www.smn.gob.ar/radar'
