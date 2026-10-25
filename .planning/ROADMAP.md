@@ -156,6 +156,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 8/8 | Complete    | 2026-10-25 |
 | 4. Pronóstico con confianza | 0/TBD | Not started | - |
-| 5. Lluvia, satélite y astros | 5/5 | Complete   | 2026-10-25 |
+| 5. Lluvia, satélite y astros | 5/5 | Complete    | 2026-10-25 |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
 | 7. Alertas Web Push | 0/TBD | Not started | - |

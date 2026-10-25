@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-10-25T17:58:53.463Z"
+status: ready_to_plan
+last_updated: 2026-10-25T18:01:28.226Z
 last_activity: 2026-10-25
 progress:
   total_phases: 7
@@ -11,6 +11,7 @@ progress:
   total_plans: 25
   completed_plans: 25
   percent: 57
+stopped_at: Phase 5 complete (5/5) — ready to discuss Phase 6
 ---
 
 # Project State
@@ -20,13 +21,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-23)
 
 **Core value:** Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con una experiencia visual que no se parece a ninguna otra app del clima.
-**Current focus:** Phase 5 — lluvia-sat-lite-y-astros
+**Current focus:** Phase 6 — pwa instalable y offline
 
 ## Current Position
 
-Phase: 5 (lluvia-sat-lite-y-astros) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
+Phase: 6
+Plan: Not started
+Status: Ready to plan
 Last activity: 2026-10-25
 
 Progress: [██████████] 100%
@@ -35,7 +36,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 18
 - Average duration: -
 - Total execution time: 0 hours
 
@@ -45,6 +46,7 @@ Progress: [██████████] 100%
 |-------|-------|-------|----------|
 | 2 | 5 | - | - |
 | 3 | 8 | - | - |
+| 5 | 5 | - | - |
 
 **Recent Trend:**
 

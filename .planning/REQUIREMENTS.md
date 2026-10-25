@@ -33,19 +33,19 @@
 
 ### Lluvia acumulada (RAIN)
 
-- [ ] **RAIN-01**: El usuario ve la lluvia acumulada de la semana, el mes y el año
-- [ ] **RAIN-02**: El usuario compara cada acumulado contra el promedio histórico 1991–2020 prorrateado a la misma fecha
-- [ ] **RAIN-03**: El usuario ve aclarado que el acumulado es estimado por reanálisis, no medido por pluviómetro
+- [x] **RAIN-01**: El usuario ve la lluvia acumulada de la semana, el mes y el año
+- [x] **RAIN-02**: El usuario compara cada acumulado contra el promedio histórico 1991–2020 prorrateado a la misma fecha
+- [x] **RAIN-03**: El usuario ve aclarado que el acumulado es estimado por reanálisis, no medido por pluviómetro
 
 ### Satélite (SAT)
 
-- [ ] **SAT-01**: El usuario ve la imagen satelital infrarroja reciente (GOES-East) centrada en Winifreda para ver la nubosidad y tormentas que se acercan
-- [ ] **SAT-02**: El usuario puede abrir el radar del SMN con un link externo
+- [x] **SAT-01**: El usuario ve la imagen satelital infrarroja reciente (GOES-East) centrada en Winifreda para ver la nubosidad y tormentas que se acercan
+- [x] **SAT-02**: El usuario puede abrir el radar del SMN con un link externo
 
 ### Sol y luna (ASTRO)
 
-- [ ] **ASTRO-01**: El usuario ve la hora de salida y puesta del sol y la duración del día
-- [ ] **ASTRO-02**: El usuario ve la fase lunar actual (dibujada para el hemisferio sur)
+- [x] **ASTRO-01**: El usuario ve la hora de salida y puesta del sol y la duración del día
+- [x] **ASTRO-02**: El usuario ve la fase lunar actual (dibujada para el hemisferio sur)
 
 ### Cielo vivo (SKY)
 
@@ -115,13 +115,13 @@
 | MODL-01 | — | Out of scope |
 | MODL-02 | Phase 4 | Pending |
 | MODL-03 | — | Out of scope |
-| RAIN-01 | Phase 5 | Pending |
-| RAIN-02 | Phase 5 | Pending |
-| RAIN-03 | Phase 5 | Pending |
-| SAT-01 | Phase 5 | Pending |
-| SAT-02 | Phase 5 | Pending |
-| ASTRO-01 | Phase 5 | Pending |
-| ASTRO-02 | Phase 5 | Pending |
+| RAIN-01 | Phase 5 | Complete |
+| RAIN-02 | Phase 5 | Complete |
+| RAIN-03 | Phase 5 | Complete |
+| SAT-01 | Phase 5 | Complete |
+| SAT-02 | Phase 5 | Complete |
+| ASTRO-01 | Phase 5 | Complete |
+| ASTRO-02 | Phase 5 | Complete |
 | SKY-01 | Phase 3 | Complete |
 | SKY-02 | Phase 3 | Complete |
 | SKY-03 | Phase 3 | Complete |
