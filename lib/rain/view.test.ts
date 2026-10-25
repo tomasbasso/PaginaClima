@@ -100,7 +100,7 @@ describe('buildRainView', () => {
     const week = v.rows[0]
     expect(week.normalMm).toBeCloseTo((6 + 13 / 24) * 0.6)
     expect(week.normalText).toBe(`Lo normal a esta fecha: 3,9${NB}mm`)
-    expect(week.compareText).toBe(`15${NB}% menos de lo normal`) // r 0.825 → 17.5 → 15
+    expect(week.compareText).toBe(`15${NB}% menos de lo normal`) // r 0.8255 → 17.45 → 15
     // obs 3.24 < normal 3.925: normal at 0.8, observed proportional.
     expect(week.bar?.normalFrac).toBeCloseTo(0.8)
     expect(week.bar?.observedFrac).toBeCloseTo((3.24 / week.normalMm!) * 0.8)
@@ -165,6 +165,17 @@ describe('buildRainView', () => {
     expect(v.missingNormalText).toBe('No pudimos cargar el promedio histórico para comparar.')
     expect(v.disclaimer).toBe('Estimado por reanálisis, no pluviómetro.')
     expect(v.lastRain.mmText).toBe(`1,2${NB}mm`)
+  })
+
+  it('lowercases the comparison inside the sr sentence', () => {
+    // Month: 12.04 mm over 1–24/10 + 13/24 of the 25th → per-day normal making r = 1.
+    const perDay = 12.04 / (24 + 13 / 24)
+    const v = buildRainView(ok(stitched()), NOW, FLAT.map(() => perDay))
+    if (v.status !== 'ok') throw new Error('expected ok')
+    expect(v.rows[1].compareText).toBe('Casi lo normal')
+    expect(v.rows[1].srText).toBe(
+      'En lo que va del mes llovieron 12 milímetros. Lo normal a esta fecha son 12 milímetros: casi lo normal.',
+    )
   })
 
   it('defaults to the committed climatology', () => {
