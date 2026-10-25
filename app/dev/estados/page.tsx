@@ -18,7 +18,11 @@ import { type SkyState, skyFromSnapshot, skyToken } from '@/lib/sky/state'
 import { localDateKey } from '@/lib/time'
 import type { AhoraVariant } from '@/lib/weather/status'
 import type { HourlyPoint, WeatherSnapshot } from '@/lib/weather/types'
-import { buildFixtures, buildForecastFixtures } from './fixtures'
+import { LluviaAcumulada } from '@/components/cielo/LluviaAcumulada'
+import { MoonDisc } from '@/components/cielo/MoonDisc'
+import { Satelite } from '@/components/cielo/Satelite'
+import { SolLuna } from '@/components/cielo/SolLuna'
+import { buildCieloFixtures, buildFixtures, buildForecastFixtures } from './fixtures'
 
 // Fixtures are relative to the request time, so the ages ("HACE X MIN") stay meaningful.
 export const dynamic = 'force-dynamic'
@@ -95,6 +99,20 @@ function MeteogramFrame({ name, points, now }: { name: string; points: HourlyPoi
   )
 }
 
+/** One 390-px /cielo block frame on ground, as below the compact horizon. */
+function CieloFrame({ section, name, children }: { section: string; name: string; children: ReactNode }) {
+  return (
+    <figure className="flex flex-col gap-3">
+      <figcaption className={CAPTION}>
+        {section} · {name}
+      </figcaption>
+      <section aria-label={`${section} ${name}`} className="w-[390px] shrink-0 bg-ground px-6">
+        {children}
+      </section>
+    </figure>
+  )
+}
+
 /** Compact /pronostico composition: sky box with the 120 px band, then the list on ground. */
 function DailyFrame({
   name,
@@ -141,6 +159,7 @@ export default function EstadosPage() {
   const { states, skies } = buildFixtures(nowMs)
   const forecast = buildForecastFixtures(nowMs)
   const { headlines } = forecast
+  const cielo = buildCieloFixtures(nowMs)
   const skyOf = (s: WeatherSnapshot) => skyFromSnapshot(s, now)
 
   const dataFrames: {
@@ -247,6 +266,59 @@ export default function EstadosPage() {
             <NoData />
           </div>
         </DailyFrame>
+      </div>
+
+      <h2 id="luna" className="mb-8 mt-16 font-serif text-[24px] text-white">
+        Luna
+      </h2>
+      <figure className="flex flex-col gap-3">
+        <figcaption className={CAPTION}>
+          Hemisferio sur: el cuarto creciente se ve iluminado a la izquierda
+        </figcaption>
+        <section aria-label="Fases de la luna" className="w-[390px] shrink-0 bg-ground px-6 py-8">
+          <ul className="grid grid-cols-4 gap-x-2 gap-y-6">
+            {cielo.moons.map((m) => (
+              <li key={`${m.label}-${m.name}`} className="flex flex-col items-center gap-2 text-center">
+                <MoonDisc path={m.path} />
+                <p className="text-[12px] font-semibold leading-[1.33] nums text-ink/75">{m.label}</p>
+                <p className="text-[15px] leading-[1.6] text-ink">{m.name}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </figure>
+
+      <h2 id="sol" className="mb-8 mt-16 font-serif text-[24px] text-white">
+        Sol
+      </h2>
+      <div className="flex flex-col gap-12">
+        {cielo.suns.map((f) => (
+          <CieloFrame key={f.name} section="Sol y luna" name={f.name}>
+            <SolLuna sun={f.sun} moon={f.moon} />
+          </CieloFrame>
+        ))}
+      </div>
+
+      <h2 id="lluvia" className="mb-8 mt-16 font-serif text-[24px] text-white">
+        Lluvia
+      </h2>
+      <div className="flex flex-col gap-12">
+        {cielo.rains.map((f) => (
+          <CieloFrame key={f.name} section="Lluvia" name={f.name}>
+            <LluviaAcumulada view={f.view} />
+          </CieloFrame>
+        ))}
+      </div>
+
+      <h2 id="satelite" className="mb-8 mt-16 font-serif text-[24px] text-white">
+        Satélite
+      </h2>
+      <div className="flex flex-col gap-12">
+        {cielo.satellites.map((f) => (
+          <CieloFrame key={f.name} section="Satélite" name={f.name}>
+            <Satelite view={f.view} showImage={f.showImage} />
+          </CieloFrame>
+        ))}
       </div>
     </main>
   )

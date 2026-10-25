@@ -1,9 +1,23 @@
 // Fixtures for /dev/estados (D-14). Pure: every snapshot is built relative to `nowMs`, so the
 // "ACTUALIZADO HACE X MIN" ages and the Desactualizado threshold stay meaningful on each request.
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { buildHeadline } from '@/lib/forecast/headline'
 import { makeDaily, makeHourly } from '@/lib/forecast/__fixtures__/build'
+import { doyIndex, loadClimatology } from '@/lib/rain/normal'
+import { seriesStart } from '@/lib/rain/periods'
+import type { RainDay, StitchedRain } from '@/lib/rain/stitch'
+import { buildRainView, type RainData, type RainView } from '@/lib/rain/view'
+import {
+  type SatelliteLatest,
+  type SatelliteView,
+  satelliteView,
+  stampFromIso,
+} from '@/lib/satellite/frame'
+import { type MoonInfo, moonInfo, moonPath, moonPhaseName } from '@/lib/sky/moon'
 import type { SkyState, SkyToken } from '@/lib/sky/state'
-import { addDaysToKey, localDateKey } from '@/lib/time'
+import { type SunDay, sunDay } from '@/lib/sky/sun'
+import { addDaysToKey, localDateKey, localHour, weekdayLong } from '@/lib/time'
 import type { DailyPoint, HourlyPoint, NowData, SourceInfo, WeatherSnapshot } from '@/lib/weather/types'
 
 const MIN = 60_000
@@ -248,4 +262,168 @@ export function buildForecastFixtures(nowMs: number): {
     daily: { semana, nulos: dailyNulos, pasados },
     headlines: { largo, manana },
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 5 (/cielo: Luna, Sol, Lluvia, Satélite). Every instant is derived from nowMs or is a
+// fixed UTC constant. Rain series are synthetic StitchedRain built against the real 1991–2020
+// climatology, so the comparisons land exactly where each frame says. The satellite image is the
+// local GIBS fixture as a data URI: never a GIBS URL nor /api/satelite.
+
+export interface MoonFrame {
+  label: string
+  name: string
+  path: string | null
+}
+
+export interface RainFrame {
+  name: string
+  view: RainView
+}
+
+export interface SatelliteFrame {
+  name: string
+  view: SatelliteView | null
+  showImage: boolean
+}
+
+const HOUR = 60 * MIN
+const STEP = 10 * MIN
+
+/** The GIBS pass on the 10-min grid at or before `ms`. */
+function passAt(ms: number): SatelliteLatest {
+  const t = Math.floor(ms / STEP) * STEP
+  const timeISO = new Date(t).toISOString().replace('.000Z', 'Z')
+  return { stamp: stampFromIso(timeISO), timeISO }
+}
+
+/** The committed real GIBS frame as a data URI; null when it cannot be read (no broken src). */
+function fixtureJpegDataUri(): string | null {
+  try {
+    const buf = readFileSync(path.join(process.cwd(), 'lib', 'sources', '__fixtures__', 'gibs-frame.jpg'))
+    return `data:image/jpeg;base64,${buf.toString('base64')}`
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Synthetic stitched series from seriesStart(today) to `until`: every day rains `scale` × its
+ * climatological normal (today prorated by the observed share), so each period's ratio is
+ * `scale`. `mm` rewrites single days after the scale is applied.
+ */
+function stitched(
+  now: Date,
+  clim: readonly number[],
+  opts: { scale: number; until?: string; mm?: (date: string, base: number) => number },
+): StitchedRain {
+  const todayKey = localDateKey(now)
+  const until = opts.until ?? todayKey
+  const todayIncluded = until === todayKey
+  const todayFraction = todayIncluded ? (localHour(now) + 1) / 24 : 0
+  const start = seriesStart(todayKey)
+  const days: RainDay[] = []
+  for (let d = start; d <= until; d = addDaysToKey(d, 1)) {
+    const share = d === todayKey ? todayFraction : 1
+    const base = Math.round(opts.scale * clim[doyIndex(d)] * share * 10) / 10
+    days.push({ date: d, mm: opts.mm ? opts.mm(d, base) : base, source: 'era5' })
+  }
+  return {
+    days,
+    start,
+    dataUntil: until,
+    todayIncluded,
+    todayFraction,
+    lagging: until < addDaysToKey(todayKey, -1),
+  }
+}
+
+export function buildCieloFixtures(nowMs: number): {
+  moons: MoonFrame[]
+  suns: { name: string; sun: SunDay; moon: MoonInfo }[]
+  rains: RainFrame[]
+  satellites: SatelliteFrame[]
+} {
+  const now = new Date(nowMs)
+  const todayKey = localDateKey(now)
+
+  // 8 phases: waxing 0 → 1, then waning 0.75 → 0.25, each with a representative phase.
+  const moonSpecs: [number, boolean, number][] = [
+    [0, true, 0],
+    [0.25, true, 0.125],
+    [0.5, true, 0.25],
+    [0.75, true, 0.375],
+    [1, true, 0.5],
+    [0.75, false, 0.625],
+    [0.5, false, 0.75],
+    [0.25, false, 0.875],
+  ]
+  const moons: MoonFrame[] = moonSpecs.map(([fraction, waxing, phase]) => ({
+    label: `${Math.round(fraction * 100)} %${fraction > 0 && fraction < 1 ? (waxing ? ' · crece' : ' · mengua') : ''}`,
+    name: moonPhaseName(phase),
+    path: moonPath(fraction, waxing),
+  }))
+
+  const sunAt = (iso: string) => {
+    const t = new Date(iso)
+    return { sun: sunDay(t), moon: moonInfo(t) }
+  }
+  const suns = [
+    { name: 'Día largo (diciembre)', ...sunAt('2026-12-10T15:00:00Z') },
+    { name: 'Día corto (junio)', ...sunAt('2026-06-10T15:00:00Z') },
+    { name: 'Igual que ayer (solsticio)', ...sunAt('2026-12-21T15:00:00Z') },
+  ]
+
+  // Monday 09:00 ART of the current week: the week normal is under 2 mm.
+  let monday = todayKey
+  for (let i = 0; i < 6 && weekdayLong(monday) !== 'lunes'; i++) monday = addDaysToKey(monday, -1)
+  const mondayMorning = new Date(Date.parse(`${monday}T09:00:00-03:00`))
+
+  const clim = loadClimatology()
+  const series = clim ?? new Array<number>(365).fill(2)
+  const ok = (s: StitchedRain): RainData => ({ status: 'ok', stitched: s, recentError: null })
+  const rainAt = (s: StitchedRain, at: Date = now, c: readonly number[] | null = clim) =>
+    buildRainView(ok(s), at, c)
+  const ago = (n: number) => addDaysToKey(todayKey, -n)
+  const lastRainOn = (day: string, mm: number) => (d: string, base: number) =>
+    d === day ? mm : d > day ? 0 : base
+
+  const rains: RainFrame[] = [
+    { name: 'Menos de lo normal', view: rainAt(stitched(now, series, { scale: 0.5 })) },
+    { name: 'Casi lo normal', view: rainAt(stitched(now, series, { scale: 1 })) },
+    { name: 'Más del doble', view: rainAt(stitched(now, series, { scale: 2.4 })) },
+    {
+      name: 'Pronto para comparar (lunes 09:00)',
+      view: rainAt(stitched(mondayMorning, series, { scale: 1 }), mondayMorning),
+    },
+    { name: 'Sin climatología', view: rainAt(stitched(now, series, { scale: 1 }), now, null) },
+    { name: 'Datos atrasados', view: rainAt(stitched(now, series, { scale: 1, until: ago(5) })) },
+    { name: 'Sin datos', view: buildRainView({ status: 'error' }, now, clim) },
+    {
+      name: 'Última lluvia hoy',
+      view: rainAt(stitched(now, series, { scale: 0.3, mm: lastRainOn(todayKey, 6.4) })),
+    },
+    {
+      name: 'Última lluvia hace 6 días',
+      view: rainAt(stitched(now, series, { scale: 0.3, mm: lastRainOn(ago(6), 12) })),
+    },
+    {
+      name: 'Última lluvia hace más de 14 días',
+      view: rainAt(stitched(now, series, { scale: 0.3, mm: lastRainOn(ago(20), 18) })),
+    },
+    { name: 'Sin lluvias en la serie', view: rainAt(stitched(now, series, { scale: 0 })) },
+  ]
+
+  const jpeg = fixtureJpegDataUri()
+  const withImage = (v: SatelliteView | null) => (v && jpeg ? { ...v, src: jpeg } : v)
+  const normal = withImage(satelliteView(passAt(nowMs - 40 * MIN), now))
+  const vieja = withImage(satelliteView(passAt(nowMs - 3 * HOUR), now))
+  const satellites: SatelliteFrame[] = [
+    { name: 'Normal (imagen fixture local)', view: normal, showImage: jpeg !== null },
+    { name: 'Vieja (hace 3 h)', view: vieja, showImage: jpeg !== null },
+    { name: 'Sin imagen', view: null, showImage: false },
+    { name: 'Cargando', view: normal, showImage: false },
+  ]
+
+  return { moons, suns, rains, satellites }
 }
