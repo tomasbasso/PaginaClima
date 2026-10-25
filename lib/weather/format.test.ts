@@ -9,7 +9,7 @@ describe('formatMm (phase 2 figure rule)', () => {
     [9.96, '10'],
     [12.4, '12'],
     [142.6, '143'],
-    [5, '5'],
+    [5, '5,0'],
   ])('%s → %s', (mm, text) => expect(formatMm(mm)).toBe(text))
 })
 
