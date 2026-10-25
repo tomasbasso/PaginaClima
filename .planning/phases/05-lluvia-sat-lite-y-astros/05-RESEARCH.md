@@ -569,12 +569,12 @@ Implementar exactamente la tabla "Texto comparativo" del UI-SPEC (constantes con
 | A5 | La Data Cache de Vercel guarda entradas de `unstable_cache` de ~60 KB sin problema | Patrón 3 | Bajo: muy por debajo del límite de 2 MB conocido para fetch cache |
 | A6 | La hora `TIME` del paso es el inicio nominal del escaneo (el full disk dura unos 10 min) | Patrón 3 | Ninguno práctico |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **¿La copy RAIN-03 sigue siendo exacta cuando los últimos días son IFS?** — RESUELTA. Se mantiene "Estimado por reanálisis, no pluviómetro". Los ~7 días finales son análisis/pronóstico del mismo centro (ECMWF), igual de "no pluviómetro". El UI-SPEC está aprobado y no hay que cambiar copy. Si el planner quiere, `source` por día queda en el modelo para una futura aclaración.
 2. **¿Suavizado de 15 o de 31 días?** — RESUELTA: 31 días circular (se documenta en el JSON). La diferencia es menor de 1 mm en la semana y de 2,5 mm en el año.
-3. **¿Margen de 90 días antes del 1 de enero para "Última lluvia"?** — Recomendado. Si el planner lo saca, la copy del UI-SPEC para "ninguna" ya cubre el caso.
-4. **¿Corregir CLAUDE.md (nombre de capa GIBS)?** — Se recomienda una tarea de docs en esta fase. No bloquea.
+3. **¿Margen de 90 días antes del 1 de enero para "Última lluvia"?** — RESOLVED: se incluye el margen de 90 días (recomendado). Si el planner lo saca, la copy del UI-SPEC para "ninguna" ya cubre el caso.
+4. **¿Corregir CLAUDE.md (nombre de capa GIBS)?** — RESOLVED: una tarea de docs de esta fase corrige el nombre de la capa en CLAUDE.md. No bloquea.
 
 ## Environment Availability
 
