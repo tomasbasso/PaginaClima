@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel (completed 2026-10-23)
 - [x] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial (completed 2026-10-24)
-- [ ] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
+- [x] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone (completed 2026-10-25)
 - [ ] **Phase 4: Los modelos opinan** - Comparación ECMWF/GFS/ICON/GEM, semáforo de coincidencia, MET Norway aparte y probabilidad real de ensemble
 - [ ] **Phase 5: Lluvia, satélite y astros** - Lluvia acumulada contra la normal, satélite IR GOES-East, link al radar del SMN, sol y luna
 - [ ] **Phase 6: PWA instalable y offline** - Instalación en iPhone y Android con instrucciones, y último pronóstico disponible sin señal
@@ -81,7 +81,7 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08)
 - [x] 03-05-PLAN.md — /dev/sky: forzar estados, 3 cuadros, presets y lectura de FPS/MS/calidad
 - [x] 03-06-PLAN.md — Relámpagos con límites de fotosensibilidad, contraluz de la silueta y FORZAR RELÁMPAGO
 - [x] 03-07-PLAN.md — Gate, revisión de escritorio, push a main con smoke de producción y preview para el iPhone
-- [ ] 03-08-PLAN.md — Checkpoint en iPhone real y decisión de resolución (0,5×/0,75×) y umbrales del gobernador
+- [x] 03-08-PLAN.md — Checkpoint en iPhone real y decisión de resolución (0,5×/0,75×) y umbrales del gobernador
 **UI hint**: yes
 **Research**: sí — WebGL2 contra Canvas 2D en Safari standalone, presupuesto de rendimiento en iPhone
 
@@ -147,7 +147,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
-| 3. Cielo vivo | 7/8 | In Progress|  |
+| 3. Cielo vivo | 8/8 | Complete   | 2026-10-25 |
 | 4. Los modelos opinan | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-10-25T00:29:23.207Z"
+status: verifying
+last_updated: "2026-10-25T01:23:06.424Z"
 last_activity: 2026-10-25
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 20
-  completed_plans: 19
-  percent: 29
+  completed_plans: 20
+  percent: 43
 ---
 
 # Project State
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 
 Phase: 3 (cielo-vivo) — EXECUTING
 Plan: 8 of 8
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-10-25
 
 Progress: [██████████] 95%
@@ -101,6 +101,7 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-05: SkyBackdrop dev props (astro, paused, bufferScale, onStats, onStatus) in refs; only bufferScale recreates the renderer
 - [Phase 03]: 03-07: borde de la banda medido con getBoundingClientRect().top; rampa del clamp dentro de la banda
 - [Phase 03]: 03-07: preview/cielo-vivo usa un commit vacío propio (aa99c5e) porque Vercel no rearma un SHA ya desplegado en producción
+- [Phase 03]: 03-08: iPhone measurement skipped by owner; BUFFER_SCALE 0.5 and GOV_* thresholds kept (28/45 ms)
 
 ### Pending Todos
 
