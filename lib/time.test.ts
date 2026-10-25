@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import {
   addDaysToKey,
+  formatDayLong,
   formatDayMonth,
+  formatDayOfMonth,
   formatHHmm,
   formatHeaderDate,
   localDateKey,
   localHour,
+  monthLong,
   relativeDayLabel,
   weekdayLong,
   weekdayShort,
@@ -76,5 +79,19 @@ describe('lib/time (D-08, DATA-04) under TZ=UTC', () => {
     expect(relativeDayLabel('2026-10-24', '2026-10-23')).toBe('Mañana')
     expect(relativeDayLabel('2026-10-25', '2026-10-23')).toBe('dom 25')
     expect(relativeDayLabel('2026-11-02', '2026-10-31')).toBe('lun 2')
+  })
+})
+
+describe('month helpers (local MONTH_LONG table)', () => {
+  it('names the month and the day of the month', () => {
+    expect(monthLong('2026-10-25')).toBe('octubre')
+    expect(monthLong('2026-01-01')).toBe('enero')
+    expect(monthLong('2026-12-31')).toBe('diciembre')
+    expect(formatDayOfMonth('2026-08-12')).toBe('12 de agosto')
+    expect(formatDayOfMonth('2026-08-02')).toBe('2 de agosto')
+  })
+
+  it('writes the long day with the weekday', () => {
+    expect(formatDayLong('2026-11-05')).toBe('jueves 5 de noviembre')
   })
 })
