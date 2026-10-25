@@ -2,8 +2,8 @@
 import { z } from 'zod'
 import { TZ } from '@/lib/config'
 
-const localDT = z.iso.datetime({ local: true }) // "2026-10-23T12:00" (naive local time)
-const nums = z.array(z.number().nullable())
+export const localDT = z.iso.datetime({ local: true }) // "2026-10-23T12:00" (naive local time)
+export const nums = z.array(z.number().nullable())
 /** Secondary current fields: Open-Meteo sometimes sends a lone null (WR-09); not a schema change. */
 const optNum = z.number().nullable()
 
@@ -11,7 +11,7 @@ const optNum = z.number().nullable()
  * Parallel arrays must all match `time` (WR-03). Shorter arrays would otherwise turn into
  * silent nulls (or "undefined-03:00" for sunrise/sunset): fail loudly with 'schema' instead.
  */
-function sameLengthAsTime(block: { time: unknown[] } & Record<string, unknown>, ctx: z.RefinementCtx) {
+export function sameLengthAsTime(block: { time: unknown[] } & Record<string, unknown>, ctx: z.RefinementCtx) {
   for (const [key, value] of Object.entries(block)) {
     if (key !== 'time' && Array.isArray(value) && value.length !== block.time.length) {
       ctx.addIssue({

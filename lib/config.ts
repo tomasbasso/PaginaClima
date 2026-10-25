@@ -10,6 +10,9 @@ export const TTL = {
   openMeteoForecast: 900,
   metNorway: 2100,
   page: 600,
+  /** ERA5 updates once a day: 6 h keeps the ~455-day archive request cheap (D-10). */
+  openMeteoArchive: 21_600,
+  openMeteoRecentRain: 1_800,
 } as const
 
 export const DEFAULT_USER_AGENT = 'ClimaWinifreda/1.0 github.com/tomasbasso/PaginaClima'
@@ -74,4 +77,31 @@ export const OPEN_METEO_URL = `https://api.open-meteo.com/v1/forecast?${new URLS
   forecast_days: '14',
   timezone: TZ,
   wind_speed_unit: 'kmh',
+}).toString()}`
+
+/**
+ * ERA5 daily rain (D-10). `models: 'era5'` explicitly: best_match on the archive is IFS HRES
+ * (includes forecast hours of today) and would not be coherent with the ERA5 1991–2020 normal.
+ * `end` must be ≤ today ART or the archive answers 400 (RESEARCH Pitfall 5).
+ */
+export function openMeteoArchiveUrl(start: string, end: string): string {
+  return `https://archive-api.open-meteo.com/v1/archive?${new URLSearchParams({
+    latitude: String(LAT),
+    longitude: String(LON),
+    start_date: start,
+    end_date: end,
+    daily: 'precipitation_sum',
+    models: 'era5',
+    timezone: TZ,
+  }).toString()}`
+}
+
+/** Hourly rain of the last 14 days + today, to fill the days ERA5 does not cover yet (D-10). */
+export const OPEN_METEO_RECENT_RAIN_URL = `https://api.open-meteo.com/v1/forecast?${new URLSearchParams({
+  latitude: String(LAT),
+  longitude: String(LON),
+  hourly: 'precipitation',
+  past_days: '14',
+  forecast_days: '1',
+  timezone: TZ,
 }).toString()}`
