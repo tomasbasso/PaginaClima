@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-25T17:34:20.401Z"
+last_updated: "2026-10-25T17:41:50.947Z"
 last_activity: 2026-10-25
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 22
+  completed_plans: 23
   percent: 43
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 5 (lluvia-sat-lite-y-astros) — EXECUTING
-Plan: 3 of 5
+Plan: 4 of 5
 Status: Ready to execute
 Last activity: 2026-10-25
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [█████████░] 88%
 | Phase 03 P07 | ~2h | 3 tasks | 4 files |
 | Phase 05 P01 | 8 min | 2 tasks | 14 files |
 | Phase 05 P02 | 8 min | 3 tasks | 22 files |
+| Phase 05 P03 | 12 min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -113,6 +114,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-08: iPhone measurement skipped by owner; BUFFER_SCALE 0.5 and GOV_* thresholds kept (28/45 ms)
 - [Phase 05]: 05-01: lado iluminado de la luna por waxing de suncalc (hemisferio sur: creciente a la izquierda), terminador vertical
 - [Phase 05]: 05-01: 'Llena el …' se omite mientras el nombre sea 'Luna llena'
+- [Phase 05]: 05-03: normal prorrateada hasta dataUntil (no hasta hoy), hoy ponderado por todayFraction; dia de lluvia >= 1 mm (RAIN_DAY_MM)
+- [Phase 05]: 05-03: rotulo NORMAL en caja fija de 64 px clampeado con CSS clamp(); comparacion en minuscula dentro del texto sr
 
 ### Pending Todos
 
@@ -134,6 +137,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-25T17:34:15.254Z
+Last session: 2026-10-25T17:41:41.967Z
 Stopped at: Phase 5 UI-SPEC approved
 Resume file: None
