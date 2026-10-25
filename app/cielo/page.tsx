@@ -6,6 +6,7 @@ import type { Metadata } from 'next'
 import { SolLuna } from '@/components/cielo/SolLuna'
 import { CieloHead } from '@/components/cielo/CieloHead'
 import { Hero } from '@/components/Hero'
+import { moonInfo } from '@/lib/sky/moon'
 import { skyFromSnapshot } from '@/lib/sky/state'
 import { sunDay } from '@/lib/sky/sun'
 import { getWeatherSnapshot } from '@/lib/weather/snapshot'
@@ -29,7 +30,7 @@ export default async function CieloPage() {
       below={
         // divide-y draws the hairline between blocks (48 + hairline + 32).
         <div className="divide-y divide-ink/12">
-          <SolLuna sun={sunDay(now)} />
+          <SolLuna sun={sunDay(now)} moon={moonInfo(now)} />
         </div>
       }
     >

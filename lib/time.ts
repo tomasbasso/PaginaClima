@@ -107,6 +107,36 @@ export function weekdayLong(key: string): string {
   return WEEKDAY_LONG[weekdayIndex(key)]
 }
 
+const MONTH_LONG = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+] as const
+
+/** "octubre" for '2026-10-25'. */
+export function monthLong(key: string): string {
+  return MONTH_LONG[Number(key.slice(5, 7)) - 1]
+}
+
+/** "12 de agosto" for '2026-08-12' (day without a leading zero). */
+export function formatDayOfMonth(key: string): string {
+  return `${Number(key.slice(8, 10))} de ${monthLong(key)}`
+}
+
+/** "jueves 5 de noviembre" for '2026-11-05'. */
+export function formatDayLong(key: string): string {
+  return `${weekdayLong(key)} ${formatDayOfMonth(key)}`
+}
+
 /** 'Hoy' · 'Mañana' · 'dom 25' (sentence case; the UI uppercases with CSS). */
 export function relativeDayLabel(key: string, todayKey: string): string {
   if (key === todayKey) return 'Hoy'

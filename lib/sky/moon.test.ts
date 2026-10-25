@@ -74,7 +74,8 @@ describe('moonInfo (ASTRO-02)', () => {
   })
 
   it('writes the moon rise and set times when suncalc has them', () => {
-    expect(moonInfo(OCT_25).timesText).toBe('Sale 07:29 · se pone 05:37')
+    // A full moon rises around sunset: 19:29 ART (05-RESEARCH wrote "07:29", a 12-hour reading).
+    expect(moonInfo(OCT_25).timesText).toBe('Sale 19:29 · se pone 05:37')
     expect(moonInfo(OCT_25).srText).toContain('Luna llena')
   })
 })

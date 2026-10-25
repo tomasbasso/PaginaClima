@@ -2,6 +2,8 @@
 // from pure suncalc helpers, so it has no error state. The ruler is decorative (aria-hidden); the
 // data is in visible text and in the sr-only sentence.
 import { useId } from 'react'
+import { MoonDisc } from '@/components/cielo/MoonDisc'
+import type { MoonInfo } from '@/lib/sky/moon'
 import type { SunDay } from '@/lib/sky/sun'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
@@ -9,7 +11,7 @@ const FIGURE = 'font-serif text-[28px] leading-[1.21] nums text-ink'
 const BODY = 'text-[15px] leading-[1.6]'
 const pct = (f: number) => `${(f * 100).toFixed(3)}%`
 
-export function SolLuna({ sun }: { sun: SunDay }) {
+export function SolLuna({ sun, moon }: { sun: SunDay; moon: MoonInfo }) {
   // Several instances live on /dev/estados: the id must be unique and a valid selector.
   const id = `sol-luna-${useId().replace(/:/g, '')}`
   const { riseFrac, setFrac, nowFrac } = sun.ruler
@@ -45,6 +47,16 @@ export function SolLuna({ sun }: { sun: SunDay }) {
             style={{ left: pct(riseFrac), width: pct(Math.max(0, setFrac - riseFrac)) }}
           />
           <div className="absolute inset-y-0 w-px bg-ink/55" style={{ left: pct(nowFrac) }} />
+        </div>
+      </div>
+      <p className="sr-only">{moon.srText}</p>
+      <div aria-hidden="true" className="mt-6 flex items-start gap-4 border-t border-ink/12 pt-6">
+        <MoonDisc path={moon.path} />
+        <div className={`flex flex-col ${BODY}`}>
+          <p className="text-ink">{moon.name}</p>
+          <p className="nums text-ink/75">{moon.illuminatedText}</p>
+          {moon.fullMoonText ? <p className="text-ink/75">{moon.fullMoonText}</p> : null}
+          {moon.timesText ? <p className={`${LABEL} nums text-ink/75`}>{moon.timesText}</p> : null}
         </div>
       </div>
     </section>
