@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-24T23:54:07.157Z"
-last_activity: 2026-10-24
+last_updated: "2026-10-25T00:29:23.207Z"
+last_activity: 2026-10-25
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 20
-  completed_plans: 18
+  completed_plans: 19
   percent: 29
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 3 (cielo-vivo) — EXECUTING
-Plan: 7 of 8
+Plan: 8 of 8
 Status: Ready to execute
-Last activity: 2026-10-24
+Last activity: 2026-10-25
 
-Progress: [█████████░] 90%
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [█████████░] 90%
 | Phase 03 P02 | 6 min | 3 tasks | 11 files |
 | Phase 03 P03 | 7 min | 3 tasks | 6 files |
 | Phase 03 P05 | 9 min | 2 tasks | 5 files |
+| Phase 03 P07 | ~2h | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -98,6 +99,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-03: estrellas y halo de luna se desvanecen con el factor de despejado interpolado en 2000 ms; halo de luna atenuado de día
 - [Phase 03]: 03-05: /dev/sky alt range −30…70 (presets −30/−25 round-trip); query validated by parseSkyLabParams, never echoed
 - [Phase 03]: 03-05: SkyBackdrop dev props (astro, paused, bufferScale, onStats, onStatus) in refs; only bufferScale recreates the renderer
+- [Phase 03]: 03-07: borde de la banda medido con getBoundingClientRect().top; rampa del clamp dentro de la banda
+- [Phase 03]: 03-07: preview/cielo-vivo usa un commit vacío propio (aa99c5e) porque Vercel no rearma un SHA ya desplegado en producción
 
 ### Pending Todos
 
@@ -109,6 +112,7 @@ None yet.
 - Capa exacta de NASA GIBS para GOES-East IR sin confirmar — fase 5
 - Decidir repo público o privado antes de la fase 7 (Actions apaga `schedule` a los 60 días en repos públicos)
 - Rate limit de Open-Meteo por IP compartida de Vercel — mitigar con TTLs largos desde la fase 1
+- 03-07: PREVIEW_URL del deploy BwPzY1Y51TJ4fTzJe5yaj7LNxynd sin resolver (sin gh ni login de Vercel CLI); resolver con Vercel MCP antes de 03-08
 
 ## Deferred Items
 
@@ -118,6 +122,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-24T23:54:07.140Z
+Last session: 2026-10-25T00:29:11.529Z
 Stopped at: Completed 03-05-PLAN.md
 Resume file: None

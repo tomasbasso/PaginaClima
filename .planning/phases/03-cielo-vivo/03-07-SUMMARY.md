@@ -1,4 +1,56 @@
-# 03-07 — Gate, revisión de escritorio y deploy (borrador: falta Task 3)
+---
+phase: 03-cielo-vivo
+plan: 07
+subsystem: sky
+tags: [gate, validation, contrast, deploy, vercel, preview]
+requires:
+  - phase: 03-01
+    provides: paleta, astros, smoke con --expect-html/--reject-html
+  - phase: 03-06
+    provides: relámpagos seguros y FORZAR RELÁMPAGO en /dev/sky
+provides:
+  - 03-VALIDATION.md completo (nyquist_compliant true, wave_0_complete true)
+  - Revisión de escritorio de los 11 presets con luminancia medida por píxel
+  - Borde de la banda medido con getBoundingClientRect y rampa del clamp dentro de la banda (fix 292db10)
+  - Cielo vivo en producción (2409946, gru1) y build de preview en la rama preview/cielo-vivo
+affects: [03-08]
+tech-stack:
+  added: []
+  patterns:
+    - "Luminancia de la zona de contenido medida por píxel con readPixels, pasada a lineal con la fórmula sRGB exacta"
+    - "Rama de preview con un commit vacío propio cuando el SHA ya se desplegó en producción (Vercel no rearma el mismo SHA)"
+key-files:
+  created: []
+  modified:
+    - components/client/sky/renderer.ts
+    - components/client/sky/shader.ts
+    - .planning/phases/03-cielo-vivo/03-VALIDATION.md
+    - .planning/phases/03-cielo-vivo/03-07-SUMMARY.md
+key-decisions:
+  - "El borde de la banda se mide con getBoundingClientRect().top y no como alto de caja − alto de banda; la rampa de 24 px del clamp va dentro de la banda"
+  - "La rama preview/cielo-vivo lleva un commit vacío (aa99c5e, mismo árbol que 2409946), porque Vercel no arma un preview para un SHA que ya desplegó en producción"
+requirements-completed: []
+duration: ~2 h (incluye la revisión de escritorio del orquestador)
+completed: 2026-10-24
+---
+
+# Phase 3 Plan 07: Gate, revisión de escritorio y deploy Summary
+
+**Gate completo en verde (532 tests, chunk del cielo de 10 985 B gzip). Los 11 presets de /dev/sky quedan en L ≤ 0,0737 en la zona de contenido y 0,0835 en el pico del relámpago, después de corregir el borde de la banda. El cielo vivo está en producción (2409946, gru1, /dev/* en 404) y hay un build de preview en `preview/cielo-vivo` para el iPhone.**
+
+## Gate automatizado
+
+Hubo dos pasadas: la del Task 1 (7c2c354) y la que se volvió a correr antes del push, porque 292db10 tocó el renderer y el shader. Las dos salieron con exit 0.
+
+| Chequeo | Task 1 (7c2c354) | Antes del push (2409946) |
+|---------|------------------|--------------------------|
+| `npm test` | 532/532 | 532/532 (28 archivos) |
+| `npm run typecheck` | OK | OK |
+| `npm run lint` | OK | OK |
+| `npm run build` | OK | OK |
+| Chunk con `uBandTop` (≤ 20 480 B gzip) | 10 965 B | `.next/static/chunks/18ix884q76-uo.js`: **10 985 B** |
+| grep de three/pixi/ogl/@react-three | vacío | vacío |
+| Smoke local `--start` (puerto 3107) | exit 0 | exit 0: `/` trae `data-sky-weather`, `data-sky-band` y `data-sky-root` sin `<canvas`; `/pronostico`, `/dev/sky` y `/dev/estados` traen su contenido |
 
 ## Revisión de escritorio
 
@@ -35,3 +87,48 @@ Ahora el borde se mide directo con `getBoundingClientRect().top` y la rampa qued
 | Home | / y /pronostico a 375×812 | OK | — | Exactamente 1 `<canvas>` en cada página. En la home la banda mide 168 px, arranca en 588 y no sobresale de la caja (756) |
 
 **Límites de este entorno (no son FALLA):** con el panel del navegador oculto, el rAF baja a ~1/s y el gobernador cae a CALIDAD 3, porque `document.visibilityState` sigue en `visible`. Con el panel a la vista la lectura es 31 FPS / CALIDAD 1. En el iPhone una pestaña en segundo plano dispara `visibilitychange`, así que esto no aplica, pero conviene confirmarlo en 03-08. Los FPS de escritorio no dicen nada del iPhone.
+
+## Producción
+
+PROD_URL: https://clima-winifreda.vercel.app
+
+- Push: `git push origin main` (sin --force), `2ae5eaa..2409946`. `git merge-base --is-ancestor HEAD origin/main` sale con 0.
+- Commit desplegado: **2409946**. Región: **gru1**.
+- `node scripts/smoke.mjs https://clima-winifreda.vercel.app --expect-region gru1 --expect-commit 2409946 --expect-404 /dev/sky --expect-404 /dev/estados` sale con exit 0. Hubo que esperar el deploy: el primer intento todavía veía 2ae5eaa. Resultados: `/` 200 con "Winifreda", commit = 2409946, `fetchedAt` estable, `now.tempC = 13.7`, region = gru1, `/dev/sky` 404, `/dev/estados` 404.
+- La home de producción trae `data-sky-weather="cubierto"` y `data-sky-band`. También aparece `data-sky-weather="despejado"`, que corresponde a otro nodo del SSR. `/pronostico` responde 200.
+
+## Preview para el iPhone
+
+- Rama: `preview/cielo-vivo`. Primero se publicó 2409946, pero Vercel no armó un preview para ese SHA porque ya estaba desplegado en producción: el commit tiene un solo status de Vercel. Por eso se publicó en la rama, y solo en la rama, un commit vacío: **aa99c5e** (mismo árbol que 2409946, main no se movió). Vercel lo desplegó con status `success` ("Deployment has completed").
+- Deploy en el dashboard: https://vercel.com/tomibasso99-4456s-projects/clima-winifreda/BwPzY1Y51TJ4fTzJe5yaj7LNxynd
+- PREVIEW_URL: PENDIENTE. En esta sesión no se pudo leer el dominio `*.vercel.app` del deploy: no está `gh`, el Vercel CLI no está logueado (arranca el device login) y la integración de Git de Vercel no crea GitHub Deployments (`/deployments?ref=preview/cielo-vivo` vuelve vacío). El alias de rama `clima-winifreda-git-preview-cielo-vivo-tomibasso99-4456s-projects.vercel.app` pasa los 63 caracteres y no resuelve. Hay que sacarlo con Vercel MCP (deploy `BwPzY1Y51TJ4fTzJe5yaj7LNxynd`) o del dashboard.
+- Código HTTP de `$PREVIEW_URL/dev/sky`: PENDIENTE, se mide cuando se tenga la URL. Lo esperado es 200, o 401 si el preview tiene Vercel Authentication.
+
+## Deviations from Plan
+
+### Auto-fixed Issues
+
+**1. [Rule 1 - Bug] Borde de la banda y rampa del clamp (C-1/C-5)**
+- **Found during:** Task 2
+- **Issue:** el borde se calculaba como alto de caja − alto de banda, y en /dev/sky la banda sobresale 23 px. Además, la rampa de 24 px quedaba dentro de la zona de contenido. Se midió L 0,111 en Siesta y 0,118 en el pico del relámpago.
+- **Fix:** el borde se mide con `getBoundingClientRect().top` y la rampa queda dentro de la banda.
+- **Files modified:** components/client/sky/renderer.ts, components/client/sky/shader.ts
+- **Commit:** 292db10
+
+**2. [Rule 3 - Blocking] Vercel no arma un preview para un SHA ya desplegado**
+- **Found during:** Task 3
+- **Issue:** el push de 2409946 a `preview/cielo-vivo` no disparó ningún build de preview.
+- **Fix:** se publicó en la rama de preview, y solo ahí, un commit vacío aa99c5e (mismo árbol). Main no cambió.
+- **Commit:** aa99c5e (solo en origin/preview/cielo-vivo)
+
+### Bloqueo parcial
+
+- PREVIEW_URL y su código HTTP quedan pendientes porque no hay credenciales de Vercel ni `gh` en esta sesión (ver arriba). El build del preview está listo; lo único que falta es leer su dominio.
+
+## Next Phase Readiness
+
+- 03-08 (iPhone real): cuando se tenga el dominio del preview, se abre `/dev/sky` en el iPhone. Ahí se revisan fluidez, pausa en segundo plano, temperatura, el molino con reducir movimiento real y la confirmación de `visibilitychange`.
+
+## Self-Check: PASSED
+
+Commits 7c2c354, 292db10, 2409946 y aa99c5e existen. 03-VALIDATION.md y este SUMMARY existen. Quedan pendientes PREVIEW_URL y su código HTTP (bloqueo parcial, ver arriba).
