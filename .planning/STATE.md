@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-last_updated: "2026-10-25T13:14:26.993Z"
+last_updated: "2026-10-25T13:49:16.584Z"
 last_activity: 2026-10-25
 progress:
   total_phases: 7
@@ -130,6 +130,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-25T13:14:26.973Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-lluvia-sat-lite-y-astros/05-CONTEXT.md
+Last session: 2026-10-25T13:49:16.567Z
+Stopped at: Phase 5 UI-SPEC approved
+Resume file: .planning/phases/05-lluvia-sat-lite-y-astros/05-UI-SPEC.md
