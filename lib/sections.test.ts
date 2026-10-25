@@ -4,11 +4,11 @@ import { isActiveSection, SECTIONS } from './sections'
 describe('SECTIONS (D-02)', () => {
   const enabled = (id: string) => SECTIONS.find((s) => s.id === id)?.enabled
 
-  it('enables Pronóstico in phase 2 and keeps Modelos and Cielo disabled', () => {
+  it('enables Pronóstico and Cielo and keeps Modelos disabled', () => {
     expect(enabled('ahora')).toBe(true)
     expect(enabled('pronostico')).toBe(true)
     expect(enabled('modelos')).toBe(false)
-    expect(enabled('cielo')).toBe(false)
+    expect(enabled('cielo')).toBe(true)
   })
 })
 

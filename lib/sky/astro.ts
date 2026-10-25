@@ -4,7 +4,7 @@ import { getMoonIllumination, getMoonPosition, getPosition, getTimes } from 'sun
 import { LAT, LON } from '@/lib/config'
 
 /** Argentina civil day offset in minutes (UTC−3, no DST), for suncalc's day selection. */
-const UTC_OFFSET_MIN = -180
+export const UTC_OFFSET_MIN = -180
 
 export type SkyAstro = {
   /** Before solar noon: the 0° anchor is amanecer, otherwise atardecer. */

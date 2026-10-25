@@ -1,5 +1,5 @@
 // Bottom tab bar sections (UI-SPEC "Barra de pestañas"). Each later phase flips its `enabled`:
-// /pronostico in phase 2, /modelos in phase 4, /cielo in phase 5.
+// /pronostico in phase 2, /cielo in phase 5 (D-09). Modelos stays disabled (D-09: not touched here).
 export type SectionId = 'ahora' | 'pronostico' | 'modelos' | 'cielo'
 
 export const SECTIONS: ReadonlyArray<{
@@ -11,7 +11,7 @@ export const SECTIONS: ReadonlyArray<{
   { id: 'ahora', label: 'Ahora', href: '/', enabled: true },
   { id: 'pronostico', label: 'Pronóstico', href: '/pronostico', enabled: true },
   { id: 'modelos', label: 'Modelos', href: '/modelos', enabled: false },
-  { id: 'cielo', label: 'Cielo', href: '/cielo', enabled: false },
+  { id: 'cielo', label: 'Cielo', href: '/cielo', enabled: true },
 ]
 
 /**
