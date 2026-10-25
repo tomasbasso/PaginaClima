@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-25T14:19:48.611Z"
-last_activity: 2026-10-25 -- Phase 5 planning complete
+last_updated: "2026-10-25T17:26:08.920Z"
+last_activity: 2026-10-25
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
   percent: 43
 ---
 
@@ -20,16 +20,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-10-23)
 
 **Core value:** Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con una experiencia visual que no se parece a ninguna otra app del clima.
-**Current focus:** Phase 4 — pronóstico con confianza
+**Current focus:** Phase 5 — lluvia-sat-lite-y-astros
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 5 (lluvia-sat-lite-y-astros) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-10-25 -- Phase 5 planning complete
+Last activity: 2026-10-25
 
-Progress: [██████████] 95%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [██████████] 95%
 | Phase 03 P03 | 7 min | 3 tasks | 6 files |
 | Phase 03 P05 | 9 min | 2 tasks | 5 files |
 | Phase 03 P07 | ~2h | 3 tasks | 4 files |
+| Phase 05 P01 | 8 min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,8 @@ Recent decisions affecting current work:
 - [Phase 03]: 03-07: borde de la banda medido con getBoundingClientRect().top; rampa del clamp dentro de la banda
 - [Phase 03]: 03-07: preview/cielo-vivo usa un commit vacío propio (aa99c5e) porque Vercel no rearma un SHA ya desplegado en producción
 - [Phase 03]: 03-08: iPhone measurement skipped by owner; BUFFER_SCALE 0.5 and GOV_* thresholds kept (28/45 ms)
+- [Phase 05]: 05-01: lado iluminado de la luna por waxing de suncalc (hemisferio sur: creciente a la izquierda), terminador vertical
+- [Phase 05]: 05-01: 'Llena el …' se omite mientras el nombre sea 'Luna llena'
 
 ### Pending Todos
 
@@ -130,6 +133,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-10-25T13:49:16.567Z
+Last session: 2026-10-25T17:26:01.513Z
 Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-lluvia-sat-lite-y-astros/05-UI-SPEC.md
+Resume file: None
