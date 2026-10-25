@@ -5,6 +5,7 @@
 //   node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1]
 //                          [--expect-commit <sha7>] [--expect-404 /path]...
 //                          [--expect-html '/path::regex']... [--reject-html '/path::regex']...
+//                          [--expect-satellite]
 //
 //   --start            spawn `npx next start -p <port>` (port from baseUrl) and stop it at the end
 //   --expect-region    /api/health `region` must equal this value
@@ -15,6 +16,8 @@
 //   --expect-404       this path must return 404 (repeatable)
 //   --expect-html '<path>::<regex>'  GET path must be 200 and its body must match regex (repeatable)
 //   --reject-html '<path>::<regex>'  GET path must be 200 and its body must NOT match (repeatable)
+//   --expect-satellite  /cielo must reference /api/satelite/<stamp>.jpg; that route must answer
+//                       200 image/jpeg, immutable, nosniff, > 8 000 bytes; an old stamp must 404
 //
 // Reused by plans 01-02 (first deploy) and 01-07 (phase close).
 import { spawn, spawnSync } from 'node:child_process'
@@ -31,7 +34,7 @@ function isFlagValue(a) {
 function usage(msg) {
   console.error(`smoke: ${msg}`)
   console.error(
-    'usage: node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1] [--expect-commit <sha7>] [--expect-404 /path]... [--expect-html /path::regex]... [--reject-html /path::regex]...',
+    'usage: node scripts/smoke.mjs <baseUrl> [--start] [--expect-region gru1] [--expect-commit <sha7>] [--expect-404 /path]... [--expect-html /path::regex]... [--reject-html /path::regex]... [--expect-satellite]',
   )
   process.exit(2)
 }
@@ -58,6 +61,7 @@ function flagValues(name) {
 
 const base = new URL(baseArg)
 const startServer = args.includes('--start')
+const expectSatellite = args.includes('--expect-satellite')
 const expectRegion = flagValue('--expect-region')
 const expectCommit = flagValue('--expect-commit')
 const expect404 = flagValues('--expect-404')
@@ -235,6 +239,34 @@ async function main() {
     else if (re.test(r.text)) fail(`GET ${path} -> 200 but HTML matches /${source}/ (must not)`)
     else pass(`GET ${path} does not match /${source}/`)
   }
+
+  // 7. Optional: the satellite frame of /cielo is served by our own immutable route (D-07).
+  if (expectSatellite) await checkSatellite()
+}
+
+async function checkSatellite() {
+  const page = await get('/cielo')
+  const m = /\/api\/satelite\/(\d{8}T\d{4}Z)\.jpg/.exec(page.text)
+  if (page.status !== 200 || !m) {
+    fail(`sin imagen satelital en /cielo (GET /cielo -> ${page.status}, no /api/satelite/<stamp>.jpg in HTML)`)
+    return
+  }
+  const path = `/api/satelite/${m[1]}.jpg`
+  const res = await fetch(url(path), { redirect: 'manual', signal: AbortSignal.timeout(30_000) })
+  const bytes = (await res.arrayBuffer()).byteLength
+  const type = res.headers.get('content-type') ?? ''
+  const cache = res.headers.get('cache-control') ?? ''
+  const sniff = res.headers.get('x-content-type-options') ?? ''
+  if (res.status !== 200) fail(`GET ${path} -> ${res.status} (expected 200)`)
+  else if (!type.startsWith('image/jpeg')) fail(`GET ${path} content-type ${type} (expected image/jpeg)`)
+  else if (!cache.includes('immutable')) fail(`GET ${path} cache-control "${cache}" (expected immutable)`)
+  else if (sniff !== 'nosniff') fail(`GET ${path} x-content-type-options "${sniff}" (expected nosniff)`)
+  else if (bytes <= 8_000) fail(`GET ${path} body ${bytes} B (expected > 8 000, not the black frame)`)
+  else pass(`GET ${path} -> 200 image/jpeg immutable nosniff ${bytes} B`)
+
+  const old = await get('/api/satelite/19990101T0000Z.jpg')
+  if (old.status === 404) pass('GET /api/satelite/19990101T0000Z.jpg -> 404')
+  else fail(`GET /api/satelite/19990101T0000Z.jpg -> ${old.status} (expected 404)`)
 }
 
 main()
