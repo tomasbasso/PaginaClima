@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import { formatInt, formatTemp } from './format'
+import { formatInt, formatMm, formatTemp } from './format'
+
+describe('formatMm (phase 2 figure rule)', () => {
+  it.each([
+    [0, '0'],
+    [0.04, '0'],
+    [3.24, '3,2'],
+    [9.96, '10'],
+    [12.4, '12'],
+    [142.6, '143'],
+    [5, '5'],
+  ])('%s → %s', (mm, text) => expect(formatMm(mm)).toBe(text))
+})
 
 describe('formatTemp', () => {
   it('rounds', () => expect(formatTemp(23.6)).toBe('24'))
