@@ -25,11 +25,11 @@
 - [ ] **FCST-03**: El usuario ve la probabilidad de lluvia de cada día calculada desde los miembros del ensemble (≥ 1 mm en el día local)
 - [ ] **FCST-04**: El usuario ve el rango de incertidumbre (p10–p90) de temperatura y lluvia en los días lejanos
 
-### Los modelos opinan (MODL)
+### Coincidencia entre modelos (MODL)
 
-- [ ] **MODL-01**: El usuario ve el pronóstico de ECMWF, GFS, ICON y GEM lado a lado para los próximos días
-- [ ] **MODL-02**: El usuario ve un semáforo de coincidencia entre modelos (coinciden / dudan / no se ponen de acuerdo) calculado solo con modelos independientes
-- [ ] **MODL-03**: El usuario ve el pronóstico de MET Norway como segunda opinión, rotulado "basado en ECMWF" y fuera del cálculo de coincidencia
+- ~~**MODL-01**: El usuario ve el pronóstico de ECMWF, GFS, ICON y GEM lado a lado para los próximos días~~ (fuera de alcance desde 2026-10-25: se eliminó la pestaña Modelos)
+- [ ] **MODL-02**: El usuario ve en cada día del Pronóstico un semáforo de coincidencia entre modelos (coinciden / dudan / no se ponen de acuerdo) calculado solo con modelos independientes, sin una pestaña aparte
+- ~~**MODL-03**: El usuario ve el pronóstico de MET Norway como segunda opinión, rotulado "basado en ECMWF" y fuera del cálculo de coincidencia~~ (fuera de alcance desde 2026-10-25: se eliminó la pestaña Modelos)
 
 ### Lluvia acumulada (RAIN)
 
@@ -95,6 +95,7 @@
 | Pronóstico a más de 14 días | Sin habilidad predictiva real |
 | Monetización | Open-Meteo gratis es solo no comercial |
 | Spaghetti plots de ensembles | Ilegibles en el teléfono; se usa el abanico p10–p90 |
+| Pestaña Modelos (MODL-01, MODL-03): cada modelo lado a lado y MET Norway como segunda opinión | Decisión del dueño (2026-10-25): a la mayoría no le interesa comparar modelos; la confianza se muestra dentro del Pronóstico (probabilidad real, rango y semáforo) |
 
 ## Traceability
 
@@ -111,9 +112,9 @@
 | FCST-02 | Phase 2 | Complete |
 | FCST-03 | Phase 4 | Pending |
 | FCST-04 | Phase 4 | Pending |
-| MODL-01 | Phase 4 | Pending |
+| MODL-01 | — | Out of scope |
 | MODL-02 | Phase 4 | Pending |
-| MODL-03 | Phase 4 | Pending |
+| MODL-03 | — | Out of scope |
 | RAIN-01 | Phase 5 | Pending |
 | RAIN-02 | Phase 5 | Pending |
 | RAIN-03 | Phase 5 | Pending |

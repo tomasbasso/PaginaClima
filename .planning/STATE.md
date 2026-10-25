@@ -21,7 +21,7 @@ stopped_at: Phase 3 complete (8/8) — ready to discuss Phase 4
 See: .planning/PROJECT.md (updated 2026-10-23)
 
 **Core value:** Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con una experiencia visual que no se parece a ninguna otra app del clima.
-**Current focus:** Phase 4 — los modelos opinan
+**Current focus:** Phase 4 — pronóstico con confianza
 
 ## Current Position
 
@@ -69,6 +69,12 @@ Progress: [██████████] 95%
 
 ## Accumulated Context
 
+### Quick Tasks Completed
+
+| # | Description | Date | Directory |
+|---|-------------|------|-----------|
+| 1 | Fase 4 sin pestaña Modelos: pasa a "Pronóstico con confianza" (FCST-03, FCST-04, MODL-02) | 2026-10-25 | [20261025-fase4-sin-pestana-modelos](./quick/20261025-fase4-sin-pestana-modelos/) |
+
 ### Decisions
 
 Decisions are logged in PROJECT.md Key Decisions table.
@@ -76,7 +82,7 @@ Recent decisions affecting current work:
 
 - [Roadmap]: Modo MVP vertical — cada fase entrega algo visible y desplegado en Vercel (región gru1) desde la fase 1
 - [Roadmap]: Antes de construir pantallas hay una etapa de diseño/identidad (mockups en Stitch + /gsd-ui-phase); todas las fases tienen UI hint
-- [Roadmap]: Fases con investigación propia: 3 (cielo/WebGL en Safari), 4 (modelos/GEM/ensemble), 5 (GIBS/ERA5), 7 (Web Push iOS/cron)
+- [Roadmap]: Fases con investigación propia: 3 (cielo/WebGL en Safari), 4 (ensemble/GEM/semáforo), 5 (GIBS/ERA5), 7 (Web Push iOS/cron)
 - [Phase 1]: 01-01: Source adapters use unstable_cache(fetchRaw, ['<source>','v1']) returning { data, fetchedAt }; page and route call getWeatherSnapshot() directly and never throw
 - [Phase 1]: 01-01: RootLayout typed explicitly (not generated LayoutProps) so tsc --noEmit works before next typegen
 - [Phase 1]: 01-01: smoke.mjs --expect-404 needs MSYS_NO_PATHCONV=1 under Git Bash

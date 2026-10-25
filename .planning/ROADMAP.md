@@ -2,7 +2,7 @@
 
 ## Overview
 
-El camino arranca con una página real publicada en Vercel desde el día uno: la capa de datos en el servidor (adapters, `WeatherSnapshot`, caché por TTL, hora argentina) y la sección Ahora. Sobre esa base se suma el pronóstico núcleo (meteograma de 48 h, diario y titular editorial), después el diferencial visual (cielo vivo con horizonte pampeano, probado en un iPhone real), y luego la honestidad sobre la incertidumbre (los modelos opinan y la probabilidad real desde ensembles). Se completa el contenido con lluvia acumulada, satélite IR y sol/luna, se vuelve instalable y offline como PWA, y se cierra con alertas Web Push revisadas cada hora. Cada fase es un corte vertical: termina con algo visible y desplegado.
+El camino arranca con una página real publicada en Vercel desde el día uno: la capa de datos en el servidor (adapters, `WeatherSnapshot`, caché por TTL, hora argentina) y la sección Ahora. Sobre esa base se suma el pronóstico núcleo (meteograma de 48 h, diario y titular editorial), después el diferencial visual (cielo vivo con horizonte pampeano, probado en un iPhone real), y luego la honestidad sobre la incertidumbre dentro del Pronóstico (probabilidad real de lluvia desde ensembles, rango en los días lejanos y semáforo de coincidencia entre modelos). Se completa el contenido con lluvia acumulada, satélite IR y sol/luna, se vuelve instalable y offline como PWA, y se cierra con alertas Web Push revisadas cada hora. Cada fase es un corte vertical: termina con algo visible y desplegado.
 
 ## Phases
 
@@ -14,8 +14,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Fundaciones y Ahora** - Capa de datos con caché, hora argentina, sección Ahora y deploy automático a Vercel (completed 2026-10-23)
 - [x] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial (completed 2026-10-24)
-- [x] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone (completed 2026-10-25)
-- [ ] **Phase 4: Los modelos opinan** - Comparación ECMWF/GFS/ICON/GEM, semáforo de coincidencia, MET Norway aparte y probabilidad real de ensemble
+- [x] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
+ (completed 2026-10-25)
+- [ ] **Phase 4: Pronóstico con confianza** - Probabilidad real de lluvia desde el ensemble, rango p10–p90 en días lejanos y semáforo de coincidencia por día, todo dentro del Pronóstico (sin pestaña Modelos)
 - [ ] **Phase 5: Lluvia, satélite y astros** - Lluvia acumulada contra la normal, satélite IR GOES-East, link al radar del SMN, sol y luna
 - [ ] **Phase 6: PWA instalable y offline** - Instalación en iPhone y Android con instrucciones, y último pronóstico disponible sin señal
 - [ ] **Phase 7: Alertas Web Push** - Avisos de helada, tormenta y viento fuerte revisados cada hora, sin repetidos
@@ -85,19 +86,19 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08)
 **UI hint**: yes
 **Research**: sí — WebGL2 contra Canvas 2D en Safari standalone, presupuesto de rendimiento en iPhone
 
-### Phase 4: Los modelos opinan
-**Goal**: El usuario sabe cuánta confianza tenerle al pronóstico: ve qué dice cada modelo, si coinciden, y una probabilidad de lluvia real con su rango de incertidumbre
+### Phase 4: Pronóstico con confianza
+**Goal**: El usuario sabe cuánta confianza tenerle al pronóstico sin salir del Pronóstico: una probabilidad de lluvia real, el rango de incertidumbre en los días lejanos y un semáforo que dice si los modelos coinciden
 **Mode:** mvp
 **Depends on**: Phase 2
-**Requirements**: MODL-01, MODL-02, MODL-03, FCST-03, FCST-04
+**Requirements**: FCST-03, FCST-04, MODL-02
 **Success Criteria** (what must be TRUE):
-  1. El usuario ve el pronóstico de ECMWF, GFS, ICON y GEM lado a lado para los próximos días (o de los 3 disponibles si GEM no cubre la zona, con aclaración)
-  2. El usuario ve un semáforo por día (coinciden / dudan / no se ponen de acuerdo) calculado solo con los modelos independientes
-  3. El usuario ve el pronóstico de MET Norway como segunda opinión, rotulado "basado en ECMWF" y sin peso en el semáforo
-  4. Cada día del pronóstico diario muestra la probabilidad de lluvia calculada desde los miembros del ensemble (≥ 1 mm en el día local), y los días lejanos muestran el rango p10–p90 de temperatura y lluvia
+  1. Cada día del pronóstico diario muestra la probabilidad de lluvia calculada desde los miembros del ensemble (≥ 1 mm en el día local)
+  2. Los días lejanos muestran el rango p10–p90 de temperatura y lluvia
+  3. Cada día del Pronóstico muestra un semáforo (coinciden / dudan / no se ponen de acuerdo) calculado con los modelos independientes (ECMWF, GFS, ICON y GEM si cubre la zona), sin mostrar los modelos por separado
+  4. La barra de pestañas ya no tiene el botón Modelos (la pestaña se eliminó del alcance el 2026-10-25)
 **Plans**: TBD
 **UI hint**: yes
-**Research**: sí — IDs de modelos en Open-Meteo, disponibilidad de GEM en Sudamérica, horizontes por modelo del ensemble
+**Research**: sí — IDs de modelos en Open-Meteo, disponibilidad de GEM en Sudamérica, horizontes por modelo del ensemble, umbrales del semáforo
 
 ### Phase 5: Lluvia, satélite y astros
 **Goal**: El usuario completa el panorama: cuánto llovió contra lo normal, qué nubosidad se acerca y cuándo sale y se pone el sol, con la fase de la luna
@@ -148,7 +149,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 8/8 | Complete    | 2026-10-25 |
-| 4. Los modelos opinan | 0/TBD | Not started | - |
+| 4. Pronóstico con confianza | 0/TBD | Not started | - |
 | 5. Lluvia, satélite y astros | 0/TBD | Not started | - |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
 | 7. Alertas Web Push | 0/TBD | Not started | - |

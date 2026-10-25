@@ -19,7 +19,7 @@ Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con
 - [ ] **Ahora**: temperatura, sensación térmica, viento, humedad y presión actuales
 - [ ] **48 h por hora**: meteograma con temperatura, lluvia y viento
 - [ ] **7–14 días**: pronóstico diario con probabilidad de lluvia real (Open-Meteo Ensemble)
-- [ ] **Los modelos opinan**: ECMWF, GFS, ICON y GEM votan la coincidencia; MET Norway se muestra aparte como "basado en ECMWF"
+- [ ] **Pronóstico con confianza**: dentro del Pronóstico, un semáforo por día con la coincidencia de ECMWF, GFS, ICON y GEM, más el rango p10–p90 en los días lejanos (sin pestaña Modelos)
 - [ ] **Lluvia acumulada**: semana / mes / año contra el promedio histórico (Open-Meteo Historical)
 - [ ] **Satélite IR** (GOES-East vía NASA GIBS) + link al radar del SMN — reemplaza a RainViewer, que no cubre Argentina
 - [ ] **Modo offline**: muestra el último pronóstico guardado sin señal
@@ -36,6 +36,7 @@ Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con
 - Monetización (publicidad, sponsors) — el plan gratis de Open-Meteo es solo no comercial
 - GitHub Pages como hosting — sin servidor se pierden caché, MET Norway (User-Agent) y push
 - VPS con Coolify — es de un cliente, no se usa para proyectos propios
+- Pestaña Modelos (cada modelo lado a lado, MET Norway como segunda opinión) — decisión del 2026-10-25: a la mayoría no le interesa; la confianza se muestra dentro del Pronóstico
 
 ## Context
 
@@ -60,13 +61,14 @@ Abrirla y entender de un vistazo qué tiempo hace y va a hacer en Winifreda, con
 |----------|-----------|---------|
 | Solo Winifreda, coordenadas fijas | Foco y simplicidad; sin buscador | — Pending |
 | Diseño "cielo vivo" generativo + tipografía editorial + horizonte pampeano | Es el diferencial del proyecto | — Pending |
-| Comparar modelos (ECMWF/GFS/ICON/MET Norway) con indicador de coincidencia | Diferencial de contenido frente a apps genéricas | — Pending |
+| Comparar modelos (ECMWF/GFS/ICON/MET Norway) con indicador de coincidencia | Diferencial de contenido frente a apps genéricas | Revisada 2026-10-25: queda solo el indicador (semáforo) dentro del Pronóstico, sin comparación lado a lado |
 | Hosting en Vercel Hobby, código en GitHub | Gratis, deploy automático, soporta servidor | — Pending |
 | GitHub Actions como cron horario | El cron de Vercel Hobby es diario | — Pending |
 | Supabase free para suscripciones push | Sin servidor propio para guardar estado | — Pending |
 | Push como última fase | No bloquea nada y suma complejidad | — Pending |
 | Satélite IR GOES-East en vez de RainViewer | RainViewer tiene 0 cobertura sobre Argentina (medido) | — Pending |
 | MET Norway no vota en la coincidencia | Fuera de Escandinavia usa datos de ECMWF (contaría doble) | — Pending |
+| Sin pestaña Modelos; la confianza va dentro del Pronóstico | La comparación de modelos interesa a pocos; la probabilidad real, el rango y el semáforo le sirven a cualquiera | 2026-10-25 |
 | Helada agronómica: mínima ≤ 2 °C | A 2 °C en abrigo ya hiela a ras del suelo | — Pending |
 | Modo offline con último dato | En el campo se corta la señal seguido | — Pending |
 
