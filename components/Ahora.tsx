@@ -52,7 +52,7 @@ function DataItem({
  * - degraded: Open-Meteo refresh failed (or fault): same data, "No pudimos actualizar…" notice
  *   with the last good time; the age-based Desactualizado notice is suppressed (one notice).
  * - empty: Sin datos + Reintentar (header stays; sky/horizon/tab bar live outside).
- * - loading: "—" values, CARGANDO, no freshness row (app/loading.tsx).
+ * - loading: "—" values, CARGANDO, no freshness row (/dev/estados).
  * MET Norway status never changes the UI ("Fuente secundaria caída" = nothing visible).
  * Synchronous with no server-only imports: app/error.tsx (client) renders it too.
  */

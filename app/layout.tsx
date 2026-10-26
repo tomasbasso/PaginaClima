@@ -38,10 +38,10 @@ export const viewport: Viewport = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  // No data work here (WR-06): awaiting the snapshot in the root layout would block streaming,
-  // so app/loading.tsx could never show. <html data-sky> is the solar-phase fallback (404 etc.);
-  // each page's <Hero> carries the weather-aware token on <main>, and <SkyBackdrop live> keeps
-  // both in sync on the client.
+  // No data work here (WR-06): awaiting the snapshot in the root layout would make every route,
+  // 404 and error pages included, depend on upstream. <html data-sky> is the solar-phase
+  // fallback (404 etc.); each page's <Hero> carries the weather-aware token on <main>, and
+  // <SkyBackdrop live> keeps both in sync on the client.
   const sky = resolveSkyState(new Date(), null);
   return (
     <html

@@ -1,4 +1,4 @@
-// Hero shell shared by app/page.tsx, app/loading.tsx, app/error.tsx and app/pronostico: a sky
+// Hero shell shared by app/page.tsx, app/error.tsx, app/pronostico and app/cielo: a sky
 // box (sky backdrop, content column with safe-area padding, spacer and the Pampa horizon band)
 // and an optional `below` slot that renders under the horizon, on ground (UI-SPEC "Refactor de
 // Hero"). Full (default): the sky box is at least the first screen (100svh minus the tab bar), so
