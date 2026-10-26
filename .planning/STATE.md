@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 Phase: 6
 Plan: Not started
 Status: Ready to plan
-Last activity: 2026-10-25
+Last activity: 2026-10-26 - Completed quick task 261026-g5s: SEO técnico para Search Console
 
 Progress: [██████████] 100%
 
@@ -79,6 +79,7 @@ Progress: [██████████] 100%
 | # | Description | Date | Directory |
 |---|-------------|------|-----------|
 | 1 | Fase 4 sin pestaña Modelos: pasa a "Pronóstico con confianza" (FCST-03, FCST-04, MODL-02) | 2026-10-25 | [20261025-fase4-sin-pestana-modelos](./quick/20261025-fase4-sin-pestana-modelos/) |
+| 261026-g5s | SEO técnico para Search Console: metadata, robots, sitemap, manifest, OG dinámica, JSON-LD y h1 duplicado | 2026-10-26 | [261026-g5s-seo-tecnico-para-search-console-metadata](./quick/261026-g5s-seo-tecnico-para-search-console-metadata/) |
 
 ### Decisions
 
