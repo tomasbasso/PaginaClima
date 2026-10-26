@@ -12,6 +12,17 @@ export const SITE_DESCRIPTION =
 
 export const HOME_TITLE = 'Clima en Winifreda hoy · Pronóstico La Pampa'
 
+export const OG_IMAGE_ALT = 'Clima actual en Winifreda, La Pampa: temperatura y estado del cielo'
+
+/** The root app/opengraph-image.tsx, referenced explicitly (see pageMetadata). */
+const OG_IMAGE = {
+  url: '/opengraph-image',
+  width: 1200,
+  height: 630,
+  type: 'image/png',
+  alt: OG_IMAGE_ALT,
+}
+
 type SitemapEntry = {
   path: string
   changeFrequency: NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
@@ -27,7 +38,9 @@ export const SITEMAP_PATHS: readonly SitemapEntry[] = [
 
 /**
  * A page-level `openGraph`/`twitter` object replaces the layout's (no deep merge), so every page
- * carries the full set from here. Images come from the file-based app/opengraph-image.tsx.
+ * carries the full set from here. That replacement also drops the root file-based image on child
+ * segments (verified: no og:image on /pronostico or /cielo), so the image is listed explicitly
+ * (on every page, home included: the URL then carries no cache-busting hash).
  */
 export function pageMetadata({
   path,
@@ -50,8 +63,9 @@ export function pageMetadata({
       url: path,
       title: text,
       description,
+      images: [OG_IMAGE],
     },
-    twitter: { card: 'summary_large_image', title: text, description },
+    twitter: { card: 'summary_large_image', title: text, description, images: [OG_IMAGE] },
   }
 }
 

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { SITE_URL } from './config'
 import {
   HOME_TITLE,
+  OG_IMAGE_ALT,
   SITE_DESCRIPTION,
   SITEMAP_PATHS,
   buildJsonLd,
@@ -66,10 +67,11 @@ describe('pageMetadata', () => {
     expect(m.twitter?.title).toBe('Z')
   })
 
-  it('does not set images (the file-based opengraph-image supplies them)', () => {
-    const m = pageMetadata({ path: '/', title: 'X', description: 'Y' })
-    expect(m.openGraph?.images).toBeUndefined()
-    expect(m.twitter?.images).toBeUndefined()
+  it('points og and twitter images at the root opengraph-image', () => {
+    const m = pageMetadata({ path: '/cielo', title: 'X', description: 'Y' })
+    const image = { url: '/opengraph-image', width: 1200, height: 630, type: 'image/png', alt: OG_IMAGE_ALT }
+    expect(m.openGraph?.images).toEqual([image])
+    expect(m.twitter?.images).toEqual([image])
   })
 })
 

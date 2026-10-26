@@ -1,13 +1,13 @@
-// /opengraph-image: 1200×630 share card with the current weather, inherited by /pronostico and
-// /cielo. Never fails (T-SEO-02): the snapshot read is guarded, ogSummary is null-safe, and the
+// /opengraph-image: 1200×630 share card with the current weather; /pronostico and /cielo point
+// at it through pageMetadata(). Never fails (T-SEO-02): the snapshot read is guarded, ogSummary is null-safe, and the
 // default ImageResponse font is used (no runtime font fetch). revalidate keeps crawlers on the
 // cache, not upstream. Node runtime (default).
 import { ImageResponse } from 'next/og'
-import { ogSummary } from '@/lib/seo'
+import { OG_IMAGE_ALT, ogSummary } from '@/lib/seo'
 import { getWeatherSnapshot } from '@/lib/weather/snapshot'
 
 export const revalidate = 600
-export const alt = 'Clima actual en Winifreda, La Pampa: temperatura y estado del cielo'
+export const alt = OG_IMAGE_ALT
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
