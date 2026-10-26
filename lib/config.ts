@@ -5,6 +5,23 @@ export const LON = -64.23
 export const ALTITUDE_M = 169
 export const TZ = 'America/Argentina/Buenos_Aires'
 
+export const DEFAULT_SITE_URL = 'https://clima-winifreda.vercel.app'
+
+/** Same fallback rule as resolveUserAgent; trailing slashes are stripped so paths join cleanly. */
+export function resolveSiteUrl(raw: string | undefined): string {
+  return (raw?.trim() || DEFAULT_SITE_URL).replace(/\/+$/, '')
+}
+
+/** Canonical origin. NEXT_PUBLIC_ so it is inlined at build and identical on server and client. */
+export const SITE_URL = resolveSiteUrl(process.env.NEXT_PUBLIC_SITE_URL)
+export const SITE_NAME = 'Clima Winifreda'
+
+/**
+ * Exact town coordinates, only for schema.org markup. LAT/LON above stay at 2 decimals on
+ * purpose (MET Norway ToS) and are what every upstream request uses.
+ */
+export const SCHEMA_GEO = { latitude: -36.2269, longitude: -64.2339 } as const
+
 /** Cache lifetimes in seconds (D-07). MET 2100 s lands after its ~1815 s `Expires`. */
 export const TTL = {
   openMeteoForecast: 900,
