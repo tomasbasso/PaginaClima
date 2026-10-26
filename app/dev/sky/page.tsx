@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Cielo — Clima en Winifreda',
-  robots: { index: false },
+  robots: { index: false, follow: false },
 }
 
 export default async function SkyLabPage({

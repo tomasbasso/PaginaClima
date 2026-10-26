@@ -4,7 +4,6 @@
 // (DATA-03). The snapshot only drives the sky; sun and moon are local suncalc math, no network.
 // Rain comes from server-cached ERA5 + past_days (getRainData never throws; D-10). The satellite
 // pass comes from the server-cached GIBS adapter (getSatelliteSafe returns null on failure; D-07).
-import type { Metadata } from 'next'
 import { LluviaAcumulada } from '@/components/cielo/LluviaAcumulada'
 import { Satelite } from '@/components/cielo/Satelite'
 import { SolLuna } from '@/components/cielo/SolLuna'
@@ -12,6 +11,7 @@ import { CieloHead } from '@/components/cielo/CieloHead'
 import { Hero } from '@/components/Hero'
 import { getRainData } from '@/lib/rain/series'
 import { buildRainView } from '@/lib/rain/view'
+import { pageMetadata } from '@/lib/seo'
 import { satelliteView } from '@/lib/satellite/frame'
 import { getSatelliteSafe } from '@/lib/satellite/latest'
 import { moonInfo } from '@/lib/sky/moon'
@@ -21,10 +21,12 @@ import { getWeatherSnapshot } from '@/lib/weather/snapshot'
 
 export const revalidate = 600
 
-export const metadata: Metadata = {
-  title: 'El cielo en Winifreda',
-  description: 'Lluvia acumulada contra lo normal, imagen satelital, sol y luna en Winifreda, La Pampa.',
-}
+export const metadata = pageMetadata({
+  path: '/cielo',
+  title: { absolute: 'Lluvia, satélite, sol y luna en Winifreda' },
+  description:
+    'Lluvia acumulada en Winifreda frente a lo normal, imagen satelital GOES de nubes y tormentas, salida y puesta del sol y fase lunar de hoy.',
+})
 
 export default async function CieloPage() {
   const [snapshot, rain, latest] = await Promise.all([

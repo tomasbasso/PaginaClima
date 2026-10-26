@@ -1,14 +1,29 @@
 import type { Metadata, Viewport } from "next";
 import type React from "react";
+import { SITE_NAME, SITE_URL } from "@/lib/config";
+import { SITE_DESCRIPTION } from "@/lib/seo";
 import { resolveSkyState, skyToken } from "@/lib/sky/state";
 import { TabBar } from "@/components/TabBar";
 import { jakarta, playfair } from "./fonts";
 import "./globals.css";
 
+// Site-wide defaults. No canonical here: it would leak to every route, 404s included; each page
+// sets its own through pageMetadata().
 export const metadata: Metadata = {
-  title: "Clima en Winifreda",
-  description: "El tiempo de Winifreda, La Pampa: ahora, en hora argentina.",
-  appleWebApp: { statusBarStyle: "black-translucent" },
+  metadataBase: new URL(SITE_URL),
+  applicationName: SITE_NAME,
+  title: { default: "Clima en Winifreda", template: "%s · Clima Winifreda" },
+  description: SITE_DESCRIPTION,
+  keywords: ["clima Winifreda", "pronóstico Winifreda", "tiempo La Pampa", "lluvia Winifreda"],
+  openGraph: {
+    type: "website",
+    locale: "es_AR",
+    siteName: SITE_NAME,
+    title: "Clima en Winifreda",
+    description: SITE_DESCRIPTION,
+  },
+  twitter: { card: "summary_large_image" },
+  appleWebApp: { title: SITE_NAME, statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {

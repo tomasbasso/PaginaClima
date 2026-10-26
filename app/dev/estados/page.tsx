@@ -29,7 +29,7 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'Estados — Clima en Winifreda',
-  robots: { index: false },
+  robots: { index: false, follow: false },
 }
 
 const CAPTION = 'text-[12px] font-semibold uppercase tracking-[0.14em] text-white/75'
