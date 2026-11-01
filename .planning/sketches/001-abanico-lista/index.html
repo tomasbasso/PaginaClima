@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Maqueta fase 4</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #fbfbf2; --ground: #0e131c; --bar: #090e17;
+  --azure: #8ecae6; --sun: #f4c06a; --ember: #e8603a;
+  --ink75: rgb(251 251 242 / .75); --ink55: rgb(251 251 242 / .55);
+  --ink30: rgb(251 251 242 / .3); --ink12: rgb(251 251 242 / .12);
+  --ease: cubic-bezier(.16, 1, .3, 1);
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { height: 100%; }
+body {
+  background: #05070b; color: var(--ink);
+  font: 400 15px/1.6 'Plus Jakarta Sans', system-ui, sans-serif;
+  display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 12px 0;
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+.label { font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: .14em; text-transform: uppercase; }
+.nums { font-variant-numeric: tabular-nums; }
+
+/* Controles de la maqueta, fuera del teléfono */
+.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; padding: 0 12px; }
+.seg { display: flex; }
+.seg button {
+  height: 40px; padding: 0 12px; background: transparent; border: 1px solid var(--ink30); margin-left: -1px;
+  font-size: 12px; font-weight: 600; letter-spacing: .06em;
+}
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--ground); border-color: var(--ink); }
+.note { max-width: 420px; padding: 0 16px; text-align: center; font-size: 12px; line-height: 1.5; color: var(--ink55); }
+
+/* Teléfono */
+.phone {
+  position: relative; flex: none; overflow: hidden; background: var(--ground);
+  width: min(var(--w), 100vw); height: min(var(--h), calc(100dvh - 118px));
+  outline: 1px solid var(--ink12);
+}
+.scroll { position: absolute; inset: 0; overflow: hidden auto; padding-bottom: 56px; scrollbar-width: none; }
+.scroll::-webkit-scrollbar { display: none; }
+.sky { background: linear-gradient(#1d3557 0%, #2f5f80 34%, #8d9fa8 62%, #eeb48f 84%, #fcd5ce 100%); }
+.head { padding: 24px 24px 24px; }
+.head .top { display: flex; justify-content: space-between; color: var(--ink); }
+.head h1 { margin-top: 32px; font: italic 400 28px/1.21 'Playfair Display', Georgia, serif; letter-spacing: -.01em; }
+.head .fresh { margin-top: 8px; color: var(--ink75); }
+.band { display: block; width: 100%; height: 120px; }
+.below { padding: 32px 24px 0; }
+
+/* Despacho y leyenda */
+.despacho { border-left: 2px solid var(--ember); padding-left: 16px; font: italic 400 24px/1.33 'Playfair Display', Georgia, serif; text-wrap: pretty; }
+.legend { list-style: none; padding: 0; margin-top: 16px; display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--ink75); }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.rombo { flex: none; display: block; }
+
+/* Lista */
+.lista { position: relative; margin-top: 24px; container-type: inline-size; }
+ol { list-style: none; padding: 0; }
+.row { position: relative; padding: 16px 0; }
+.row.rule { border-top: 1px solid var(--ink12); }
+.l1 { display: grid; grid-template-columns: 60px 40px 1fr 36px 44px; column-gap: 8px; align-items: center; }
+.tmin { text-align: right; color: var(--ink75); }
+.tmax.tent { color: var(--ink75); }
+.prob { text-align: right; color: var(--azure); }
+.l2 { display: flex; align-items: center; gap: 8px; min-height: 16px; margin-top: 4px; white-space: nowrap; }
+.w-dudan { color: var(--sun); } .w-desacuerdo { color: var(--ember); } .w-solo { color: var(--ink75); }
+.estado { flex: 1; min-width: 0; overflow: hidden; color: var(--ink75); }
+.mm { flex: none; color: var(--azure); font-size: 12px; font-weight: 600; line-height: 16px; }
+.st-c { display: none; }
+@container (max-width: 326.5px) {
+  .l1 { grid-template-columns: 56px 40px 1fr 32px 44px; column-gap: 4px; }
+  .st-n { display: none; } .st-c { display: inline; }
+}
+
+/* Abanico */
+.barra { position: relative; height: 16px; }
+.barra::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; transform: translateY(-50%); background: var(--ink12); }
+.seg-t, .ban { position: absolute; transition: left 420ms var(--ease), right 420ms var(--ease), width 420ms var(--ease); }
+.seg-t { top: 6px; height: 4px; background: var(--ink); }
+.tent .seg-t { background: var(--ink55); }
+.ban { top: 4px; height: 8px; animation: abrir 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+.ban.l { background: linear-gradient(to left, rgb(251 251 242 / .45), rgb(251 251 242 / .18) 55%, rgb(251 251 242 / .06) 85%, rgb(251 251 242 / 0)); transform-origin: right center; }
+.ban.r { background: linear-gradient(to right, rgb(251 251 242 / .45), rgb(251 251 242 / .18) 55%, rgb(251 251 242 / .06) 85%, rgb(251 251 242 / 0)); transform-origin: left center; }
+.tent .ban { opacity: .8; }
+@keyframes abrir { from { transform: scaleX(0); } }
+
+/* Pluviómetro */
+.pluvio { position: absolute; right: -16px; width: 8px; top: 0; bottom: 0; background: var(--ink12); }
+.row.rule .pluvio { top: -1px; }
+.relleno { position: absolute; left: 0; right: 0; bottom: 0; background: var(--azure); transform-origin: bottom; animation: llenar 420ms var(--ease) backwards; animation-delay: calc(var(--i, 0) * 40ms); }
+.tent .relleno { background: repeating-linear-gradient(to top, var(--azure) 0 2px, transparent 2px 4px); }
+.muesca { position: absolute; left: 0; right: 0; bottom: 50%; height: 1px; background: var(--ground); }
+.cap { position: absolute; left: 0; right: 0; height: 1px; background: var(--ink55); }
+.cap.t { top: 0; } .cap.b { bottom: 0; }
+.exp .r6 .cap.b { display: none; }
+@keyframes llenar { from { transform: scaleY(0); } }
+
+.nota { position: relative; border-top: 1px solid rgb(251 251 242 / .2); padding: 16px 0; color: var(--ink75); }
+.nota .pluvio { top: -1px; }
+.cola { display: none; } .exp .cola { display: block; }
+.toggle { width: 100%; height: 44px; margin-top: 24px; background: transparent; border: 1px solid var(--ink30); }
+.credito { margin-top: 24px; color: var(--ink75); padding-bottom: 48px; }
+.credito p + p { margin-top: 4px; }
+
+/* Variante B: río continuo */
+.rio { position: absolute; left: 0; top: 0; pointer-events: none; animation: bajar 660ms var(--ease) backwards; }
+@keyframes bajar { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.v-b .ban { display: none; }
+.v-b .barra::before { background: rgb(251 251 242 / .08); }
+.v-b .row, .v-b .nota { z-index: 1; }
+
+/* Barra de pestañas */
+.tabs { position: absolute; left: 0; right: 0; bottom: 0; height: 56px; display: flex; background: var(--bar); border-top: 1px solid var(--ink12); z-index: 3; }
+.tabs span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: .02em; color: var(--ink75); }
+.tabs .on { color: var(--azure); }
+.tabs svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; }
+
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="controls" role="group" aria-label="Controles de la maqueta">
+  <div class="seg" id="c-var">
+    <button data-v="a">★ A: Contrato</button>
+    <button data-v="b">B: Río</button>
+  </div>
+  <div class="seg" id="c-w">
+    <button data-w="390">390</button>
+    <button data-w="320">320</button>
+  </div>
+  <div class="seg"><button id="replay">Repetir</button></div>
+</div>
+
+<div class="phone" id="phone">
+  <div class="scroll" id="scroll">
+    <div class="sky">
+      <div class="head">
+        <div class="top label"><span>Winifreda</span><span class="nums">dom 1 nov</span></div>
+        <h1>Los próximos días</h1>
+        <p class="fresh label">Actualizado hace 8 min</p>
+      </div>
+      <svg class="band" viewBox="0 0 390 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <g fill="#0f141d">
+          <path d="M0 104 C70 100 140 106 210 103 C280 100 340 105 390 102 V120 H0Z"/>
+          <g transform="translate(72 104)"><path d="M-4 0 L-3 -24 L-14 -38 L-11 -40 L-1 -29 L7 -42 L10 -40 L3 -24 L5 0 Z"/><path d="M-60 -40 C-58 -52 -38 -60 -20 -58 C-10 -66 12 -67 24 -59 C40 -62 58 -54 61 -42 C49 -36 32 -38 19 -36 C5 -38 -10 -34 -24 -37 C-37 -34 -51 -35 -60 -40 Z"/></g>
+          <g transform="translate(306 104)"><path d="M-11 0 L-2 -86 L0 -86 L-8 0 Z"/><path d="M11 0 L2 -86 L0 -86 L8 0 Z"/><path d="M-1 -90 L-22 -104 L-19 -108 L0 -94 L6 -116 L10 -115 L3 -92 L24 -84 L22 -80 L1 -88 L-10 -68 L-14 -70Z"/></g>
+        </g>
+      </svg>
+    </div>
+    <div class="below">
+      <p class="despacho">El viernes los modelos no se ponen de acuerdo.</p>
+      <ul class="legend label" aria-label="Qué significan los rombos" id="legend"></ul>
+      <div class="lista" id="lista"></div>
+      <button class="toggle label" id="toggle" aria-expanded="false">Ver 14 días</button>
+      <div class="credito label">
+        <p>Probabilidad: 51 escenarios de ECMWF</p>
+        <p>Coincidencia: 4 modelos</p>
+      </div>
+    </div>
+  </div>
+  <div class="tabs" aria-hidden="true">
+    <span><svg viewBox="0 0 24 24"><path d="M3 17H21"/><path d="M7 17A5 5 0 0 1 17 17"/><path d="M12 7V9"/><path d="M6.5 10.5L7.5 11.5"/><path d="M17.5 10.5L16.5 11.5"/></svg>Ahora</span>
+    <span class="on"><svg viewBox="0 0 24 24"><rect x="4" y="6" width="16" height="14"/><path d="M9 4V8"/><path d="M15 4V8"/><rect x="7" y="13" width="2" height="2"/><rect x="11" y="13" width="2" height="2"/><rect x="15" y="13" width="2" height="2"/></svg>Pronóstico</span>
+    <span><svg viewBox="0 0 24 24"><path d="M19.5 14.5A8 8 0 1 1 9.5 4.5A6.5 6.5 0 0 0 19.5 14.5Z"/></svg>Cielo</span>
+  </div>
+</div>
+<p class="note" id="note"></p>
+
+<script>
+// Datos inventados para la maqueta. v: coinciden | dudan | desacuerdo | solo
+var D = [
+  { d: 'Hoy',    a: 11, b: 26, p10: 10.5, p90: 26.8, pr: 4,  v: 'coinciden', s: 'Despejado' },
+  { d: 'Mañana', a: 13, b: 29, p10: 12,   p90: 30,   pr: 6,  v: 'coinciden', s: 'Casi despejado' },
+  { d: 'mar 3',  a: 15, b: 31, p10: 13.5, p90: 32.5, pr: 16, v: 'coinciden', s: 'Algo nublado' },
+  { d: 'mié 4',  a: 17, b: 33, p10: 14.5, p90: 35.5, pr: 35, v: 'dudan',     s: 'Algo nublado', mm: '1–6' },
+  { d: 'jue 5',  a: 18, b: 30, p10: 14,   p90: 34,   pr: 61, v: 'dudan',     s: 'Chaparrones', c: 'Chaparrón', mm: '3–18' },
+  { d: 'vie 6',  a: 14, b: 24, p10: 9,    p90: 31,   pr: 86, v: 'desacuerdo',s: 'Tormenta', c: '', mm: '8–42' },
+  { d: 'sáb 7',  a: 9,  b: 20, p10: 5,    p90: 26,   pr: 51, v: 'dudan',     s: 'Lluvia débil', c: 'Lluvia', mm: '1–14' },
+  { d: 'dom 8',  a: 7,  b: 21, p10: 3,    p90: 27,   pr: 25, v: 'dudan',     s: 'Cubierto', mm: '0–6' },
+  { d: 'lun 9',  a: 8,  b: 23, p10: 3,    p90: 29,   pr: 20, v: 'coinciden', s: 'Algo nublado', mm: '0–5' },
+  { d: 'mar 10', a: 10, b: 25, p10: 4,    p90: 31,   pr: 30, v: 'dudan',     s: 'Algo nublado', mm: '0–8' },
+  { d: 'mié 11', a: 11, b: 26, p10: 4,    p90: 33,   pr: 45, v: 'desacuerdo',s: 'Lluvia débil', c: 'Lluvia', mm: '0–15' },
+  { d: 'jue 12', a: 12, b: 27, p10: 5,    p90: 34,   pr: 40, v: 'dudan',     s: 'Lluvia débil', c: 'Lluvia', mm: '0–14' },
+  { d: 'vie 13', a: 12, b: 26, p10: 4,    p90: 35,   pr: 30, v: 'solo',      s: 'Nubes', c: '', mm: '0–11' },
+  { d: 'sáb 14', a: 11, b: 26, p10: 3,    p90: 35,   pr: 25, v: 'solo',      s: 'Nubes', c: '', mm: '0–10' },
+];
+var ROMBO = {
+  coinciden: '<svg class="rombo" width="12" height="12" viewBox="0 0 12 12" style="color:var(--azure)" aria-hidden="true"><path d="M6 1.25 10.75 6 6 10.75 1.25 6Z" fill="currentColor" stroke="currentColor" stroke-width="1.5"/></svg>',
+  dudan: '<svg class="rombo" width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--sun)" aria-hidden="true"><path d="M6 1.25 10.75 6 6 10.75 1.25 6Z" stroke="currentColor" stroke-width="1.5"/><path d="M1.25 6H10.75L6 10.75Z" fill="currentColor"/></svg>',
+  desacuerdo: '<svg class="rombo" width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--ember)" aria-hidden="true"><path d="M6 1.5 10.5 6 6 10.5 1.5 6Z" stroke="currentColor" stroke-width="2"/></svg>',
+  solo: '<svg class="rombo" width="12" height="12" viewBox="0 0 12 12" fill="none" style="color:var(--ink55)" aria-hidden="true"><path d="M2 6H10" stroke="currentColor" stroke-width="1.5"/></svg>',
+};
+var WORD = { dudan: 'Dudan', desacuerdo: 'Sin acuerdo', solo: 'Solo un modelo' };
+var NOTES = {
+  a: 'A sigue el contrato: cada día tiene su banda. Datos inventados y cabecera aproximada.',
+  b: 'B une las bandas en una sola forma que se abre y se tiñe de azul donde es probable que llueva. No está en el contrato. Datos inventados y cabecera aproximada.',
+};
+
+var S = { v: location.hash.indexOf('b') > -1 ? 'b' : 'a', w: location.hash.indexOf('320') > -1 ? 320 : 390, exp: location.hash.indexOf('14') > -1 };
+var $ = function (id) { return document.getElementById(id); };
+
+// Escala con los extremos de las bandas, como bar7 y bar14 del contrato.
+function scale(days) {
+  var lo = Infinity, hi = -Infinity;
+  days.forEach(function (x) { lo = Math.min(lo, x.p10, x.a); hi = Math.max(hi, x.p90, x.b); });
+  return function (t) { return (t - lo) / (hi - lo); };
+}
+var U = '(100% - 8px)';
+function barStyles(x, f) {
+  var lo = f(x.a), hi = f(x.b), bl = f(x.p10), bh = f(x.p90);
+  return {
+    seg: 'left:calc(4px + ' + lo + ' * ' + U + ');width:max(4px,calc(' + (hi - lo) + ' * ' + U + '))',
+    l: 'right:calc(100% - 4px - ' + lo + ' * ' + U + ');width:max(4px,calc(' + (lo - bl) + ' * ' + U + '))',
+    r: 'left:calc(4px + ' + hi + ' * ' + U + ');width:max(4px,calc(' + (bh - hi) + ' * ' + U + '))',
+  };
+}
+function shown(pr) { return pr < 10 ? null : pr >= 92.5 ? 95 : Math.round(pr / 5) * 5; }
+
+function rowHtml(x, i, n) {
+  var tent = i >= 7, p = shown(x.pr), word = WORD[x.v];
+  var c = x.c === undefined ? x.s : x.c;
+  var idx = tent ? i - 7 : i;
+  return '<li class="row r' + i + (tent ? ' tent' : '') + (i === 0 || i === 7 ? '' : ' rule') + '" style="--i:' + idx + '" data-i="' + i + '">' +
+    '<div class="l1"><span>' + x.d + '</span>' +
+    '<span class="tmin nums">' + x.a + '°</span>' +
+    '<div class="barra"><div class="ban l"></div><div class="ban r"></div><div class="seg-t"></div></div>' +
+    '<span class="tmax nums' + (tent ? ' tent' : '') + '">' + x.b + '°</span>' +
+    '<span class="prob nums">' + (p === null ? '' : p + ' %') + '</span></div>' +
+    '<div class="l2">' + ROMBO[x.v] +
+    (word ? '<span class="label w-' + x.v + '">' + word + '</span>' : '') +
+    '<span class="estado label"><span class="st-n">' + x.s + '</span><span class="st-c">' + c + '</span></span>' +
+    (x.mm ? '<span class="mm nums">' + x.mm + ' mm</span>' : '') + '</div>' +
+    '<div class="pluvio" aria-hidden="true">' +
+    (p === null ? '' : '<div class="relleno" style="height:' + p + '%"></div>') +
+    '<div class="muesca"></div>' +
+    (i === 0 ? '<div class="cap t"></div>' : '') +
+    (i === 6 || i === n - 1 ? '<div class="cap b"></div>' : '') +
+    '</div></li>';
+}
+function applyBars() {
+  var f = scale(S.exp ? D : D.slice(0, 7));
+  document.querySelectorAll('.row').forEach(function (r) {
+    var x = D[+r.dataset.i], st = barStyles(x, f);
+    r.querySelector('.seg-t').style.cssText = st.seg;
+    r.querySelector('.ban.l').style.cssText = st.l;
+    r.querySelector('.ban.r').style.cssText = st.r;
+  });
+}
+// Variante B: una sola forma que pasa por el p10 y el p90 de cada día.
+function curve(pts) {
+  var s = '';
+  for (var i = 1; i < pts.length; i++) {
+    var m = (pts[i - 1][1] + pts[i][1]) / 2;
+    s += ' C' + pts[i - 1][0] + ' ' + m + ' ' + pts[i][0] + ' ' + m + ' ' + pts[i][0] + ' ' + pts[i][1];
+  }
+  return s;
+}
+function mix(t) {
+  var a = [251, 251, 242], b = [142, 202, 230];
+  return 'rgb(' + a.map(function (v, k) { return Math.round(v + (b[k] - v) * t); }).join(' ') + ')';
+}
+function drawRio() {
+  var old = document.querySelector('.rio');
+  if (old) old.remove();
+  if (S.v !== 'b') return;
+  var list = $('lista'), box = list.getBoundingClientRect();
+  var f = scale(S.exp ? D : D.slice(0, 7));
+  var stops = '', P = [];
+  var rows = [].slice.call(list.querySelectorAll('.row')).filter(function (r) { return r.offsetParent; });
+  var end = rows[rows.length - 1].getBoundingClientRect().bottom - box.top;
+  rows.forEach(function (r) {
+    var x = D[+r.dataset.i], c = r.querySelector('.barra').getBoundingClientRect();
+    var y = c.top + c.height / 2 - box.top, x0 = c.left - box.left + 4, u = c.width - 8;
+    P.push({ y: y, a: x0 + f(x.a) * u, b: x0 + f(x.b) * u, l: x0 + f(x.p10) * u, r: x0 + f(x.p90) * u });
+    var t = Math.min(1, (shown(x.pr) || 0) / 70);
+    stops += '<stop offset="' + (y / end) + '" stop-color="' + mix(t) + '" stop-opacity="' + (0.07 + 0.11 * t) + '"/>';
+  });
+  // Capas anidadas del mín–máx al p10–p90: más densas cerca del dato y difusas hacia afuera.
+  var layers = '';
+  [0.34, 0.67, 1].forEach(function (k) {
+    var L = P.map(function (p) { return [p.a + (p.l - p.a) * k, p.y]; });
+    var R = P.map(function (p) { return [p.b + (p.r - p.b) * k, p.y]; });
+    L.unshift([L[0][0], 0]); R.unshift([R[0][0], 0]);
+    L.push([L[L.length - 1][0], end]); R.push([R[R.length - 1][0], end]);
+    var RR = R.slice().reverse();
+    layers += '<path d="M' + L[0][0] + ' ' + L[0][1] + curve(L) + ' L' + RR[0][0] + ' ' + RR[0][1] + curve(RR) + 'Z" fill="url(#rioG)"/>';
+  });
+  var ns = '<svg class="rio" width="' + box.width + '" height="' + end + '" aria-hidden="true"><defs>' +
+    '<linearGradient id="rioG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="' + end + '">' +
+    '<stop offset="0" stop-color="' + mix(0) + '" stop-opacity="0"/>' + stops +
+    '<stop offset="1" stop-color="' + mix(0) + '" stop-opacity="0"/></linearGradient>' +
+    '<filter id="rioB" filterUnits="userSpaceOnUse" x="0" y="0" width="' + box.width + '" height="' + end + '"><feGaussianBlur stdDeviation="1.5"/></filter></defs>' +
+    '<g filter="url(#rioB)">' + layers + '</g></svg>';
+  list.insertAdjacentHTML('afterbegin', ns);
+}
+function render() {
+  var n = D.length;
+  $('lista').innerHTML =
+    '<ol>' + D.slice(0, 7).map(function (x, i) { return rowHtml(x, i, n); }).join('') + '</ol>' +
+    '<div class="cola"><p class="nota label">Del día 8 en adelante, orientativo<span class="pluvio"></span></p>' +
+    '<ol start="8">' + D.slice(7).map(function (x, i) { return rowHtml(x, i + 7, n); }).join('') + '</ol></div>';
+  sync();
+}
+function sync() {
+  var p = $('phone');
+  p.style.setProperty('--w', S.w + 'px');
+  p.style.setProperty('--h', (S.w === 320 ? 568 : 844) + 'px');
+  $('lista').className = 'lista v-' + S.v + (S.exp ? ' exp' : '');
+  $('toggle').textContent = S.exp ? 'Ver 7 días' : 'Ver 14 días';
+  $('toggle').setAttribute('aria-expanded', S.exp);
+  $('note').textContent = NOTES[S.v];
+  document.querySelectorAll('#c-var button').forEach(function (b) { b.setAttribute('aria-pressed', b.dataset.v === S.v); });
+  document.querySelectorAll('#c-w button').forEach(function (b) { b.setAttribute('aria-pressed', +b.dataset.w === S.w); });
+  applyBars();
+  drawRio();
+}
+$('legend').innerHTML = [['coinciden', 'Coinciden'], ['dudan', 'Dudan'], ['desacuerdo', 'No se ponen de acuerdo']]
+  .map(function (x) { return '<li>' + ROMBO[x[0]] + x[1] + '</li>'; }).join('');
+$('c-var').onclick = function (e) { if (e.target.dataset.v) { S.v = e.target.dataset.v; render(); } };
+$('c-w').onclick = function (e) { if (e.target.dataset.w) { S.w = +e.target.dataset.w; render(); } };
+$('toggle').onclick = function () { S.exp = !S.exp; sync(); };
+$('replay').onclick = function () { render(); $('scroll').scrollTop = $('lista').offsetTop - 200; };
+render();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(drawRio);
+addEventListener('resize', drawRio);
+</script>
+</body>
+</html>
