@@ -134,7 +134,11 @@ function Row({
           >
             {row.verdict !== 'sinDato' ? <Rombo kind={row.verdict} /> : null}
             {row.word ? <span className={`${LABEL} shrink-0 ${WORD_COLORS[row.word]}`}>{row.word}</span> : null}
-            <span className={`${LABEL} min-w-0 flex-1 overflow-hidden text-ink/75`}>{row.stateLabel ?? ''}</span>
+            {/* Both texts ship in the HTML and the container query picks one, with no JS (D-04). */}
+            <span className={`${LABEL} min-w-0 flex-1 overflow-hidden text-ink/75`}>
+              <span className="@max-[327px]:hidden">{row.statusNormal ?? ''}</span>
+              <span className="hidden @max-[327px]:inline">{row.statusCompact ?? ''}</span>
+            </span>
             {row.ensembleUp && row.rainText ? (
               <span className={`${LABEL_NUM} nums shrink-0 text-azure`}>{row.rainText}</span>
             ) : null}

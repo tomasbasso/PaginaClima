@@ -6,6 +6,7 @@ import type { DailyPoint, DayConfidence } from '@/lib/weather/types'
 import { describeWeather } from '@/lib/weather/wmo'
 import type { Verdict } from './agreement'
 import { rainRange, rainRangeText, toDisplayPct } from './ensemble'
+import { rowStatus } from './rowStatus'
 
 const NBSP = '\u00A0'
 
@@ -22,7 +23,9 @@ export interface DailyBar {
 export interface DailyRow {
   key: string // local 'YYYY-MM-DD'
   label: string // 'Hoy' · 'Mañana' · 'dom 25'
-  stateLabel: string | null
+  stateLabel: string | null // always complete: it feeds srText, the screen shows the variants below
+  statusNormal: string | null // state on line 2 for a column of at least 327 px; null = no room (D-04)
+  statusCompact: string | null // same, under 327 px
   minText: string
   maxText: string
   rainText: string | null
@@ -201,10 +204,20 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
         : probPct === null
           ? null
           : `${probPct}${NBSP}%`
+    const word = WORDS[verdict]
+    // With the ensemble down the mm sit in the last column, so they take nothing from line 2.
+    const status = rowStatus({
+      label: stateLabel,
+      word,
+      hasGlyph: verdict !== 'sinDato',
+      mmText: ensembleUp ? rain : null,
+    })
     return {
       key: d.date,
       label: relativeDayLabel(d.date, todayKey),
       stateLabel,
+      statusNormal: status.normal,
+      statusCompact: status.compact,
       minText: tempText(d.tMinC),
       maxText: tempText(d.tMaxC),
       rainText: rain,
@@ -212,7 +225,7 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
       probPct,
       ensembleUp,
       verdict,
-      word: WORDS[verdict],
+      word,
       modelsUp,
       bar7: i < DEFAULT_DAYS ? barFor(d, ensemble, scale7) : null,
       bar14: barFor(d, ensemble, scale14),
