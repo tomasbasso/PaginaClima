@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import fixture from '@/lib/sources/__fixtures__/open-meteo-forecast.json'
 import metFixture from '@/lib/sources/__fixtures__/met-norway-compact.json'
 import ensembleFixture from '@/lib/sources/__fixtures__/open-meteo-ensemble.json'
+import modelsFixture from '@/lib/sources/__fixtures__/open-meteo-models.json'
 
 // unstable_cache needs the Next incremental cache; in tests it is a passthrough.
 vi.mock('next/cache', () => ({
@@ -11,15 +12,17 @@ vi.mock('next/cache', () => ({
 
 type Reply = () => Response
 
-/** fetch stub routed by host: each upstream answers independently. */
+/** fetch stub routed by host, and by the models param on the shared forecast host. */
 function stubFetch({
   om = () => new Response(JSON.stringify(fixture), { status: 200 }),
   met = () => new Response(JSON.stringify(metFixture), { status: 200 }),
   ensemble = () => new Response(JSON.stringify(ensembleFixture), { status: 200 }),
-}: { om?: Reply; met?: Reply; ensemble?: Reply } = {}) {
+  models = () => new Response(JSON.stringify(modelsFixture), { status: 200 }),
+}: { om?: Reply; met?: Reply; ensemble?: Reply; models?: Reply } = {}) {
   const fn = vi.fn(async (input: unknown) => {
-    const host = new URL(String(input)).host
-    if (host === 'api.open-meteo.com') return om()
+    const url = new URL(String(input))
+    const host = url.host
+    if (host === 'api.open-meteo.com') return url.searchParams.has('models') ? models() : om()
     if (host === 'api.met.no') return met()
     if (host === 'ensemble-api.open-meteo.com') return ensemble()
     throw new TypeError(`unexpected host ${host}`)
@@ -30,6 +33,10 @@ function stubFetch({
 
 function callsTo(fn: ReturnType<typeof stubFetch>, host: string): string[] {
   return fn.mock.calls.map((c) => String(c[0])).filter((u) => new URL(u).host === host)
+}
+
+function hasModels(url: string): boolean {
+  return new URL(url).searchParams.has('models')
 }
 
 async function loadSnapshot() {
@@ -72,7 +79,7 @@ describe('walking skeleton: getWeatherSnapshot()', () => {
 
     expect(snap.sources[1]).toMatchObject({ id: 'met-norway', status: 'ok' })
 
-    const omCalls = callsTo(fetchMock, 'api.open-meteo.com')
+    const omCalls = callsTo(fetchMock, 'api.open-meteo.com').filter((u) => !hasModels(u))
     expect(omCalls).toHaveLength(1)
     expect(callsTo(fetchMock, 'api.met.no')).toHaveLength(1)
     const url = omCalls[0]
@@ -151,5 +158,38 @@ describe('walking skeleton: getWeatherSnapshot()', () => {
       errorCode: 'http_500',
     })
     expect(snap.confidence.filter((day) => day.ensemble !== null)).toEqual([])
+  })
+
+  it('adds the verdict per day from the real multi-model fixture, without model values', async () => {
+    const fetchMock = stubFetch()
+
+    const snap = await loadSnapshot()
+
+    expect(snap.sources).toContainEqual(
+      expect.objectContaining({ id: 'open-meteo-models', status: 'ok' }),
+    )
+    expect(snap.confidence[0].voters).toBe(4)
+    expect(callsTo(fetchMock, 'api.open-meteo.com').filter(hasModels)).toHaveLength(1)
+    expect(JSON.stringify(snap)).not.toMatch(/ecmwf_ifs|gfs_seamless|icon_seamless|gem_seamless/)
+  })
+
+  it('keeps the page and the ensemble when the models answer 500: every verdict is sinDato', async () => {
+    stubFetch({ models: () => new Response('down', { status: 500 }) })
+
+    const snap = await loadSnapshot()
+
+    expect(snap.now).not.toBeNull()
+    expect(snap.sources).toContainEqual({
+      id: 'open-meteo-models',
+      status: 'error',
+      fetchedAt: null,
+      errorCode: 'http_500',
+    })
+    expect(snap.confidence).toHaveLength(14)
+    for (const day of snap.confidence) {
+      expect(day.ensemble?.members).toBe(51)
+      expect(day.verdict).toBe('sinDato')
+      expect(day.voters).toBe(0)
+    }
   })
 })
