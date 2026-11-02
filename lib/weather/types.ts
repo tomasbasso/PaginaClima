@@ -1,7 +1,14 @@
 // WeatherSnapshot contract: the single shape consumed by the page, /api/weather,
 // the service worker (phase 6) and the alerts cron (phase 7).
 
-export type SourceId = 'open-meteo' | 'met-norway' | 'open-meteo-archive' | 'nasa-gibs'
+import type { EnsembleDay } from '@/lib/forecast/ensemble'
+
+export type SourceId =
+  | 'open-meteo'
+  | 'met-norway'
+  | 'open-meteo-archive'
+  | 'nasa-gibs'
+  | 'open-meteo-ensemble'
 
 /** 'stale' = a refresh attempt actually failed (never mere age). */
 export type SourceStatus = 'ok' | 'stale' | 'error'
@@ -52,10 +59,17 @@ export interface DailyPoint {
   gustMaxKmh: number | null
 }
 
+/** Per-day aggregate only: the snapshot is public through /api/weather, raw members never enter. */
+export interface DayConfidence {
+  date: string
+  ensemble: Omit<EnsembleDay, 'date'> | null
+}
+
 export interface WeatherSnapshot {
   generatedAt: string // ISO UTC, Date.now() at build of the snapshot
   now: NowData | null
   hourly48: HourlyPoint[]
   daily: DailyPoint[]
   sources: SourceInfo[] // sources[0] is always 'open-meteo'
+  confidence: DayConfidence[] // [] when the ensemble failed and there is no last-good
 }

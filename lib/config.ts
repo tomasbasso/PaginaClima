@@ -30,6 +30,8 @@ export const TTL = {
   /** ERA5 updates once a day: 6 h keeps the ~455-day archive request cheap (D-10). */
   openMeteoArchive: 21_600,
   openMeteoRecentRain: 1_800,
+  /** ENS runs every 6 h and shows up about 10 h after its nominal time: 3 h is enough (D-18). */
+  openMeteoEnsemble: 10_800,
   /** Latest GOES-East pass (DescribeDomains + blank-step fallback); new passes every 10 min (D-07). */
   gibsLatest: 600,
   /** One frame per stamp never changes: 1 day in the Data Cache, the CDN keeps it immutable. */
@@ -124,6 +126,21 @@ export const OPEN_METEO_RECENT_RAIN_URL = `https://api.open-meteo.com/v1/forecas
   hourly: 'precipitation',
   past_days: '14',
   forecast_days: '1',
+  timezone: TZ,
+}).toString()}`
+
+/**
+ * ECMWF ENS, 51 members (FCST-03). Hourly rain, summed per member in lib/forecast/localDayRain:
+ * the API's daily sum shifts the local day (RESEARCH Pitfall 1). 15 days so that day 14 can
+ * close with its 00:00 stamp.
+ */
+export const OPEN_METEO_ENSEMBLE_URL = `https://ensemble-api.open-meteo.com/v1/ensemble?${new URLSearchParams({
+  latitude: String(LAT),
+  longitude: String(LON),
+  models: 'ecmwf_ifs025',
+  hourly: 'precipitation',
+  daily: 'temperature_2m_max,temperature_2m_min',
+  forecast_days: '15',
   timezone: TZ,
 }).toString()}`
 

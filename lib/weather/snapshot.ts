@@ -2,16 +2,30 @@ import 'server-only'
 import { cache } from 'react'
 import { TTL } from '@/lib/config'
 import { getMetNorway } from '@/lib/sources/metNorway'
+import { getOpenMeteoEnsemble, getOpenMeteoEnsembleFresh } from '@/lib/sources/openMeteoEnsemble'
 import { getOpenMeteoForecast, getOpenMeteoForecastFresh } from '@/lib/sources/openMeteoForecast'
 import { SourceError } from '@/lib/sources/errors'
-import { readThrough } from '@/lib/sources/readThrough'
+import { readThrough, type ReadThroughResult } from '@/lib/sources/readThrough'
 import { normalizeForecast } from './normalize'
 import { applyFault, readFault } from './faults'
 import { deriveSourceStatus } from './status'
-import type { SourceInfo, WeatherSnapshot } from './types'
+import type { DayConfidence, SourceId, SourceInfo, WeatherSnapshot } from './types'
 
 function errorCodeOf(reason: unknown): string {
   return reason instanceof SourceError ? reason.code : 'unknown'
+}
+
+/** Status of a read-through source. Status is outcome-based: see deriveSourceStatus. */
+function infoFrom(id: SourceId, settled: PromiseSettledResult<ReadThroughResult<unknown>>): SourceInfo {
+  if (settled.status === 'rejected') {
+    const errorCode = errorCodeOf(settled.reason)
+    console.error(`[snapshot] ${id} unavailable: ${errorCode}`)
+    return { id, status: 'error', fetchedAt: null, errorCode }
+  }
+  const status = deriveSourceStatus(settled)
+  const info: SourceInfo = { id, status, fetchedAt: settled.value.value.fetchedAt }
+  if (status === 'stale') info.errorCode = settled.value.refreshError
+  return info
 }
 
 /**
@@ -22,12 +36,12 @@ function errorCodeOf(reason: unknown): string {
  * (D-01 implemented through the D-03 fallback). 'stale' is set only from readThrough's
  * refreshError, never from age (checker revision; see plan 06 Design note).
  * MET Norway gets no read-through (ToS: no repeat before `Expires`, Pitfall 7) and only feeds
- * sources[] in phase 1 (D-05).
+ * sources[] in phase 1 (D-05). An ensemble failure only empties `confidence` (D-17).
  */
 export const getWeatherSnapshot = cache(async (): Promise<WeatherSnapshot> => {
   const nowMs = Date.now()
   const generatedAt = new Date(nowMs).toISOString()
-  const [om, met] = await Promise.allSettled([
+  const [om, met, ensemble] = await Promise.allSettled([
     readThrough({
       getCached: getOpenMeteoForecast,
       getFresh: getOpenMeteoForecastFresh,
@@ -35,18 +49,16 @@ export const getWeatherSnapshot = cache(async (): Promise<WeatherSnapshot> => {
       nowMs,
     }),
     getMetNorway(),
+    readThrough({
+      getCached: getOpenMeteoEnsemble,
+      getFresh: getOpenMeteoEnsembleFresh,
+      ttlS: TTL.openMeteoEnsemble,
+      nowMs,
+    }),
   ])
 
-  let omInfo: SourceInfo
-  if (om.status === 'fulfilled') {
-    const status = deriveSourceStatus(om)
-    omInfo = { id: 'open-meteo', status, fetchedAt: om.value.value.fetchedAt }
-    if (status === 'stale') omInfo.errorCode = om.value.refreshError
-  } else {
-    const errorCode = errorCodeOf(om.reason)
-    console.error(`[snapshot] open-meteo unavailable: ${errorCode}`)
-    omInfo = { id: 'open-meteo', status: 'error', fetchedAt: null, errorCode }
-  }
+  const omInfo = infoFrom('open-meteo', om)
+  const ensembleInfo = infoFrom('open-meteo-ensemble', ensemble)
 
   let metInfo: SourceInfo
   if (met.status === 'fulfilled') {
@@ -57,12 +69,16 @@ export const getWeatherSnapshot = cache(async (): Promise<WeatherSnapshot> => {
     metInfo = { id: 'met-norway', status: 'error', fetchedAt: null, errorCode }
   }
 
-  const sources = [omInfo, metInfo]
+  const sources = [omInfo, metInfo, ensembleInfo]
+  const confidence: DayConfidence[] =
+    ensemble.status === 'fulfilled'
+      ? ensemble.value.value.data.map(({ date, ...day }) => ({ date, ensemble: day }))
+      : []
   let built: WeatherSnapshot
   if (om.status === 'fulfilled') {
-    built = { generatedAt, ...normalizeForecast(om.value.value.data), sources }
+    built = { generatedAt, ...normalizeForecast(om.value.value.data), sources, confidence }
   } else {
-    built = { generatedAt, now: null, hourly48: [], daily: [], sources }
+    built = { generatedAt, now: null, hourly48: [], daily: [], sources, confidence }
   }
   const fault = readFault({
     VERCEL_ENV: process.env.VERCEL_ENV,

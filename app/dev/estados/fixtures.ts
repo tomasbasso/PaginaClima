@@ -59,6 +59,7 @@ function snapshot(
     hourly48,
     daily,
     sources,
+    confidence: [],
   }
 }
 

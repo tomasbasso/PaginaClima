@@ -26,6 +26,7 @@ function snap(now: NowData | null, om: Partial<SourceInfo>): WeatherSnapshot {
       { id: 'open-meteo', status: 'ok', fetchedAt: '2026-10-23T15:00:00.000Z', ...om },
       { id: 'met-norway', status: 'ok', fetchedAt: '2026-10-23T15:00:00.000Z' },
     ],
+    confidence: [],
   }
 }
 

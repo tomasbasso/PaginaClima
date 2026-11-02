@@ -47,6 +47,20 @@ describe('aggregateEnsemble()', () => {
     expect(days.map((d) => d.date)).not.toContain(fixture.daily.time[14])
   })
 
+  it('real fixture: each count matches a by-hand sum of rows 1-24, 25-48, …', () => {
+    const hourly = fixture.hourly as unknown as Record<string, Array<number | null>>
+    const columns = Object.keys(hourly).filter((k) => /^precipitation(_member\d{2})?$/.test(k))
+    const byHand = Array.from({ length: 14 }, (_, day) =>
+      columns.filter((key) => {
+        const hours = hourly[key].slice(1 + 24 * day, 25 + 24 * day)
+        const sum = hours.reduce<number>((acc, mm) => acc + Math.max(0, mm ?? 0), 0)
+        return sum >= 1 - 1e-9
+      }).length,
+    )
+    const days = aggregateEnsemble(fixture.hourly, fixture.daily)
+    expect(days.map((d) => d.rainMembers)).toEqual(byHand)
+  })
+
   it('real fixture: temperature percentiles come from the daily block', () => {
     const [first] = aggregateEnsemble(fixture.hourly, fixture.daily)
     const daily = fixture.daily as unknown as Record<string, Array<number | null>>
