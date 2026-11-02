@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-02T01:54:07.184Z"
+last_updated: "2026-11-02T01:59:13.450Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 35
-  completed_plans: 30
+  completed_plans: 31
   percent: 57
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 04 (pron-stico-con-confianza) — EXECUTING
-Plan: 6 of 10
+Plan: 7 of 10
 Status: Ready to execute
 Last activity: 2026-11-02
 
-Progress: [█████████░] 86%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [█████████░] 86%
 | Phase 04 P03 | 5 min | 2 tasks | 9 files |
 | Phase 04 P04 | 6 min | 2 tasks | 6 files |
 | Phase 04 P05 | 6 min | 2 tasks | 12 files |
+| Phase 04 P06 | 4 min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -136,6 +137,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-05: confidence es la unión de fechas de ensemble y modelos: con el ensemble caído, los días siguen con veredicto y ensemble en null
 - [Phase 04]: 04-05: aggregateModels omite los días sin votantes: el día 15 sin terminar no llega al snapshot
 - [Phase 04]: 04-05: el schema multimodelo exige un modelo con sus tres columnas, y MODL-02 sigue abierto hasta que 04-06 dibuje el rombo
+- [Phase 04]: 04-06: modelsUp mira solo los días visibles, igual que ensembleUp: un veredicto de un día pasado no cuenta
+- [Phase 04]: 04-06: MODL-02 queda completo: el semáforo se ve por día y /api/weather no expone nombres de modelo; leyenda y despacho llegan en 04-08
 
 ### Pending Todos
 
@@ -157,6 +160,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T01:54:07.164Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-11-02T01:59:13.425Z
+Stopped at: Completed 04-06-PLAN.md
 Resume file: None

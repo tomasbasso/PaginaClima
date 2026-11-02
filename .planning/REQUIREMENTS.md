@@ -28,7 +28,7 @@
 ### Coincidencia entre modelos (MODL)
 
 - ~~**MODL-01**: El usuario ve el pronóstico de ECMWF, GFS, ICON y GEM lado a lado para los próximos días~~ (fuera de alcance desde 2026-10-25: se eliminó la pestaña Modelos)
-- [ ] **MODL-02**: El usuario ve en cada día del Pronóstico un semáforo de coincidencia entre modelos (coinciden / dudan / no se ponen de acuerdo) calculado solo con modelos independientes, sin una pestaña aparte
+- [x] **MODL-02**: El usuario ve en cada día del Pronóstico un semáforo de coincidencia entre modelos (coinciden / dudan / no se ponen de acuerdo) calculado solo con modelos independientes, sin una pestaña aparte
 - ~~**MODL-03**: El usuario ve el pronóstico de MET Norway como segunda opinión, rotulado "basado en ECMWF" y fuera del cálculo de coincidencia~~ (fuera de alcance desde 2026-10-25: se eliminó la pestaña Modelos)
 
 ### Lluvia acumulada (RAIN)
@@ -113,7 +113,7 @@
 | FCST-03 | Phase 4 | Complete |
 | FCST-04 | Phase 4 | Complete |
 | MODL-01 | — | Out of scope |
-| MODL-02 | Phase 4 | Pending |
+| MODL-02 | Phase 4 | Complete |
 | MODL-03 | — | Out of scope |
 | RAIN-01 | Phase 5 | Complete |
 | RAIN-02 | Phase 5 | Complete |
