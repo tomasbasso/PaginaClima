@@ -2,8 +2,10 @@
 // Daily list of /pronostico (UI-SPEC "Anatomía de la fila", "Botón ver 14 días"). The only client
 // island of the page: it toggles between 7 and 14 days (D-08). Rows arrive precomputed and plain
 // (lib/forecast/daily.ts); both range scales come from the server, so expanding only swaps
-// bar7 → bar14 (D-09, no animation). Rows are static: no links, buttons or hover (D-11).
-import { useId, useState } from 'react'
+// bar7 → bar14, which the bar pieces follow with a CSS transition. Bands and rain gauge fills open
+// with CSS only (globals.css, D-03): the delay comes from --i, and the tail restarts its animations
+// when `hidden` goes away. Rows are static: no links, buttons or hover (D-11).
+import { type CSSProperties, useId, useState } from 'react'
 import type { DailyBar, DailyRow } from '@/lib/forecast/daily'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
@@ -19,14 +21,36 @@ const STRIPED_FILL = 'repeating-linear-gradient(to top, var(--color-azure) 0 2px
 const BUTTON =
   'h-11 border border-ink/30 bg-transparent px-6 text-[12px] font-semibold uppercase leading-[1.33] tracking-[0.14em] text-ink transition-colors hover:border-accent hover:bg-ink/8 focus-visible:border-accent focus-visible:bg-ink/8 active:bg-ink/12'
 
+/** Usable width: 4 px stay free on each end, so a 4-px minimum never leaves the cell (UI-SPEC "Abanico"). */
+const U = '(100% - 8px)'
+const at = (fraction: number) => `calc(4px + ${fraction} * ${U})`
+const span = (fraction: number) => `max(4px, calc(${fraction} * ${U}))`
+
 function RangeBar({ bar, tentative }: { bar: DailyBar | null; tentative: boolean }) {
+  const far = tentative ? ' abanico-lejano' : ''
   return (
     <div className="relative h-4">
       <div className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-ink/12" />
+      {bar?.bandLo != null ? (
+        // Anchored by `right`, so its minimum width grows outwards and never under the segment.
+        <div
+          className={`abanico-l bar-pieza absolute top-1 h-2${far}`}
+          style={{
+            right: `calc(100% - 4px - ${bar.lo} * ${U})`,
+            width: span(bar.lo - bar.bandLo),
+          }}
+        />
+      ) : null}
+      {bar?.bandHi != null ? (
+        <div
+          className={`abanico-r bar-pieza absolute top-1 h-2${far}`}
+          style={{ left: at(bar.hi), width: span(bar.bandHi - bar.hi) }}
+        />
+      ) : null}
       {bar ? (
         <div
-          className={`absolute top-1/2 h-1 -translate-y-1/2 ${tentative ? 'bg-ink/55' : 'bg-ink'}`}
-          style={{ left: `${bar.lo * 100}%`, width: `max(4px, ${(bar.hi - bar.lo) * 100}%)` }}
+          className={`bar-pieza absolute top-[6px] h-1 ${tentative ? 'bg-ink/55' : 'bg-ink'}`}
+          style={{ left: at(bar.lo), width: span(bar.hi - bar.lo) }}
         />
       ) : null}
     </div>
@@ -51,7 +75,7 @@ function Pluviometro({
     <div data-pluvio className={`absolute -right-4 bottom-0 w-2 bg-ink/12 ${hairline ? '-top-px' : 'top-0'}`}>
       {pct !== null ? (
         <div
-          className={`absolute inset-x-0 bottom-0 ${tentative ? '' : 'bg-azure'}`}
+          className={`pluvio-relleno absolute inset-x-0 bottom-0 ${tentative ? '' : 'bg-azure'}`}
           style={tentative ? { height: `${pct}%`, background: STRIPED_FILL } : { height: `${pct}%` }}
         />
       ) : null}
@@ -65,18 +89,23 @@ function Pluviometro({
 function Row({
   row,
   bar,
+  index,
   first,
   capTop = false,
   capBottom = false,
 }: {
   row: DailyRow
   bar: DailyBar | null
+  index: number // position inside its list: the opening delay restarts on day 8
   first: boolean
   capTop?: boolean
   capBottom?: boolean
 }) {
   return (
-    <li className={`relative py-4 ${first ? '' : 'border-t border-ink/12'}`}>
+    <li
+      className={`relative py-4 ${first ? '' : 'border-t border-ink/12'}`}
+      style={{ '--i': index } as CSSProperties}
+    >
       <span className="sr-only">{row.srText}</span>
       <div aria-hidden="true" className="@container">
         <div className={`grid items-center ${row.ensembleUp ? GRID_ENSEMBLE : GRID_FALLBACK}`}>
@@ -140,6 +169,7 @@ export function DailyList({
             key={r.key}
             row={r}
             bar={barOf(r)}
+            index={i}
             first={i === 0}
             capTop={i === 0}
             capBottom={!tailShown && i === head.length - 1}
@@ -156,7 +186,14 @@ export function DailyList({
             </p>
             <ol aria-label="Pronóstico orientativo, días 8 a 14" start={8}>
               {tail.map((r, i) => (
-                <Row key={r.key} row={r} bar={r.bar14} first={i === 0} capBottom={i === tail.length - 1} />
+                <Row
+                  key={r.key}
+                  row={r}
+                  bar={r.bar14}
+                  index={i}
+                  first={i === 0}
+                  capBottom={i === tail.length - 1}
+                />
               ))}
             </ol>
           </div>

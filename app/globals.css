@@ -203,6 +203,76 @@ html:has(main[data-sky="tormenta"]) {
     radial-gradient(circle at 42.6% 33.5%, rgb(251 251 242 / 0.5) 0 1px, transparent 1.5px);
 }
 
+/* Fan bands and rain gauge opening (04-UI-SPEC "Abanico" and "Animación de entrada", D-03, D-05).
+   The keyframes have no `to`: the end state is the element's own style, already in the SSR HTML.
+   6 x 40 ms + 420 ms = 660 ms, for the first 7 rows and again for the tail, whose --i restarts.
+   Reduced motion needs nothing here: the global rule below removes animations and transitions. */
+@keyframes abanico-abrir {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes pluvio-llenar {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+.abanico-l,
+.abanico-r,
+.pluvio-relleno {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: backwards;
+  animation-delay: calc(var(--i, 0) * 40ms);
+}
+
+/* Band from the segment outwards, with no hard edge at the tip. */
+.abanico-l,
+.abanico-r {
+  animation-name: abanico-abrir;
+  --abanico-0: 0.45;
+  --abanico-55: 0.18;
+  --abanico-85: 0.06;
+  background: linear-gradient(
+    var(--abanico-hacia),
+    rgb(251 251 242 / var(--abanico-0)) 0%,
+    rgb(251 251 242 / var(--abanico-55)) 55%,
+    rgb(251 251 242 / var(--abanico-85)) 85%,
+    rgb(251 251 242 / 0) 100%
+  );
+}
+
+.abanico-l {
+  --abanico-hacia: to left;
+  transform-origin: right center;
+}
+
+.abanico-r {
+  --abanico-hacia: to right;
+  transform-origin: left center;
+}
+
+/* Days 8+: these stops already are the 80 % of the UI-SPEC, so no opacity on top. */
+.abanico-lejano {
+  --abanico-0: 0.36;
+  --abanico-55: 0.14;
+  --abanico-85: 0.05;
+}
+
+.pluvio-relleno {
+  animation-name: pluvio-llenar;
+  transform-origin: bottom;
+}
+
+/* Rows 1-7 follow bar7 <-> bar14 without opening again. */
+.bar-pieza {
+  transition-property: left, right, width;
+  transition-duration: 420ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 html {
   background: #0e131c;
   color: #fbfbf2;
