@@ -1,6 +1,7 @@
 // WeatherSnapshot contract: the single shape consumed by the page, /api/weather,
 // the service worker (phase 6) and the alerts cron (phase 7).
 
+import type { Verdict } from '@/lib/forecast/agreement'
 import type { EnsembleDay } from '@/lib/forecast/ensemble'
 
 export type SourceId =
@@ -60,10 +61,16 @@ export interface DailyPoint {
   gustMaxKmh: number | null
 }
 
-/** Per-day aggregate only: the snapshot is public through /api/weather, raw members never enter. */
+/**
+ * Per-day aggregate only: the snapshot is public through /api/weather, so raw members and values per
+ * model never enter (D-18). `ensemble` is null when it has no data that day; `verdict` is 'sinDato'
+ * when the models failed or nobody votes that day.
+ */
 export interface DayConfidence {
   date: string
   ensemble: Omit<EnsembleDay, 'date'> | null
+  verdict: Verdict
+  voters: number
 }
 
 export interface WeatherSnapshot {
@@ -72,5 +79,5 @@ export interface WeatherSnapshot {
   hourly48: HourlyPoint[]
   daily: DailyPoint[]
   sources: SourceInfo[] // sources[0] is always 'open-meteo'
-  confidence: DayConfidence[] // [] when the ensemble failed and there is no last-good
+  confidence: DayConfidence[] // [] when the ensemble and the models failed with no last-good
 }

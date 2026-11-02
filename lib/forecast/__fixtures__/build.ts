@@ -91,6 +91,8 @@ export function makeConfidence(
               tMaxP90C: 28,
               ...fields,
             },
+      verdict: 'sinDato',
+      voters: 0,
     })
   }
   return out
