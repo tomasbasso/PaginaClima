@@ -425,8 +425,8 @@ export function buildConfidenceFixtures(nowMs: number): {
   })
   const ENSEMBLE = 'open-meteo-ensemble'
   const MODELS = 'open-meteo-models'
-  const notice = (rows: DailyRow[], ensemble: SourceInfo, models: SourceInfo) =>
-    confidenceNotice([ensemble, models], now, rows[0])
+  const notice = (rows: DailyRow[], ensemble: SourceInfo, models: SourceInfo, main = up('open-meteo')) =>
+    confidenceNotice([main, up('met-norway'), ensemble, models], now, rows[0])
 
   const tMax = [24, 27, 29, 22, 18, 16, 21, 25, 28, 31, 26, 19, 17, 23]
   const tMin = [11, 12, 14, 10, 7, 4, 8, 10, 12, 15, 13, 9, 5, 7]
@@ -546,12 +546,17 @@ export function buildConfidenceFixtures(nowMs: number): {
     { name: 'Cuadro 2 · Datos completos 14 días', rows: fullRows, notice: null, initialExpanded: true },
     { name: 'Cuadro 3 · Falló el ensemble', rows: noEnsembleRows, notice: notice(noEnsembleRows, down(ENSEMBLE), up(MODELS)) },
     {
+      name: 'Cuadro 3b · Falló el ensemble y la fuente principal quedó vieja · Frase fuera del contrato',
+      rows: noEnsembleRows,
+      notice: notice(noEnsembleRows, down(ENSEMBLE), up(MODELS), stale('open-meteo', 2)),
+    },
+    {
       name: 'Cuadro 4 · Ensemble con último dato bueno',
       rows: fullRows,
       notice: notice(fullRows, stale(ENSEMBLE, 3), up(MODELS)),
     },
     {
-      name: 'Cuadro 4b · Ensemble con último dato bueno y multimodelo caído',
+      name: 'Cuadro 4b · Ensemble con último dato bueno y multimodelo caído · Frase fuera del contrato',
       rows: noModelsRows,
       notice: notice(noModelsRows, stale(ENSEMBLE, 3), down(MODELS)),
     },
@@ -567,12 +572,17 @@ export function buildConfidenceFixtures(nowMs: number): {
     },
     { name: 'Cuadro 5 · Falló el multimodelo', rows: noModelsRows, notice: notice(noModelsRows, up(ENSEMBLE), down(MODELS)) },
     {
+      name: 'Cuadro 5b · Falló el multimodelo y la fuente principal quedó vieja · Frase fuera del contrato',
+      rows: noModelsRows,
+      notice: notice(noModelsRows, up(ENSEMBLE), down(MODELS), stale('open-meteo', 2)),
+    },
+    {
       name: 'Cuadro 6 · Multimodelo con último dato bueno',
       rows: fullRows,
       notice: notice(fullRows, up(ENSEMBLE), stale(MODELS, 2)),
     },
     {
-      name: 'Cuadro 6b · Multimodelo con último dato bueno y ensemble caído',
+      name: 'Cuadro 6b · Multimodelo con último dato bueno y ensemble caído · Frase fuera del contrato',
       rows: noEnsembleRows,
       notice: notice(noEnsembleRows, down(ENSEMBLE), stale(MODELS, 2)),
     },

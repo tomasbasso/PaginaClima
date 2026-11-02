@@ -14,6 +14,10 @@ const ENSEMBLE_DOWN =
   'Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. El resto del pronóstico sigue al día.'
 const MODELS_DOWN =
   'Ahora no podemos comparar los modelos, así que esta vez no hay rombos. El resto del pronóstico sigue al día.'
+const ENSEMBLE_DOWN_REST =
+  'Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. Te mostramos el resto del pronóstico.'
+const MODELS_DOWN_REST =
+  'Ahora no podemos comparar los modelos, así que esta vez no hay rombos. Te mostramos el resto del pronóstico.'
 const BOTH_DOWN =
   'Ahora no tenemos la probabilidad de lluvia ni la comparación entre modelos. Te mostramos el pronóstico principal.'
 const ensembleStale = (hhmm: string) =>
@@ -51,9 +55,42 @@ describe('confidenceNotice', () => {
     expect(notice(sources(ens('error'), mod('error')))).toBe(BOTH_DOWN)
   })
 
-  it('error wins over stale: the copy names the source with nothing to show', () => {
-    expect(notice(sources(ens('error'), mod('stale')))).toBe(ENSEMBLE_DOWN)
-    expect(notice(sources(ens('stale'), mod('error')))).toBe(MODELS_DOWN)
+  it('error wins over stale: the copy names the source with nothing to show and claims nothing else', () => {
+    expect(notice(sources(ens('error'), mod('stale')))).toBe(ENSEMBLE_DOWN_REST)
+    expect(notice(sources(ens('stale'), mod('error')))).toBe(MODELS_DOWN_REST)
+  })
+
+  it.each(['stale', 'error'] as const)('with the main source %s, nothing says "sigue al día"', (status) => {
+    const list = (ensemble: SourceInfo, models: SourceInfo) => {
+      const out = sources(ensemble, models)
+      out[0] = source('open-meteo', status)
+      return out
+    }
+    expect(notice(list(ens('error'), mod('ok')))).toBe(ENSEMBLE_DOWN_REST)
+    expect(notice(list(ens('ok'), mod('error')))).toBe(MODELS_DOWN_REST)
+  })
+
+  it('every other source counts, MET Norway too', () => {
+    const list = sources(ens('error'), mod('ok'))
+    list[1] = source('met-norway', 'error', null)
+    expect(notice(list)).toBe(ENSEMBLE_DOWN_REST)
+  })
+
+  it('never says "sigue al día" unless all the others are ok', () => {
+    const statuses: SourceStatus[] = ['ok', 'stale', 'error']
+    for (const main of statuses) {
+      for (const met of statuses) {
+        for (const a of statuses) {
+          for (const b of statuses) {
+            const list = sources(ens(a), mod(b))
+            list[0] = source('open-meteo', main)
+            list[1] = source('met-norway', met)
+            const others = main === 'ok' && met === 'ok' && (a === 'ok' || b === 'ok')
+            expect((notice(list) ?? '').includes('sigue al día') && !others).toBe(false)
+          }
+        }
+      }
+    }
   })
 
   it('stale and stale: one sentence with the oldest hour, whichever source holds it', () => {
@@ -66,7 +103,7 @@ describe('confidenceNotice', () => {
     expect(notice(sources(ens('ok'), mod('stale', null)))).toBe(MODELS_DOWN)
     expect(notice(sources(ens('stale', 'no-date'), mod('ok')))).toBe(ENSEMBLE_DOWN)
     expect(notice(sources(ens('stale', null), mod('stale', null)))).toBe(BOTH_DOWN)
-    expect(notice(sources(ens('stale', null), mod('stale', OLDER)))).toBe(ENSEMBLE_DOWN)
+    expect(notice(sources(ens('stale', null), mod('stale', OLDER)))).toBe(ENSEMBLE_DOWN_REST)
   })
 
   it('data from another local day says the date and the hour', () => {
@@ -99,7 +136,7 @@ describe('confidenceNotice', () => {
     expect(notice(sources(ens('stale'), mod('ok')), NOW, noEnsemble)).toBe(ENSEMBLE_DOWN)
     expect(notice(sources(ens('ok'), mod('stale')), NOW, noModels)).toBe(MODELS_DOWN)
     expect(notice(sources(ens('stale'), mod('stale')), NOW, nothing)).toBe(BOTH_DOWN)
-    expect(notice(sources(ens('stale'), mod('stale')), NOW, noEnsemble)).toBe(ENSEMBLE_DOWN)
+    expect(notice(sources(ens('stale'), mod('stale')), NOW, noEnsemble)).toBe(ENSEMBLE_DOWN_REST)
   })
 
   it('a stale source with a visible day keeps its copy, and an ok one without any is no failure', () => {
@@ -108,7 +145,7 @@ describe('confidenceNotice', () => {
     expect(notice(sources(ens('ok'), mod('ok')), NOW, { ensembleUp: false, modelsUp: false })).toBeNull()
   })
 
-  it('the main source does not take part: its notice lives in the header', () => {
+  it('the main source gets no notice of its own here: that one lives in the header', () => {
     const list = sources(ens('ok'), mod('ok'))
     list[0] = source('open-meteo', 'error', null)
     list[1] = source('met-norway', 'stale')

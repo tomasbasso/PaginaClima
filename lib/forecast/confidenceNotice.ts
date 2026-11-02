@@ -1,7 +1,7 @@
 // Which notice goes above the daily list when a confidence source fails (D-17, UI-SPEC "Fallas por
-// fuente"). Pure, because the page has no tests. Only local copy and a formatted hour reach the
-// screen: errorCode and anything else from upstream never do. The main source is not looked at: its
-// notice lives in the header and stays independent.
+// fuente"). Pure, because the page has no tests. Only local copy and a formatted date and hour reach
+// the screen: errorCode and anything else from upstream never do. The main source gets no sentence
+// here, because its notice lives in the header, but it does decide whether "sigue al día" is true.
 import { formatDayMonth, formatHHmm, localDateKey } from '@/lib/time'
 import type { SourceInfo } from '@/lib/weather/types'
 
@@ -32,6 +32,13 @@ function dataFrom(ms: number, now: Date): string {
   return `del ${formatDayMonth(fetched)} a las ${formatHHmm(fetched)}`
 }
 
+/** "Sigue al día" is a claim about every other source, so anything short of ok drops it. */
+function restOfForecast(sources: SourceInfo[], failed: SourceInfo['id']): string {
+  return sources.every((s) => s.id === failed || s.status === 'ok')
+    ? 'El resto del pronóstico sigue al día.'
+    : 'Te mostramos el resto del pronóstico.'
+}
+
 export function confidenceNotice(sources: SourceInfo[], now: Date, visible: VisibleData): string | null {
   const ensemble = healthOf(sources, 'open-meteo-ensemble', visible.ensembleUp)
   const models = healthOf(sources, 'open-meteo-models', visible.modelsUp)
@@ -41,10 +48,10 @@ export function confidenceNotice(sources: SourceInfo[], now: Date, visible: Visi
   }
   // Error wins over stale: the stale source still shows its full row, the other one shows nothing.
   if (ensemble.kind === 'error') {
-    return 'Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. El resto del pronóstico sigue al día.'
+    return `Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. ${restOfForecast(sources, 'open-meteo-ensemble')}`
   }
   if (models.kind === 'error') {
-    return 'Ahora no podemos comparar los modelos, así que esta vez no hay rombos. El resto del pronóstico sigue al día.'
+    return `Ahora no podemos comparar los modelos, así que esta vez no hay rombos. ${restOfForecast(sources, 'open-meteo-models')}`
   }
   if (ensemble.kind === 'stale' && models.kind === 'stale') {
     // Outside the contract, built from the approved pieces. One hour only: the oldest is the honest one.
