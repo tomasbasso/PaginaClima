@@ -93,7 +93,7 @@ describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
     expect(rows[2].srText).toBe(
       'Domingo 25: algo nublado, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia.',
     )
-    expect(rows[2].rainText).toBe('4 mm')
+    expect(rows[2].rainText).toBe('4\u00A0mm')
     expect(rows[1].rainText).toBeNull()
   })
 
@@ -141,9 +141,9 @@ describe('rainText (D-10)', () => {
   it('shows rounded mm only from 1 mm, with a non-breaking space', () => {
     expect(rainText(null)).toBeNull()
     expect(rainText(0.9)).toBeNull()
-    expect(rainText(1)).toBe('1 mm')
-    expect(rainText(4.4)).toBe('4 mm')
-    expect(rainText(12.6)).toBe('13 mm')
+    expect(rainText(1)).toBe('1\u00A0mm')
+    expect(rainText(4.4)).toBe('4\u00A0mm')
+    expect(rainText(12.6)).toBe('13\u00A0mm')
   })
 })
 
@@ -157,7 +157,7 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
       NOW,
       makeConfidence(START, 4, (i) => ({ rainMembers: [35, 5, 6, 51][i] })),
     )
-    expect(rows.map((r) => r.probText)).toEqual(['70 %', null, '10 %', '95 %'])
+    expect(rows.map((r) => r.probText)).toEqual(['70\u00A0%', null, '10\u00A0%', '95\u00A0%'])
     expect(rows.map((r) => r.probPct)).toEqual([70, null, 10, 95])
     for (const r of rows) expect(r.ensembleUp).toBe(true)
   })
@@ -173,7 +173,7 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
       expect(rows[i].probPct).toBeNull()
       expect(rows[i].ensembleUp).toBe(true)
     }
-    expect(rows[1].probText).toBe('40 %')
+    expect(rows[1].probText).toBe('40\u00A0%')
   })
 
   it('reports the ensemble as down with two arguments or with no day that has it', () => {
@@ -213,7 +213,7 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
       NOW,
       makeConfidence(START, 1, () => ({ rainMembers: 31 })),
     )
-    expect(rows[0].probText).toBe('60 %')
+    expect(rows[0].probText).toBe('60\u00A0%')
     expect(rows[0].rainText).toBeNull()
   })
 
@@ -223,7 +223,7 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
       NOW,
       makeConfidence(START, 14, () => ({ rainMembers: 30, rainP10Mm: 5, rainP90Mm: 15 })),
     )
-    for (const r of rows) expect(r.rainText).toBe('4 mm')
+    for (const r of rows) expect(r.rainText).toBe('4\u00A0mm')
   })
 
   describe('srText', () => {

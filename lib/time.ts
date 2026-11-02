@@ -143,3 +143,11 @@ export function relativeDayLabel(key: string, todayKey: string): string {
   if (key === addDaysToKey(todayKey, 1)) return 'Mañana'
   return `${weekdayShort(key)} ${Number(key.slice(8, 10))}`
 }
+
+/** 'Hoy' · 'Mañana' · 'Sábado 24': the long form read by screen readers. */
+export function longDayLabel(key: string, todayKey: string): string {
+  if (key === todayKey) return 'Hoy'
+  if (key === addDaysToKey(todayKey, 1)) return 'Mañana'
+  const weekday = weekdayLong(key)
+  return `${weekday[0].toUpperCase()}${weekday.slice(1)} ${Number(key.slice(8, 10))}`
+}
