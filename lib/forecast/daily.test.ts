@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { makeConfidence, makeDaily } from './__fixtures__/build'
 import type { Verdict } from './agreement'
-import { buildDailyRows, type DailyRow, rainText } from './daily'
+import { buildCredit, buildDailyRows, type DailyRow, rainText } from './daily'
 
 describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
   it('runs under TZ=UTC like Vercel', () => {
@@ -545,6 +545,64 @@ describe('buildDailyRows with the model agreement (MODL-02, D-12, D-14, D-17)', 
       expect(r.modelsUp).toBe(false)
       expect(r.verdict).toBe('sinDato')
     }
+  })
+})
+
+describe('buildCredit (D-16)', () => {
+  const NOW = new Date('2026-10-23T15:00:00Z')
+  const START = '2026-10-23'
+
+  /** One row per voter count; `members` null leaves the day without ensemble. */
+  const rowsWith = (voters: number[], members: number | null = 51) =>
+    buildDailyRows(
+      makeDaily(START, voters.length),
+      NOW,
+      makeConfidence(START, voters.length, () => (members === null ? null : { members })).map((c, i) => ({
+        ...c,
+        verdict: (voters[i] === 0 ? 'sinDato' : voters[i] === 1 ? 'solo' : 'coinciden') as Verdict,
+        voters: voters[i],
+      })),
+    )
+
+  it('names both sources', () => {
+    expect(buildCredit(rowsWith([4, 4]))).toEqual(['Probabilidad: 51 escenarios de ECMWF', 'Coincidencia: 4 modelos'])
+  })
+
+  it('takes the highest real count of the list', () => {
+    expect(buildCredit(rowsWith([4, 3, 2]))[1]).toBe('Coincidencia: 4 modelos')
+    expect(buildCredit(rowsWith([2, 3, 2]))[1]).toBe('Coincidencia: 3 modelos')
+    expect(buildCredit(rowsWith([2, 2]))[1]).toBe('Coincidencia: 2 modelos')
+    expect(buildCredit(rowsWith([4], 50))[0]).toBe('Probabilidad: 50 escenarios de ECMWF')
+  })
+
+  it('uses the singular for one model', () => {
+    expect(buildCredit(rowsWith([1, 0]))[1]).toBe('Coincidencia: 1 modelo')
+  })
+
+  it('omits the probability without ensemble', () => {
+    expect(buildCredit(rowsWith([4, 4], null))).toEqual(['Coincidencia: 4 modelos'])
+  })
+
+  it('omits the agreement without models', () => {
+    expect(buildCredit(rowsWith([0, 0]))).toEqual(['Probabilidad: 51 escenarios de ECMWF'])
+  })
+
+  it('has nothing to credit without either source or without rows', () => {
+    expect(buildCredit(rowsWith([0, 0], null))).toEqual([])
+    expect(buildCredit(buildDailyRows(makeDaily(START, 2), NOW))).toEqual([])
+    expect(buildCredit([])).toEqual([])
+  })
+
+  it('ignores the sources of a day that is not visible', () => {
+    const rows = buildDailyRows(makeDaily(START, 2), NOW, [
+      ...makeConfidence('2026-10-20', 1, () => ({ members: 99 })).map((c) => ({
+        ...c,
+        verdict: 'coinciden' as const,
+        voters: 4,
+      })),
+      ...makeConfidence(START, 2).map((c) => ({ ...c, verdict: 'coinciden' as const, voters: 2 })),
+    ])
+    expect(buildCredit(rows)).toEqual(['Probabilidad: 51 escenarios de ECMWF', 'Coincidencia: 2 modelos'])
   })
 })
 
