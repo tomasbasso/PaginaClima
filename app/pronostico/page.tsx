@@ -38,7 +38,7 @@ export default async function PronosticoPage() {
       compact
       below={
         rows.length > 0 ? (
-          <DailySection rows={rows} notice={confidenceNotice(snapshot.sources)} />
+          <DailySection rows={rows} notice={confidenceNotice(snapshot.sources, now, rows[0])} />
         ) : (
           <div className="pb-12 pt-8">
             <NoData action={<RetryButton />} />

@@ -425,7 +425,8 @@ export function buildConfidenceFixtures(nowMs: number): {
   })
   const ENSEMBLE = 'open-meteo-ensemble'
   const MODELS = 'open-meteo-models'
-  const notice = (ensemble: SourceInfo, models: SourceInfo) => confidenceNotice([ensemble, models])
+  const notice = (rows: DailyRow[], ensemble: SourceInfo, models: SourceInfo) =>
+    confidenceNotice([ensemble, models], now, rows[0])
 
   const tMax = [24, 27, 29, 22, 18, 16, 21, 25, 28, 31, 26, 19, 17, 23]
   const tMin = [11, 12, 14, 10, 7, 4, 8, 10, 12, 15, 13, 9, 5, 7]
@@ -465,6 +466,7 @@ export function buildConfidenceFixtures(nowMs: number): {
   const fullRows = rowsOf(baseDaily, full)
   const noEnsembleRows = rowsOf(baseDaily, vote(noEnsemble, VERDICTS, votersByDay))
   const noModelsRows = rowsOf(baseDaily, baseEnsemble)
+  const noConfidenceRows = rowsOf(baseDaily, [])
 
   const twoModels = vote(baseEnsemble, 'cdcdcdccdcdccd', () => 2)
   const onlyOne = vote(baseEnsemble, 'ssssssssssssss')
@@ -542,34 +544,49 @@ export function buildConfidenceFixtures(nowMs: number): {
   const frames: ConfidenceFrame[] = [
     { name: 'Cuadro 1 · Datos completos 7 días', rows: fullRows, notice: null },
     { name: 'Cuadro 2 · Datos completos 14 días', rows: fullRows, notice: null, initialExpanded: true },
-    { name: 'Cuadro 3 · Falló el ensemble', rows: noEnsembleRows, notice: notice(down(ENSEMBLE), up(MODELS)) },
+    { name: 'Cuadro 3 · Falló el ensemble', rows: noEnsembleRows, notice: notice(noEnsembleRows, down(ENSEMBLE), up(MODELS)) },
     {
       name: 'Cuadro 4 · Ensemble con último dato bueno',
       rows: fullRows,
-      notice: notice(stale(ENSEMBLE, 3), up(MODELS)),
+      notice: notice(fullRows, stale(ENSEMBLE, 3), up(MODELS)),
     },
     {
       name: 'Cuadro 4b · Ensemble con último dato bueno y multimodelo caído',
       rows: noModelsRows,
-      notice: notice(stale(ENSEMBLE, 3), down(MODELS)),
+      notice: notice(noModelsRows, stale(ENSEMBLE, 3), down(MODELS)),
     },
-    { name: 'Cuadro 5 · Falló el multimodelo', rows: noModelsRows, notice: notice(up(ENSEMBLE), down(MODELS)) },
+    {
+      name: 'Cuadro 4c · Ensemble con último dato de otro día · Frase fuera del contrato',
+      rows: fullRows,
+      notice: notice(fullRows, stale(ENSEMBLE, 50), up(MODELS)),
+    },
+    {
+      name: 'Cuadro 4d · Ensemble con último dato que no cubre ningún día visible',
+      rows: noEnsembleRows,
+      notice: notice(noEnsembleRows, stale(ENSEMBLE, 20 * 24), up(MODELS)),
+    },
+    { name: 'Cuadro 5 · Falló el multimodelo', rows: noModelsRows, notice: notice(noModelsRows, up(ENSEMBLE), down(MODELS)) },
     {
       name: 'Cuadro 6 · Multimodelo con último dato bueno',
       rows: fullRows,
-      notice: notice(up(ENSEMBLE), stale(MODELS, 2)),
+      notice: notice(fullRows, up(ENSEMBLE), stale(MODELS, 2)),
     },
     {
       name: 'Cuadro 6b · Multimodelo con último dato bueno y ensemble caído',
       rows: noEnsembleRows,
-      notice: notice(down(ENSEMBLE), stale(MODELS, 2)),
+      notice: notice(noEnsembleRows, down(ENSEMBLE), stale(MODELS, 2)),
     },
     {
       name: 'Cuadro 6c · Las dos con último dato bueno · Frase fuera del contrato',
       rows: fullRows,
-      notice: notice(stale(ENSEMBLE, 3), stale(MODELS, 2)),
+      notice: notice(fullRows, stale(ENSEMBLE, 3), stale(MODELS, 2)),
     },
-    { name: 'Cuadro 7 · Fallaron los dos', rows: rowsOf(baseDaily, []), notice: notice(down(ENSEMBLE), down(MODELS)) },
+    {
+      name: 'Cuadro 6d · Multimodelo con último dato que no cubre ningún día visible',
+      rows: noModelsRows,
+      notice: notice(noModelsRows, up(ENSEMBLE), stale(MODELS, 20 * 24)),
+    },
+    { name: 'Cuadro 7 · Fallaron los dos', rows: noConfidenceRows, notice: notice(noConfidenceRows, down(ENSEMBLE), down(MODELS)) },
     { name: 'Cuadro 8 · Solo un modelo', rows: rowsOf(baseDaily, onlyOne), notice: null },
     { name: 'Cuadro 9 · 2 modelos', rows: rowsOf(baseDaily, twoModels), notice: null },
     { name: 'Cuadro 10 · Probabilidad baja', rows: rowsOf(baseDaily, lowProbability), notice: null },
