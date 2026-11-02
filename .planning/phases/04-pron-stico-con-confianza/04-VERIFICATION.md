@@ -1,7 +1,7 @@
 ---
 phase: 04-pron-stico-con-confianza
 verified: 2026-11-02T14:58:16Z
-status: human_needed
+status: passed
 score: 5/5 must-haves verified
 overrides_applied: 0
 re_verification:
@@ -248,3 +248,7 @@ _Verifier: Claude (gsd-verifier)_
 ## Frases aprobadas el 2026-11-02
 
 El dueño aprobó las frases fuera del contrato (punto 5 de la revisión): las 5 de los avisos y las 2 del despacho. Ya están en la tabla de copy de `04-UI-SPEC.md`. Sigue sin confirmarse la revisión de `/pronostico` en el iPhone (puntos 1 a 4).
+
+## Cierre del 2026-11-02
+
+El dueño dio por buena la revisión de `/pronostico` (puntos 1 a 4) y pidió cerrar la fase: frecuencia de "DUDAN", bandas de los días lejanos, cambio entre 7 y 14 días y rombos sin números. Con eso la fase queda en `passed`. El bloque `release_pending` de arriba quedó viejo: todo está publicado.
