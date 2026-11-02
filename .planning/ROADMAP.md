@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Pronóstico núcleo** - Meteograma de 48 h, pronóstico diario de 7–14 días y titular editorial (completed 2026-10-24)
 - [x] **Phase 3: Cielo vivo** - Fondo generativo según sol y tiempo, horizonte pampeano, accesible y fluido en iPhone
  (completed 2026-10-25)
-- [ ] **Phase 4: Pronóstico con confianza** - Probabilidad real de lluvia desde el ensemble, rango p10–p90 en días lejanos y semáforo de coincidencia por día, todo dentro del Pronóstico (sin pestaña Modelos)
+- [x] **Phase 4: Pronóstico con confianza** - Probabilidad real de lluvia desde el ensemble, rango p10–p90 en días lejanos y semáforo de coincidencia por día, todo dentro del Pronóstico (sin pestaña Modelos) (completed 2026-11-02)
 - [x] **Phase 5: Lluvia, satélite y astros** - Lluvia acumulada contra la normal, satélite IR GOES-East, link al radar del SMN, sol y luna (completed 2026-10-25)
 - [ ] **Phase 6: PWA instalable y offline** - Instalación en iPhone y Android con instrucciones, y último pronóstico disponible sin señal
 - [ ] **Phase 7: Alertas Web Push** - Avisos de helada, tormenta y viento fuerte revisados cada hora, sin repetidos
@@ -107,7 +107,7 @@ Plans (olas: 1 → 01, 02; 2 → 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07, 08;
 - [x] 04-07-PLAN.md — Línea 2 sin solapes a 390 y 320 px: acortado puro y container query
 - [x] 04-08-PLAN.md — Fallas por fuente: faults nuevos, aviso único y último dato bueno
 - [x] 04-09-PLAN.md — Despacho de confianza, leyenda de rombos, crédito y descripción SEO
-- [ ] 04-10-PLAN.md — /dev/estados con 16 cuadros, gate, verificación en el navegador, push a main, smoke de producción y revisión del dueño
+- [x] 04-10-PLAN.md — /dev/estados con 16 cuadros, gate, verificación en el navegador, push a main, smoke de producción y revisión del dueño
 **UI hint**: yes
 **Research**: sí — IDs de modelos en Open-Meteo, disponibilidad de GEM en Sudamérica, horizontes por modelo del ensemble, umbrales del semáforo
 
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 8/8 | Complete    | 2026-10-25 |
-| 4. Pronóstico con confianza | 9/10 | In Progress|  |
+| 4. Pronóstico con confianza | 10/10 | Complete   | 2026-11-02 |
 | 5. Lluvia, satélite y astros | 5/5 | Complete    | 2026-10-25 |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
 | 7. Alertas Web Push | 0/TBD | Not started | - |
