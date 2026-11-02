@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-02T01:47:06.003Z"
+last_updated: "2026-11-02T01:54:07.184Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 35
-  completed_plans: 29
+  completed_plans: 30
   percent: 57
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 04 (pron-stico-con-confianza) — EXECUTING
-Plan: 5 of 10
+Plan: 6 of 10
 Status: Ready to execute
 Last activity: 2026-11-02
 
-Progress: [████████░░] 83%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -74,6 +74,7 @@ Progress: [████████░░] 83%
 | Phase 04 P02 | 6 min | 2 tasks | 15 files |
 | Phase 04 P03 | 5 min | 2 tasks | 9 files |
 | Phase 04 P04 | 6 min | 2 tasks | 6 files |
+| Phase 04 P05 | 6 min | 2 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -132,6 +133,9 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-03: con el ensemble caído, probText es null y la última columna muestra los mm
 - [Phase 04]: 04-04: el dominio de la escala solo incluye bandas que se dibujan: un día sin barra no reserva lugar
 - [Phase 04]: 04-04: la oración del rango de temperatura se omite si falta uno de los dos límites
+- [Phase 04]: 04-05: confidence es la unión de fechas de ensemble y modelos: con el ensemble caído, los días siguen con veredicto y ensemble en null
+- [Phase 04]: 04-05: aggregateModels omite los días sin votantes: el día 15 sin terminar no llega al snapshot
+- [Phase 04]: 04-05: el schema multimodelo exige un modelo con sus tres columnas, y MODL-02 sigue abierto hasta que 04-06 dibuje el rombo
 
 ### Pending Todos
 
@@ -153,6 +157,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T01:47:05.984Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-11-02T01:54:07.164Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
