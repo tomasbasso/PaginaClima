@@ -1,17 +1,14 @@
-// Bottom tab bar sections (UI-SPEC "Barra de pestañas"). Each later phase flips its `enabled`:
-// /pronostico in phase 2, /cielo in phase 5 (D-09). Modelos stays disabled (D-09: not touched here).
-export type SectionId = 'ahora' | 'pronostico' | 'modelos' | 'cielo'
+// Bottom tab bar sections (UI-SPEC "Barra de pestañas", D-19): the app's three routes.
+export type SectionId = 'ahora' | 'pronostico' | 'cielo'
 
 export const SECTIONS: ReadonlyArray<{
   id: SectionId
   label: string
   href: string
-  enabled: boolean
 }> = [
-  { id: 'ahora', label: 'Ahora', href: '/', enabled: true },
-  { id: 'pronostico', label: 'Pronóstico', href: '/pronostico', enabled: true },
-  { id: 'modelos', label: 'Modelos', href: '/modelos', enabled: false },
-  { id: 'cielo', label: 'Cielo', href: '/cielo', enabled: true },
+  { id: 'ahora', label: 'Ahora', href: '/' },
+  { id: 'pronostico', label: 'Pronóstico', href: '/pronostico' },
+  { id: 'cielo', label: 'Cielo', href: '/cielo' },
 ]
 
 /**

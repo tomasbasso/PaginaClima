@@ -2,7 +2,6 @@
 
 // Bottom navigation (UI-SPEC "Barra de pestañas" + "Íconos"). Client component: the active tab
 // follows the current route (usePathname), and next/link keeps tab changes client-side (WR-07).
-// Disabled sections are spans, not links: no route, no focus, no click feedback.
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import type React from 'react'
@@ -51,16 +50,6 @@ const ICONS: Record<SectionId, React.ReactNode> = {
       <rect x="15" y="13" width="2" height="2" />
     </Icon>
   ),
-  // Zigzag polyline with 4 marked vertices.
-  modelos: (
-    <Icon>
-      <path d="M3 17L8 9L14 14L21 6" />
-      <rect x="2" y="16" width="2" height="2" />
-      <rect x="7" y="8" width="2" height="2" />
-      <rect x="13" y="13" width="2" height="2" />
-      <rect x="20" y="5" width="2" height="2" />
-    </Icon>
-  ),
   // Crescent moon.
   cielo: (
     <Icon>
@@ -81,33 +70,21 @@ export function TabBar() {
     >
       <div className="mx-auto flex h-full max-w-[560px]">
         {SECTIONS.map((s) => {
-          if (s.enabled) {
-            const active = isActiveSection(pathname, s.href)
-            return (
-              <Link
-                key={s.id}
-                href={s.href}
-                aria-current={active ? 'page' : undefined}
-                className={`${ITEM} ${active ? 'text-[var(--accent)]' : 'text-ink/75'}`}
-              >
-                {ICONS[s.id]}
-                <span className="mt-1">{s.label}</span>
-                <span
-                  className={`mt-1 h-px w-4 ${active ? 'bg-[var(--accent)]' : ''}`}
-                  aria-hidden="true"
-                />
-              </Link>
-            )
-          }
+          const active = isActiveSection(pathname, s.href)
           return (
-            <span key={s.id} aria-disabled="true" className={`${ITEM} text-ink/30`}>
+            <Link
+              key={s.id}
+              href={s.href}
+              aria-current={active ? 'page' : undefined}
+              className={`${ITEM} ${active ? 'text-[var(--accent)]' : 'text-ink/75'}`}
+            >
               {ICONS[s.id]}
-              <span className="mt-1">
-                {s.label}
-                <span className="sr-only"> (próximamente)</span>
-              </span>
-              <span className="mt-1 h-px w-4" aria-hidden="true" />
-            </span>
+              <span className="mt-1">{s.label}</span>
+              <span
+                className={`mt-1 h-px w-4 ${active ? 'bg-[var(--accent)]' : ''}`}
+                aria-hidden="true"
+              />
+            </Link>
           )
         })}
       </div>
