@@ -11,6 +11,8 @@ const mocks = vi.hoisted(() => ({
   getMetNorway: vi.fn(),
   getOpenMeteoEnsemble: vi.fn(),
   getOpenMeteoEnsembleFresh: vi.fn(),
+  getOpenMeteoModels: vi.fn(),
+  getOpenMeteoModelsFresh: vi.fn(),
 }))
 
 vi.mock('@/lib/sources/openMeteoForecast', () => ({
@@ -21,6 +23,10 @@ vi.mock('@/lib/sources/metNorway', () => ({ getMetNorway: mocks.getMetNorway }))
 vi.mock('@/lib/sources/openMeteoEnsemble', () => ({
   getOpenMeteoEnsemble: mocks.getOpenMeteoEnsemble,
   getOpenMeteoEnsembleFresh: mocks.getOpenMeteoEnsembleFresh,
+}))
+vi.mock('@/lib/sources/openMeteoModels', () => ({
+  getOpenMeteoModels: mocks.getOpenMeteoModels,
+  getOpenMeteoModelsFresh: mocks.getOpenMeteoModelsFresh,
 }))
 
 const T0 = Date.parse('2026-10-23T15:00:00Z')
@@ -41,6 +47,12 @@ const ensembleDay = {
   tMaxP90C: 24.4,
 }
 const ens = (ms: number) => ({ data: [ensembleDay], fetchedAt: iso(ms) })
+/** Four close, dry votes: the day agrees. */
+const modelsDay = {
+  date: ensembleDay.date,
+  votes: [20, 21, 22, 23].map((tMaxC) => ({ tMaxC, tMinC: 10, rainMm: 0 })),
+}
+const mods = (ms: number, data: unknown[] = [modelsDay]) => ({ data, fetchedAt: iso(ms) })
 
 /** Built from the post-resetModules graph so instanceof matches inside the aggregator. */
 async function sourceError(source: SourceId, code: string) {
@@ -67,6 +79,9 @@ describe('getWeatherSnapshot() status', () => {
     mocks.getOpenMeteoEnsemble.mockReset()
     mocks.getOpenMeteoEnsembleFresh.mockReset()
     mocks.getOpenMeteoEnsemble.mockResolvedValue(ens(T0 - 5 * MIN))
+    mocks.getOpenMeteoModels.mockReset()
+    mocks.getOpenMeteoModelsFresh.mockReset()
+    mocks.getOpenMeteoModels.mockResolvedValue(mods(T0 - 5 * MIN))
   })
 
   afterEach(() => {
@@ -156,7 +171,7 @@ describe('getWeatherSnapshot() status', () => {
     const s = await loadSnapshot()
 
     const { date, ...ensemble } = ensembleDay
-    expect(s.confidence).toEqual([{ date, ensemble }])
+    expect(s.confidence).toEqual([{ date, ensemble, verdict: 'coinciden', voters: 4 }])
     expect(s.sources[2]).toEqual({
       id: 'open-meteo-ensemble',
       status: 'ok',
@@ -165,7 +180,7 @@ describe('getWeatherSnapshot() status', () => {
     expect(mocks.getOpenMeteoEnsembleFresh).not.toHaveBeenCalled()
   })
 
-  it('ensemble rejected: never throws, the rest stays and open-meteo stays first', async () => {
+  it('ensemble rejected: never throws, the verdict stays and open-meteo stays first', async () => {
     mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
     mocks.getOpenMeteoEnsemble.mockRejectedValue(
       await sourceError('open-meteo-ensemble', 'http_500'),
@@ -181,7 +196,9 @@ describe('getWeatherSnapshot() status', () => {
       fetchedAt: null,
       errorCode: 'http_500',
     })
-    expect(s.confidence).toEqual([])
+    expect(s.confidence).toEqual([
+      { date: ensembleDay.date, ensemble: null, verdict: 'coinciden', voters: 4 },
+    ])
     expect(selectAhoraVariant(s)).toBe('normal')
   })
 
@@ -215,12 +232,85 @@ describe('getWeatherSnapshot() status', () => {
     expect(s.confidence).toHaveLength(1)
   })
 
-  it('the serialized snapshot has no raw member columns', async () => {
+  it('models rejected: never throws, the ensemble stays and every verdict is sinDato', async () => {
+    mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
+    mocks.getOpenMeteoModels.mockRejectedValue(await sourceError('open-meteo-models', 'http_500'))
+
+    const s = await loadSnapshot()
+
+    expect(s.now).not.toBeNull()
+    expect(s.sources[0]).toMatchObject({ id: 'open-meteo', status: 'ok' })
+    expect(s.sources[3]).toEqual({
+      id: 'open-meteo-models',
+      status: 'error',
+      fetchedAt: null,
+      errorCode: 'http_500',
+    })
+    expect(s.confidence).toHaveLength(1)
+    expect(s.confidence[0].ensemble?.rainMembers).toBe(35)
+    expect(s.confidence[0]).toMatchObject({ verdict: 'sinDato', voters: 0 })
+    expect(selectAhoraVariant(s)).toBe('normal')
+  })
+
+  it('ensemble and models rejected: confidence is empty', async () => {
+    mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
+    mocks.getOpenMeteoEnsemble.mockRejectedValue(
+      await sourceError('open-meteo-ensemble', 'http_500'),
+    )
+    mocks.getOpenMeteoModels.mockRejectedValue(await sourceError('open-meteo-models', 'network'))
+
+    const s = await loadSnapshot()
+
+    expect(s.confidence).toEqual([])
+    expect(s.now).not.toBeNull()
+  })
+
+  it('models refresh fails past its 1 h TTL: stale, the verdict comes from the last votes', async () => {
+    mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
+    mocks.getOpenMeteoModels.mockResolvedValue(mods(T0 - 2 * 60 * MIN))
+    mocks.getOpenMeteoModelsFresh.mockRejectedValue(
+      await sourceError('open-meteo-models', 'timeout'),
+    )
+
+    const s = await loadSnapshot()
+
+    expect(s.sources[3]).toEqual({
+      id: 'open-meteo-models',
+      status: 'stale',
+      fetchedAt: iso(T0 - 2 * 60 * MIN),
+      errorCode: 'timeout',
+    })
+    expect(s.confidence[0]).toMatchObject({ verdict: 'coinciden', voters: 4 })
+    expect(mocks.getOpenMeteoModelsFresh).toHaveBeenCalledWith(Math.floor(T0 / 3_600_000))
+  })
+
+  it('joins both sources on the sorted union of dates', async () => {
+    mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
+    mocks.getOpenMeteoModels.mockResolvedValue(
+      mods(T0 - 5 * MIN, [
+        { ...modelsDay, date: '2026-10-24', votes: modelsDay.votes.slice(0, 3) },
+        { ...modelsDay, date: '2026-10-22', votes: modelsDay.votes.slice(0, 1) },
+      ]),
+    )
+
+    const s = await loadSnapshot()
+
+    expect(s.confidence.map((d) => [d.date, d.ensemble !== null, d.verdict, d.voters])).toEqual([
+      ['2026-10-22', false, 'solo', 1],
+      ['2026-10-23', true, 'sinDato', 0],
+      ['2026-10-24', false, 'coinciden', 3],
+    ])
+  })
+
+  it('the serialized snapshot has no raw member columns and no model names', async () => {
     mocks.getOpenMeteoForecast.mockResolvedValue(om(T0 - 5 * MIN))
 
     const s = await loadSnapshot()
 
-    expect(JSON.stringify(s)).not.toMatch(/_memberd|precipitation_member/)
+    expect(JSON.stringify(s)).not.toMatch(
+      /_memberd|precipitation_member|ecmwf_ifs|gfs_seamless|icon_seamless|gem_seamless/,
+    )
+    expect(s.confidence[0]).not.toHaveProperty('votes')
   })
 })
 
@@ -238,6 +328,9 @@ describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
     mocks.getOpenMeteoEnsemble.mockReset()
     mocks.getOpenMeteoEnsembleFresh.mockReset()
     mocks.getOpenMeteoEnsemble.mockResolvedValue(ens(T0 - 5 * MIN))
+    mocks.getOpenMeteoModels.mockReset()
+    mocks.getOpenMeteoModelsFresh.mockReset()
+    mocks.getOpenMeteoModels.mockResolvedValue(mods(T0 - 5 * MIN))
     vi.stubEnv('VERCEL_ENV', undefined)
   })
 
@@ -293,7 +386,7 @@ describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
       vi.stubEnv('VERCEL_ENV', 'production')
       const s = await loadSnapshot()
       expect(s.now).not.toBeNull()
-      expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok', 'ok'])
+      expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok', 'ok', 'ok'])
       expect(s.sources[0].fetchedAt).toBe(iso(T0 - 5 * MIN))
     },
   )
@@ -301,7 +394,7 @@ describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
   it('ignores an unknown fault value', async () => {
     vi.stubEnv('WEATHER_FAULT', 'everything-on-fire')
     const s = await loadSnapshot()
-    expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok', 'ok'])
+    expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok', 'ok', 'ok'])
     expect(s.now).not.toBeNull()
   })
 })
