@@ -10,7 +10,7 @@ import { MeteogramSection } from '@/components/MeteogramSection'
 import { NoData } from '@/components/NoData'
 import { PampaHorizon } from '@/components/PampaHorizon'
 import { Pronostico } from '@/components/Pronostico'
-import { DailyList } from '@/components/client/DailyList'
+import { DailySection } from '@/components/DailySection'
 import { SkyBackdrop } from '@/components/client/SkyBackdrop'
 import { buildDailyRows } from '@/lib/forecast/daily'
 import { selectFutureHours } from '@/lib/forecast/hours'
@@ -243,23 +243,23 @@ export default function EstadosPage() {
       <h2 className="mb-8 mt-16 font-serif text-[24px] text-white">Pronóstico diario</h2>
       <div className="flex flex-col gap-12">
         <DailyFrame name="7 días" sky={normalSky} head={head(states.normal)}>
-          <DailyList rows={semanaRows} />
+          <DailySection rows={semanaRows} />
         </DailyFrame>
         <DailyFrame name="14 días" sky={normalSky} head={head(states.normal)}>
-          <DailyList rows={semanaRows} initialExpanded />
+          <DailySection rows={semanaRows} initialExpanded />
         </DailyFrame>
         <DailyFrame name="Datos nulos" sky={normalSky} head={head(states.normal)}>
-          <DailyList rows={buildDailyRows(forecast.daily.nulos, now)} />
+          <DailySection rows={buildDailyRows(forecast.daily.nulos, now)} />
         </DailyFrame>
         <DailyFrame name="Días pasados filtrados" sky={normalSky} head={head(states.normal)}>
-          <DailyList rows={buildDailyRows(forecast.daily.pasados, now)} />
+          <DailySection rows={buildDailyRows(forecast.daily.pasados, now)} />
         </DailyFrame>
         <DailyFrame
           name="Degradado"
           sky={skyOf(states.fuenteCaida)}
           head={head(states.fuenteCaida, 'degraded')}
         >
-          <DailyList rows={semanaRows} />
+          <DailySection rows={semanaRows} />
         </DailyFrame>
         <DailyFrame name="Vacío" sky={skyOf(states.sinDatos)} head={head(states.sinDatos, 'empty')}>
           <div className="pb-12 pt-8">

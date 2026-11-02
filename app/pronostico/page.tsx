@@ -4,7 +4,7 @@
 import { Hero } from '@/components/Hero'
 import { NoData } from '@/components/NoData'
 import { Pronostico } from '@/components/Pronostico'
-import { DailyList } from '@/components/client/DailyList'
+import { DailySection } from '@/components/DailySection'
 import { RetryButton } from '@/components/client/RetryButton'
 import { buildDailyRows } from '@/lib/forecast/daily'
 import { pageMetadata } from '@/lib/seo'
@@ -29,7 +29,7 @@ export default async function PronosticoPage() {
   const sky = skyFromSnapshot(snapshot, now)
   const variant = selectAhoraVariant(snapshot)
   // Past days of a stale snapshot are dropped here (D-12): the first row is always today (ART).
-  const rows = buildDailyRows(snapshot.daily, now)
+  const rows = buildDailyRows(snapshot.daily, now, snapshot.confidence)
 
   return (
     <Hero
@@ -37,7 +37,7 @@ export default async function PronosticoPage() {
       compact
       below={
         rows.length > 0 ? (
-          <DailyList rows={rows} />
+          <DailySection rows={rows} />
         ) : (
           <div className="pb-12 pt-8">
             <NoData action={<RetryButton />} />

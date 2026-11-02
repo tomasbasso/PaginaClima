@@ -7,7 +7,15 @@ import { useId, useState } from 'react'
 import type { DailyBar, DailyRow } from '@/lib/forecast/daily'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
+const LABEL_NUM = 'text-[12px] font-semibold leading-[1.33]'
 const BODY = 'text-[15px] leading-[1.6]'
+// Literal classes: Tailwind does not generate interpolated ones.
+const GRID_ENSEMBLE =
+  'grid-cols-[60px_40px_1fr_36px_44px] gap-x-2 @max-[327px]:grid-cols-[56px_40px_1fr_32px_44px] @max-[327px]:gap-x-1'
+const GRID_FALLBACK =
+  'grid-cols-[60px_40px_1fr_36px_64px] gap-x-2 @max-[327px]:grid-cols-[56px_40px_1fr_32px_64px] @max-[327px]:gap-x-1'
+/** Days 8+ keep the azure and get engraved stripes: another kind of data, not weaker rain. */
+const STRIPED_FILL = 'repeating-linear-gradient(to top, var(--color-azure) 0 2px, transparent 2px 4px)'
 const BUTTON =
   'h-11 border border-ink/30 bg-transparent px-6 text-[12px] font-semibold uppercase leading-[1.33] tracking-[0.14em] text-ink transition-colors hover:border-accent hover:bg-ink/8 focus-visible:border-accent focus-visible:bg-ink/8 active:bg-ink/12'
 
@@ -25,20 +33,83 @@ function RangeBar({ bar, tentative }: { bar: DailyBar | null; tentative: boolean
   )
 }
 
-function Row({ row, bar, first }: { row: DailyRow; bar: DailyBar | null; first: boolean }) {
+/** Rain gauge of one day (D-08, D-09): hangs in the right margin, outside the 342-px column. */
+function Pluviometro({
+  pct,
+  tentative,
+  hairline,
+  capTop,
+  capBottom,
+}: {
+  pct: number | null
+  tentative: boolean
+  hairline: boolean
+  capTop: boolean
+  capBottom: boolean
+}) {
   return (
-    <li className={`py-4 ${first ? '' : 'border-t border-ink/12'}`}>
+    <div data-pluvio className={`absolute -right-4 bottom-0 w-2 bg-ink/12 ${hairline ? '-top-px' : 'top-0'}`}>
+      {pct !== null ? (
+        <div
+          className={`absolute inset-x-0 bottom-0 ${tentative ? '' : 'bg-azure'}`}
+          style={tentative ? { height: `${pct}%`, background: STRIPED_FILL } : { height: `${pct}%` }}
+        />
+      ) : null}
+      <div className="absolute inset-x-0 bottom-1/2 h-px bg-ground" />
+      {capTop ? <div className="absolute inset-x-0 top-0 h-px bg-ink/55" /> : null}
+      {capBottom ? <div className="absolute inset-x-0 bottom-0 h-px bg-ink/55" /> : null}
+    </div>
+  )
+}
+
+function Row({
+  row,
+  bar,
+  first,
+  capTop = false,
+  capBottom = false,
+}: {
+  row: DailyRow
+  bar: DailyBar | null
+  first: boolean
+  capTop?: boolean
+  capBottom?: boolean
+}) {
+  return (
+    <li className={`relative py-4 ${first ? '' : 'border-t border-ink/12'}`}>
       <span className="sr-only">{row.srText}</span>
-      <div aria-hidden="true">
-        <div className="grid grid-cols-[64px_36px_1fr_36px_48px] items-center gap-x-2">
+      <div aria-hidden="true" className="@container">
+        <div className={`grid items-center ${row.ensembleUp ? GRID_ENSEMBLE : GRID_FALLBACK}`}>
           <span className={`${BODY} text-ink`}>{row.label}</span>
           <span className={`${BODY} nums text-right text-ink/75`}>{row.minText}</span>
           <RangeBar bar={bar} tentative={row.tentative} />
           <span className={`${BODY} nums ${row.tentative ? 'text-ink/75' : 'text-ink'}`}>{row.maxText}</span>
-          <span className={`${BODY} nums text-right text-azure`}>{row.rainText ?? ''}</span>
+          {row.ensembleUp ? (
+            <span className={`${BODY} nums text-right ${row.probPct === null ? 'text-ink/75' : 'text-azure'}`}>
+              {row.probText ?? ''}
+            </span>
+          ) : (
+            <span className={`${BODY} nums text-right text-azure`}>{row.rainText ?? ''}</span>
+          )}
         </div>
-        {row.stateLabel ? <p className={`${LABEL} mt-1 text-ink/75`}>{row.stateLabel}</p> : null}
+        {row.ensembleUp || row.stateLabel ? (
+          <div className="mt-1 flex min-h-4 items-center gap-2 whitespace-nowrap">
+            <span className={`${LABEL} min-w-0 flex-1 overflow-hidden text-ink/75`}>{row.stateLabel ?? ''}</span>
+            {row.ensembleUp && row.rainText ? (
+              <span className={`${LABEL_NUM} nums shrink-0 text-azure`}>{row.rainText}</span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
+      {row.ensembleUp ? (
+        <Pluviometro
+          pct={row.probPct}
+          tentative={row.tentative}
+          hairline={!first}
+          capTop={capTop}
+          capBottom={capBottom}
+        />
+      ) : null}
     </li>
   )
 }
@@ -58,23 +129,34 @@ export function DailyList({
   const head = rows.slice(0, 7)
   const tail = rows.slice(7)
   const barOf = (r: DailyRow) => (expanded ? r.bar14 : r.bar7)
+  // The strip ends on the last visible row: row 7 collapsed, the last of the tail expanded.
+  const tailShown = expanded && tail.length > 0
 
   return (
-    <div className="pb-12 pt-8">
+    <div className="pb-12">
       <ol aria-label="Pronóstico por día">
         {head.map((r, i) => (
-          <Row key={r.key} row={r} bar={barOf(r)} first={i === 0} />
+          <Row
+            key={r.key}
+            row={r}
+            bar={barOf(r)}
+            first={i === 0}
+            capTop={i === 0}
+            capBottom={!tailShown && i === head.length - 1}
+          />
         ))}
       </ol>
       {tail.length > 0 ? (
         <>
           <div id={tailId} hidden={!expanded}>
-            <p className={`${LABEL} border-t border-ink/20 py-4 text-ink/75`}>
+            <p className={`${LABEL} relative border-t border-ink/20 py-4 text-ink/75`}>
               DEL DÍA 8 EN ADELANTE, ORIENTATIVO
+              {/* Empty rail: the strip is not cut, and this gap separates the week from the rest. */}
+              {rows[0].ensembleUp ? <span className="absolute -right-4 -top-px bottom-0 w-2 bg-ink/12" /> : null}
             </p>
             <ol aria-label="Pronóstico orientativo, días 8 a 14" start={8}>
               {tail.map((r, i) => (
-                <Row key={r.key} row={r} bar={r.bar14} first={i === 0} />
+                <Row key={r.key} row={r} bar={r.bar14} first={i === 0} capBottom={i === tail.length - 1} />
               ))}
             </ol>
           </div>
