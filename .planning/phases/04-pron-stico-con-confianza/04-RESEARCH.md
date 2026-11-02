@@ -542,22 +542,26 @@ export const OPEN_METEO_ENSEMBLE_URL = `https://ensemble-api.open-meteo.com/v1/e
 | A5 | La calibración de 12 meses representa los próximos años | Calibración | Medio: se ajusta una constante |
 | A6 | Los umbrales por N respetan "a calibrar" de D-13 | Patrón 3 | Medio: D-13 habla de un solo par. Es delegación del dueño y no cambia el concepto, pero el planner debería mencionarlo |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **¿Crédito `COINCIDENCIA: {N} MODELOS` con N variable?**
    - What we know: N es 4, 3 o 2 según el día; el UI-SPEC pide un número.
    - What's unclear: qué N mostrar en la lista completa.
    - Recommendation: el máximo de votantes en la lista. El `srText` ya dice "Los 2 modelos con dato" donde toca.
+   - RESOLVED: N es el máximo de votantes de la lista (plan 04-09).
 2. **¿Mucho "DUDAN" para la fila tranquila de D-12?**
    - What we know: `dudan` sale entre 35 % y 75 % de los días según plazo y votantes, y en verano más.
    - What's unclear: si le va a resultar pesado al dueño.
    - Recommendation: ya se eligió el juego menos ruidoso que sigue siendo honesto. Revisar en la verificación final; subir el umbral es tocar una constante.
+   - RESOLVED: se sale con `AGREEMENT_C` y el dueño lo revisa en la verificación final (plan 04-10).
 3. **¿Debe "Hoy" contar solo las horas restantes?**
    - What we know: FCST-03 y D-10 dicen día local.
    - Recommendation: implementar día completo y no agrandar la fase.
+   - RESOLVED: "Hoy" cuenta el día local completo (plan 04-02).
 4. **¿Reutilizar `RAIN_DAY_MM` de `lib/rain/lastRain.ts`?**
    - What we know: existe y vale 1.
    - Recommendation: reutilizarla si `lastRain.ts` no arrastra dependencias de servidor; si no, moverla a un módulo sin dependencias.
+   - RESOLVED: se reutiliza; `lastRain.ts` no arrastra dependencias de servidor (plan 04-02).
 
 ## Environment Availability
 
