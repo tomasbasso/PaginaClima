@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-02T01:32:21.322Z"
+last_updated: "2026-11-02T01:39:17.355Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 35
-  completed_plans: 27
+  completed_plans: 28
   percent: 57
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 04 (pron-stico-con-confianza) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 Status: Ready to execute
 Last activity: 2026-11-02
 
-Progress: [████████░░] 77%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ Progress: [████████░░] 77%
 | Phase 05 P05 | 45 min | 3 tasks | 4 files |
 | Phase 04 P01 | 2 min | 1 tasks | 3 files |
 | Phase 04 P02 | 6 min | 2 tasks | 15 files |
+| Phase 04 P03 | 5 min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -126,6 +127,8 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-02: 'Hoy' cuenta el día local completo, incluidas las horas ya pasadas (FCST-03, D-10)
 - [Phase 04]: 04-02: localDayRain redondea la suma a 2 decimales para no perder el umbral de 1 mm por punto flotante
 - [Phase 04]: 04-02: FCST-03 sigue abierto hasta que 04-03 lo muestre en /pronostico
+- [Phase 04]: 04-03: ensembleUp mira solo los días visibles: un DayConfidence de un día pasado no cuenta como ensemble disponible
+- [Phase 04]: 04-03: con el ensemble caído, probText es null y la última columna muestra los mm
 
 ### Pending Todos
 
@@ -147,6 +150,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T01:32:21.303Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-11-02T01:39:17.337Z
+Stopped at: Completed 04-03-PLAN.md
 Resume file: None

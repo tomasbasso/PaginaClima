@@ -22,7 +22,7 @@
 
 - [x] **FCST-01**: El usuario ve un meteograma de las próximas 48 h con temperatura, lluvia (mm) y viento, legible en un iPhone de 390 px
 - [x] **FCST-02**: El usuario ve el pronóstico diario de 7 a 14 días con máxima, mínima, estado y lluvia esperada
-- [ ] **FCST-03**: El usuario ve la probabilidad de lluvia de cada día calculada desde los miembros del ensemble (≥ 1 mm en el día local)
+- [x] **FCST-03**: El usuario ve la probabilidad de lluvia de cada día calculada desde los miembros del ensemble (≥ 1 mm en el día local)
 - [ ] **FCST-04**: El usuario ve el rango de incertidumbre (p10–p90) de temperatura y lluvia en los días lejanos
 
 ### Coincidencia entre modelos (MODL)
@@ -110,7 +110,7 @@
 | NOW-03 | Phase 2 | Complete |
 | FCST-01 | Phase 2 | Complete |
 | FCST-02 | Phase 2 | Complete |
-| FCST-03 | Phase 4 | Pending |
+| FCST-03 | Phase 4 | Complete |
 | FCST-04 | Phase 4 | Pending |
 | MODL-01 | — | Out of scope |
 | MODL-02 | Phase 4 | Pending |

@@ -100,7 +100,7 @@ Plans (olas: 1 → 01; 2 → 02, 03; 3 → 04, 05; 4 → 06; 5 → 07; 6 → 08)
 Plans (olas: 1 → 01, 02; 2 → 03; 3 → 04; 4 → 05; 5 → 06; 6 → 07, 08; 7 → 09; 8 → 10):
 - [x] 04-01-PLAN.md — Barra de tres pestañas: Modelos se elimina del todo
 - [x] 04-02-PLAN.md — Probabilidad real de lluvia, datos: ensemble ECMWF, ventana de día local y confianza en el snapshot (se ve en 04-03)
-- [ ] 04-03-PLAN.md — Probabilidad real de lluvia en pantalla: número y pluviómetro en cada día
+- [x] 04-03-PLAN.md — Probabilidad real de lluvia en pantalla: número y pluviómetro en cada día
 - [ ] 04-04-PLAN.md — Abanico p10–p90 en la barra, rango de lluvia desde el día 4 y animación de entrada
 - [ ] 04-05-PLAN.md — Semáforo de coincidencia, datos: multimodelo, umbrales por votantes en una constante y veredicto en el snapshot (se ve en 04-06)
 - [ ] 04-06-PLAN.md — Semáforo de coincidencia en pantalla: rombos y palabra de duda
@@ -166,7 +166,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Fundaciones y Ahora | 7/7 | Complete   | 2026-10-23 |
 | 2. Pronóstico núcleo | 5/5 | Complete    | 2026-10-24 |
 | 3. Cielo vivo | 8/8 | Complete    | 2026-10-25 |
-| 4. Pronóstico con confianza | 2/10 | In Progress|  |
+| 4. Pronóstico con confianza | 3/10 | In Progress|  |
 | 5. Lluvia, satélite y astros | 5/5 | Complete    | 2026-10-25 |
 | 6. PWA instalable y offline | 0/TBD | Not started | - |
 | 7. Alertas Web Push | 0/TBD | Not started | - |
