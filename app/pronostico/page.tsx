@@ -6,6 +6,7 @@ import { NoData } from '@/components/NoData'
 import { Pronostico } from '@/components/Pronostico'
 import { DailySection } from '@/components/DailySection'
 import { RetryButton } from '@/components/client/RetryButton'
+import { confidenceNotice } from '@/lib/forecast/confidenceNotice'
 import { buildDailyRows } from '@/lib/forecast/daily'
 import { pageMetadata } from '@/lib/seo'
 import { skyFromSnapshot } from '@/lib/sky/state'
@@ -37,7 +38,7 @@ export default async function PronosticoPage() {
       compact
       below={
         rows.length > 0 ? (
-          <DailySection rows={rows} />
+          <DailySection rows={rows} notice={confidenceNotice(snapshot.sources)} />
         ) : (
           <div className="pb-12 pt-8">
             <NoData action={<RetryButton />} />
