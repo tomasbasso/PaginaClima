@@ -244,3 +244,7 @@ _Verifier: Claude (gsd-verifier)_
 - **Publicación:** los arreglos de la revisión ya están en producción, con smoke en verde en `72d82a0`.
 - **Respuestas parciales (punto 7 de la revisión del dueño):** el dueño decidió que cuentan como falla. La tarea rápida 261102-gtn (`de99cd1`, `38b8ea9`) pide al menos 12 días utilizables en ambas fuentes; en el ensemble, cada día necesita las dos temperaturas. Esto cierra los dos WARNING de respuestas parciales.
 - **Sigue pendiente del dueño:** el resto de la lista de `human_verification`. Nada de eso quedó aprobado.
+
+## Frases aprobadas el 2026-11-02
+
+El dueño aprobó las frases fuera del contrato (punto 5 de la revisión): las 5 de los avisos y las 2 del despacho. Ya están en la tabla de copy de `04-UI-SPEC.md`. Sigue sin confirmarse la revisión de `/pronostico` en el iPhone (puntos 1 a 4).

@@ -628,10 +628,14 @@ Castellano rioplatense, voseo, sin emojis y sin signos de exclamación.
 | Crédito | `PROBABILIDAD: {M} ESCENARIOS DE ECMWF` / `COINCIDENCIA: {N} MODELOS` |
 | Nota de días 8–14 | Sin cambios: `DEL DÍA 8 EN ADELANTE, ORIENTATIVO` |
 | Falló el ensemble | Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. El resto del pronóstico sigue al día. |
-| Falló el ensemble, con último dato | No pudimos actualizar la probabilidad de lluvia. Te mostramos la última que tenemos, de las {HH:mm}. |
+| Falló el ensemble, y otra fuente no está al día | Ahora no tenemos la probabilidad de lluvia ni el rango de temperatura. Te mostramos el resto del pronóstico. |
+| Falló el ensemble, con último dato | No pudimos actualizar la probabilidad de lluvia. Te mostramos la última que tenemos, de las {HH:mm}. Si es de otro día: del {dd/MM} a las {HH:mm}. |
 | Falló el multimodelo | Ahora no podemos comparar los modelos, así que esta vez no hay rombos. El resto del pronóstico sigue al día. |
-| Falló el multimodelo, con último dato | No pudimos actualizar la comparación entre modelos. Te mostramos la última que tenemos, de las {HH:mm}. |
+| Falló el multimodelo, y otra fuente no está al día | Ahora no podemos comparar los modelos, así que esta vez no hay rombos. Te mostramos el resto del pronóstico. |
+| Falló el multimodelo, con último dato | No pudimos actualizar la comparación entre modelos. Te mostramos la última que tenemos, de las {HH:mm}. Si es de otro día: del {dd/MM} a las {HH:mm}. |
 | Fallaron los dos | Ahora no tenemos la probabilidad de lluvia ni la comparación entre modelos. Te mostramos el pronóstico principal. |
+| Fallaron los dos, con último dato | No pudimos actualizar la probabilidad de lluvia ni la comparación entre modelos. Te mostramos la última que tenemos, de las {HH:mm}. Si es de otro día: del {dd/MM} a las {HH:mm}. |
+| Despacho, sin coincidencias en los días comparables | Los días que se pueden comparar, los modelos dudan. |
 | Estado vacío de la lista | El `<NoData>` de la fase 2, sin cambios: *Ahora no tenemos el tiempo de Winifreda.* / El servicio del pronóstico no está respondiendo. Probá de nuevo en unos minutos. / `REINTENTAR` |
 | Descripción SEO de `/pronostico` | Pronóstico extendido de 7 a 14 días para Winifreda, La Pampa: máximas y mínimas, probabilidad real de lluvia y cuánto coinciden los modelos, en hora argentina. |
 | Título SEO | Sin cambios |
