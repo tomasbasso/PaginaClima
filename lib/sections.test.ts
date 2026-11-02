@@ -1,14 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import { isActiveSection, SECTIONS } from './sections'
 
-describe('SECTIONS (D-02)', () => {
-  const enabled = (id: string) => SECTIONS.find((s) => s.id === id)?.enabled
+describe('SECTIONS (D-19)', () => {
+  it('lists exactly the three tabs, in order', () => {
+    expect(SECTIONS.map((s) => s.id)).toEqual(['ahora', 'pronostico', 'cielo'])
+  })
 
-  it('enables Pronóstico and Cielo and keeps Modelos disabled', () => {
-    expect(enabled('ahora')).toBe(true)
-    expect(enabled('pronostico')).toBe(true)
-    expect(enabled('modelos')).toBe(false)
-    expect(enabled('cielo')).toBe(true)
+  it('has no per-section availability flag: every tab is a live link', () => {
+    for (const section of SECTIONS) {
+      expect(Object.keys(section)).toEqual(['id', 'label', 'href'])
+    }
   })
 })
 
