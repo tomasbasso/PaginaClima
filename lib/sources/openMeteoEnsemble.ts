@@ -37,11 +37,13 @@ export async function fetchOpenMeteoEnsembleRaw(): Promise<Cached<EnsembleDay[]>
   const parsed = EnsembleDto.safeParse(body)
   if (!parsed.success) throw new SourceError('open-meteo-ensemble', 'schema')
 
+  const data = aggregateEnsemble(parsed.data.hourly, parsed.data.daily)
+  // The schema accepts null columns, so "no usable day" gets here: it is a failed refresh and must
+  // never replace the last good value in the cache (D-17).
+  if (data.length === 0) throw new SourceError('open-meteo-ensemble', 'schema')
+
   console.info('[upstream] open-meteo ensemble fetched')
-  return {
-    data: aggregateEnsemble(parsed.data.hourly, parsed.data.daily),
-    fetchedAt: new Date().toISOString(),
-  }
+  return { data, fetchedAt: new Date().toISOString() }
 }
 
 // Bump the key version on any change to the shape of EnsembleDay (Pitfall 8).

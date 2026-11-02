@@ -23,6 +23,17 @@ const json = (body: unknown, status = 200) =>
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
+/** Same columns with every value null: how Open-Meteo says it has no data. */
+const allNull = <T extends object>(block: T) =>
+  Object.fromEntries(
+    Object.entries(block).map(([key, values]) => [
+      key,
+      key === 'time' ? values : (values as unknown[]).map(() => null),
+    ]),
+  )
+
+const noData = { ...fixture, hourly: allNull(fixture.hourly), daily: allNull(fixture.daily) }
+
 /** Stamps of one full local day: D 01:00 … D+1 00:00. */
 function fullDay(date: string): string[] {
   const hours = Array.from({ length: 23 }, (_, i) => `${date}T${pad(i + 1)}:00`)
@@ -242,6 +253,44 @@ describe('Open-Meteo models adapter', () => {
     stub(json(broken))
     const { getOpenMeteoModels } = await load()
     await expect(getOpenMeteoModels()).rejects.toMatchObject({ code: 'schema' })
+  })
+
+  it('rejects with schema when every model column is null, so an empty result is never cached', async () => {
+    stub(json(noData))
+    const { fetchOpenMeteoModelsRaw } = await load()
+    await expect(fetchOpenMeteoModelsRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-models',
+      code: 'schema',
+    })
+  })
+
+  it('rejects with schema when the columns have no rows at all', async () => {
+    const noRows = (block: object) =>
+      Object.fromEntries(Object.keys(block).map((key) => [key, []]))
+    stub(json({ ...fixture, hourly: noRows(fixture.hourly), daily: noRows(fixture.daily) }))
+    const { fetchOpenMeteoModelsRaw } = await load()
+    await expect(fetchOpenMeteoModelsRaw()).rejects.toMatchObject({ code: 'schema' })
+  })
+
+  it('a response with no usable day leaves the last good value: stale, or error with none', async () => {
+    const { deriveSourceStatus } = await import('@/lib/weather/status')
+    const { readThrough } = await import('./readThrough')
+    const { getOpenMeteoModels, getOpenMeteoModelsFresh } = await load()
+    stub(json(noData))
+    const nowMs = Date.parse('2026-11-02T15:00:00Z')
+    const lastGood = { data: [{ date: '2026-11-02', votes: [{ tMaxC: 20, tMinC: 10, rainMm: 0 }] }], fetchedAt: '2026-11-02T06:00:00.000Z' }
+
+    const kept = await Promise.allSettled([
+      readThrough({ getCached: async () => lastGood, getFresh: getOpenMeteoModelsFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(kept[0])).toBe('stale')
+    expect(kept[0]).toMatchObject({ value: { value: lastGood, refreshError: 'schema' } })
+
+    const none = await Promise.allSettled([
+      readThrough({ getCached: getOpenMeteoModels, getFresh: getOpenMeteoModelsFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(none[0])).toBe('error')
   })
 
   it('getOpenMeteoModelsFresh(bucket) resolves the same shape', async () => {

@@ -19,6 +19,17 @@ function stub(impl: (input: unknown) => Promise<Response>) {
 const json = (body: unknown, status = 200) =>
   async () => new Response(JSON.stringify(body), { status })
 
+/** Same columns with every value null: how Open-Meteo says it has no data. */
+const allNull = <T extends object>(block: T) =>
+  Object.fromEntries(
+    Object.entries(block).map(([key, values]) => [
+      key,
+      key === 'time' ? values : (values as unknown[]).map(() => null),
+    ]),
+  )
+
+const noData = { ...fixture, hourly: allNull(fixture.hourly), daily: allNull(fixture.daily) }
+
 describe('Open-Meteo ensemble adapter', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -153,6 +164,44 @@ describe('Open-Meteo ensemble adapter', () => {
     stub(json({ ...fixture, timezone: 'UTC' }))
     const { getOpenMeteoEnsemble } = await load()
     await expect(getOpenMeteoEnsemble()).rejects.toMatchObject({ code: 'schema' })
+  })
+
+  it('rejects with schema when every member column is null, so an empty result is never cached', async () => {
+    stub(json(noData))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    await expect(fetchOpenMeteoEnsembleRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-ensemble',
+      code: 'schema',
+    })
+  })
+
+  it('a response with no usable day leaves the last good value: stale, or error with none', async () => {
+    const { deriveSourceStatus } = await import('@/lib/weather/status')
+    const { readThrough } = await import('./readThrough')
+    const { getOpenMeteoEnsemble, getOpenMeteoEnsembleFresh } = await load()
+    stub(json(noData))
+    const nowMs = Date.parse('2026-11-02T15:00:00Z')
+    const lastGood = { data: [{
+        date: '2026-11-02',
+        members: 51,
+        rainMembers: 10,
+        rainP10Mm: 0,
+        rainP90Mm: 4,
+        tMinP10C: 8,
+        tMaxP90C: 24,
+      }], fetchedAt: '2026-11-02T06:00:00.000Z' }
+
+    const kept = await Promise.allSettled([
+      readThrough({ getCached: async () => lastGood, getFresh: getOpenMeteoEnsembleFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(kept[0])).toBe('stale')
+    expect(kept[0]).toMatchObject({ value: { value: lastGood, refreshError: 'schema' } })
+
+    const none = await Promise.allSettled([
+      readThrough({ getCached: getOpenMeteoEnsemble, getFresh: getOpenMeteoEnsembleFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(none[0])).toBe('error')
   })
 
   it('getOpenMeteoEnsembleFresh(bucket) resolves the same shape', async () => {
