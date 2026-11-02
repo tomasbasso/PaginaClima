@@ -32,6 +32,8 @@ export const TTL = {
   openMeteoRecentRain: 1_800,
   /** ENS runs every 6 h and shows up about 10 h after its nominal time: 3 h is enough (D-18). */
   openMeteoEnsemble: 10_800,
+  /** Deterministic models publish more often than ENS, and their values stay in this cache (D-18). */
+  openMeteoModels: 3_600,
   /** Latest GOES-East pass (DescribeDomains + blank-step fallback); new passes every 10 min (D-07). */
   gibsLatest: 600,
   /** One frame per stamp never changes: 1 day in the Data Cache, the CDN keeps it immutable. */
@@ -138,6 +140,27 @@ export const OPEN_METEO_ENSEMBLE_URL = `https://ensemble-api.open-meteo.com/v1/e
   latitude: String(LAT),
   longitude: String(LON),
   models: 'ecmwf_ifs025',
+  hourly: 'precipitation',
+  daily: 'temperature_2m_max,temperature_2m_min',
+  forecast_days: '15',
+  timezone: TZ,
+}).toString()}`
+
+/**
+ * Independent models that vote on the daily agreement (D-13). HRES, not its 0.25° version. The
+ * Norwegian source is left out on purpose: outside Scandinavia it runs on ECMWF and would count twice.
+ */
+export const VOTING_MODELS = ['ecmwf_ifs', 'gfs_seamless', 'icon_seamless', 'gem_seamless'] as const
+
+/**
+ * Daily agreement between models (MODL-02). Hourly rain for the same local-day window as the
+ * ensemble, and 15 days so that day 14 can close with its 00:00 stamp. Horizons are not listed
+ * anywhere: a model votes on the days it has complete data for.
+ */
+export const OPEN_METEO_MODELS_URL = `https://api.open-meteo.com/v1/forecast?${new URLSearchParams({
+  latitude: String(LAT),
+  longitude: String(LON),
+  models: VOTING_MODELS.join(','),
   hourly: 'precipitation',
   daily: 'temperature_2m_max,temperature_2m_min',
   forecast_days: '15',

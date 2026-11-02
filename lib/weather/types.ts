@@ -9,6 +9,7 @@ export type SourceId =
   | 'open-meteo-archive'
   | 'nasa-gibs'
   | 'open-meteo-ensemble'
+  | 'open-meteo-models'
 
 /** 'stale' = a refresh attempt actually failed (never mere age). */
 export type SourceStatus = 'ok' | 'stale' | 'error'
