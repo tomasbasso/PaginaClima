@@ -4,9 +4,12 @@ import { localDateKey, longDayLabel, relativeDayLabel } from '@/lib/time'
 import { formatTemp } from '@/lib/weather/format'
 import type { DailyPoint, DayConfidence } from '@/lib/weather/types'
 import { describeWeather } from '@/lib/weather/wmo'
+import type { Verdict } from './agreement'
 import { rainRange, rainRangeText, toDisplayPct } from './ensemble'
 
 const NBSP = '\u00A0'
+
+export type DoubtWord = 'Dudan' | 'Sin acuerdo' | 'Solo un modelo'
 
 /** Fractions 0..1 of the common scale of the visible days (D-06). */
 export interface DailyBar {
@@ -26,6 +29,9 @@ export interface DailyRow {
   probText: string | null // '70 %' with NBSP · '—' day without data · null under 10 % or ensemble down
   probPct: number | null // shown value, the height of the rain gauge fill
   ensembleUp: boolean // some visible day has ensemble data; false = phase-2 look
+  verdict: Verdict
+  word: DoubtWord | null // sentence case, uppercased by CSS; null when agreeing or without data (D-12)
+  modelsUp: boolean // some visible day has a verdict other than sinDato
   bar7: DailyBar | null // scale of rows 0..6; null for rows 7..13
   bar14: DailyBar | null // scale of all rows
   tentative: boolean // days 8..14 (D-08)
@@ -122,6 +128,32 @@ function temperatureRangeSentence(d: DailyPoint, ensemble: EnsembleFields | null
   return ` La temperatura podría ir de ${formatTemp(band.lo)} a ${formatTemp(band.hi)} grados.`
 }
 
+/** The short word on screen; the full "no se ponen de acuerdo" goes to the screen reader (D-12). */
+const WORDS: Record<Verdict, DoubtWord | null> = {
+  coinciden: null,
+  dudan: 'Dudan',
+  desacuerdo: 'Sin acuerdo',
+  solo: 'Solo un modelo',
+  sinDato: null,
+}
+
+/** Two voters are named as two: with only them, "los modelos" would promise more than there is (D-14). */
+function agreementSentence(verdict: Verdict, voters: number): string {
+  const subject = voters === 2 ? 'Los 2 modelos con dato' : 'Los modelos'
+  switch (verdict) {
+    case 'coinciden':
+      return ` ${subject} coinciden.`
+    case 'dudan':
+      return ` ${subject} dudan.`
+    case 'desacuerdo':
+      return ' Los modelos no se ponen de acuerdo.'
+    case 'solo':
+      return ' Hay un solo modelo para este día, no se puede comparar.'
+    case 'sinDato':
+      return ''
+  }
+}
+
 function srTextFor(
   dayLabel: string,
   stateLabel: string | null,
@@ -129,30 +161,36 @@ function srTextFor(
   ensemble: EnsembleFields | null,
   ensembleUp: boolean,
   farDay: boolean,
+  agreement: string,
 ): string {
   const t = (v: number | null) => (v === null ? 'sin dato' : `${formatTemp(v)} grados`)
   const state = stateLabel ? `${stateLabel.toLowerCase()}, ` : ''
   const probability = probabilitySentence(ensembleUp, ensemble)
   const range = temperatureRangeSentence(d, ensemble, farDay)
-  return `${dayLabel}: ${state}mínima ${t(d.tMinC)}, máxima ${t(d.tMaxC)}, ${srRain(d, ensemble, farDay)}.${probability}${range}`
+  return `${dayLabel}: ${state}mínima ${t(d.tMinC)}, máxima ${t(d.tMaxC)}, ${srRain(d, ensemble, farDay)}.${probability}${range}${agreement}`
 }
 
 /**
  * Rows from today's local date on (past days of a stale snapshot are dropped, D-12), at most 14.
  * Day keys are compared as 'YYYY-MM-DD' strings; today comes from localDateKey (ART), never UTC.
- * The ensemble joins by date: an entry for a day that is not visible is never used.
+ * Ensemble and verdict join by date: an entry for a day that is not visible is never used.
  */
 export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayConfidence[] = []): DailyRow[] {
   const todayKey = localDateKey(now)
   const days = daily.filter((d) => d.date >= todayKey).slice(0, MAX_DAYS)
   const ensembleByDate: EnsembleByDate = new Map(confidence.map((c) => [c.date, c.ensemble]))
+  const modelsByDate = new Map(confidence.map((c) => [c.date, c]))
   const scale7 = scaleFor(days.slice(0, DEFAULT_DAYS), ensembleByDate)
   const scale14 = scaleFor(days, ensembleByDate)
   const ensembleUp = days.some((d) => Boolean(ensembleByDate.get(d.date)))
+  const verdictOf = (date: string): Verdict => modelsByDate.get(date)?.verdict ?? 'sinDato'
+  const modelsUp = days.some((d) => verdictOf(d.date) !== 'sinDato')
   return days.map((d, i) => {
     const stateLabel = describeWeather(d.weatherCode, { night: false }).label
     const ensemble = ensembleByDate.get(d.date) ?? null
     const farDay = i >= FIRST_RANGE_INDEX
+    const verdict = verdictOf(d.date)
+    const agreement = agreementSentence(verdict, modelsByDate.get(d.date)?.voters ?? 0)
     const rain =
       farDay && ensemble ? rainRangeText(ensemble.rainP10Mm, ensemble.rainP90Mm) : rainText(d.precipSumMm)
     const probPct = ensemble ? toDisplayPct(ensemble.rainMembers, ensemble.members) : null
@@ -173,10 +211,13 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
       probText,
       probPct,
       ensembleUp,
+      verdict,
+      word: WORDS[verdict],
+      modelsUp,
       bar7: i < DEFAULT_DAYS ? barFor(d, ensemble, scale7) : null,
       bar14: barFor(d, ensemble, scale14),
       tentative: i >= DEFAULT_DAYS,
-      srText: srTextFor(longDayLabel(d.date, todayKey), stateLabel, d, ensemble, ensembleUp, farDay),
+      srText: srTextFor(longDayLabel(d.date, todayKey), stateLabel, d, ensemble, ensembleUp, farDay, agreement),
     }
   })
 }
