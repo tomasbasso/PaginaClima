@@ -307,9 +307,10 @@ describe('getWeatherSnapshot() status', () => {
 
     const s = await loadSnapshot()
 
-    expect(JSON.stringify(s)).not.toMatch(
-      /_memberd|precipitation_member|ecmwf_ifs|gfs_seamless|icon_seamless|gem_seamless/,
-    )
+    const leak = /_member\d|precipitation_member|ecmwf_ifs|gfs_seamless|icon_seamless|gem_seamless/
+    // The guard itself: a typo in this pattern once let temperature members through.
+    expect('temperature_2m_max_member01').toMatch(leak)
+    expect(JSON.stringify(s)).not.toMatch(leak)
     expect(s.confidence[0]).not.toHaveProperty('votes')
   })
 })

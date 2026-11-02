@@ -128,7 +128,10 @@ describe('walking skeleton: getWeatherSnapshot()', () => {
     expect(snap.confidence).toHaveLength(14)
     for (const day of snap.confidence) expect(day.ensemble?.members).toBe(51)
     // Not the bare word: EnsembleDay has the legitimate fields members and rainMembers (D-18).
-    expect(JSON.stringify(snap)).not.toMatch(/_memberd|precipitation_member/)
+    const leak = /_member\d|precipitation_member/
+    // The guard itself: a typo in this pattern once let temperature members through.
+    expect('temperature_2m_max_member01').toMatch(leak)
+    expect(JSON.stringify(snap)).not.toMatch(leak)
   })
 
   it('asks the ensemble host once, for hourly rain and never for the daily sum', async () => {
