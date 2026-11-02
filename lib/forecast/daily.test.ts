@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { makeDaily } from './__fixtures__/build'
+import { makeConfidence, makeDaily } from './__fixtures__/build'
 import { buildDailyRows, rainText } from './daily'
 
 describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
@@ -88,11 +88,21 @@ describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
       new Date('2026-10-23T15:00:00Z'),
     )
     expect(rows[1].srText).toBe(
-      'Mañana: algo nublado, mínima 7 grados, máxima 19 grados, sin lluvia significativa',
+      'Mañana: algo nublado, mínima 7 grados, máxima 19 grados, sin lluvia significativa.',
     )
-    expect(rows[2].srText).toBe('dom 25: algo nublado, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia')
-    expect(rows[2].rainText).toBe('4 mm')
+    expect(rows[2].srText).toBe(
+      'Domingo 25: algo nublado, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia.',
+    )
+    expect(rows[2].rainText).toBe('4 mm')
     expect(rows[1].rainText).toBeNull()
+  })
+
+  it('uses the singular for a rounded total of 1 mm', () => {
+    const rows = buildDailyRows(
+      makeDaily('2026-10-23', 1, () => ({ weatherCode: 2, tMinC: 7, tMaxC: 19, precipSumMm: 1.2 })),
+      new Date('2026-10-23T15:00:00Z'),
+    )
+    expect(rows[0].srText).toBe('Hoy: algo nublado, mínima 7 grados, máxima 19 grados, 1 milímetro de lluvia.')
   })
 
   it('says "sin dato" and skips the state when missing', () => {
@@ -100,7 +110,7 @@ describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
       makeDaily('2026-10-23', 1, () => ({ weatherCode: null, tMinC: null, tMaxC: null })),
       new Date('2026-10-23T15:00:00Z'),
     )
-    expect(rows[0].srText).toBe('Hoy: mínima sin dato, máxima sin dato, sin lluvia significativa')
+    expect(rows[0].srText).toBe('Hoy: mínima sin dato, máxima sin dato, sin lluvia significativa.')
   })
 
   it('leaves every bar null on a flat scale or without finite values', () => {
@@ -128,11 +138,152 @@ describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
 })
 
 describe('rainText (D-10)', () => {
-  it('shows rounded mm only from 1 mm', () => {
+  it('shows rounded mm only from 1 mm, with a non-breaking space', () => {
     expect(rainText(null)).toBeNull()
     expect(rainText(0.9)).toBeNull()
-    expect(rainText(1)).toBe('1 mm')
-    expect(rainText(4.4)).toBe('4 mm')
-    expect(rainText(12.6)).toBe('13 mm')
+    expect(rainText(1)).toBe('1 mm')
+    expect(rainText(4.4)).toBe('4 mm')
+    expect(rainText(12.6)).toBe('13 mm')
+  })
+})
+
+describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
+  const NOW = new Date('2026-10-23T15:00:00Z')
+  const START = '2026-10-23'
+
+  it('shows the display value as text and as the fill height', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 4),
+      NOW,
+      makeConfidence(START, 4, (i) => ({ rainMembers: [35, 5, 6, 51][i] })),
+    )
+    expect(rows.map((r) => r.probText)).toEqual(['70 %', null, '10 %', '95 %'])
+    expect(rows.map((r) => r.probPct)).toEqual([70, null, 10, 95])
+    for (const r of rows) expect(r.ensembleUp).toBe(true)
+  })
+
+  it('marks a day without data with a dash while other days have it', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 3),
+      NOW,
+      makeConfidence(START, 2, (i) => (i === 0 ? null : { rainMembers: 20 })),
+    )
+    for (const i of [0, 2]) {
+      expect(rows[i].probText).toBe('—')
+      expect(rows[i].probPct).toBeNull()
+      expect(rows[i].ensembleUp).toBe(true)
+    }
+    expect(rows[1].probText).toBe('40 %')
+  })
+
+  it('reports the ensemble as down with two arguments or with no day that has it', () => {
+    const cases = [
+      buildDailyRows(makeDaily(START, 3), NOW),
+      buildDailyRows(makeDaily(START, 3), NOW, []),
+      buildDailyRows(makeDaily(START, 3), NOW, makeConfidence(START, 3, () => null)),
+    ]
+    for (const rows of cases) {
+      for (const r of rows) {
+        expect(r.ensembleUp).toBe(false)
+        expect(r.probText).toBeNull()
+        expect(r.probPct).toBeNull()
+      }
+    }
+  })
+
+  it('joins by date, so a past day of the ensemble is never used', () => {
+    // Offset by one day: the first entry is yesterday and must not land on today's row.
+    const rows = buildDailyRows(
+      makeDaily(START, 2),
+      NOW,
+      makeConfidence('2026-10-22', 2, (i) => ({ rainMembers: i === 0 ? 51 : 10 })),
+    )
+    expect(rows[0].probPct).toBe(20)
+    expect(rows[1].probText).toBe('—')
+  })
+
+  it('does not count only-past ensemble data as the ensemble being up', () => {
+    const rows = buildDailyRows(makeDaily(START, 2), NOW, makeConfidence('2026-10-20', 2))
+    expect(rows[0].ensembleUp).toBe(false)
+  })
+
+  it('shows the probability without mm under 1 mm of the main forecast (D-10)', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 1, () => ({ precipSumMm: 0.5 })),
+      NOW,
+      makeConfidence(START, 1, () => ({ rainMembers: 31 })),
+    )
+    expect(rows[0].probText).toBe('60 %')
+    expect(rows[0].rainText).toBeNull()
+  })
+
+  it('keeps the main forecast mm on days 1 to 14', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 14, () => ({ precipSumMm: 4.4 })),
+      NOW,
+      makeConfidence(START, 14, () => ({ rainMembers: 30, rainP10Mm: 5, rainP90Mm: 15 })),
+    )
+    for (const r of rows) expect(r.rainText).toBe('4 mm')
+  })
+
+  describe('srText', () => {
+    const day = (precipSumMm: number, weatherCode = 2) => () => ({
+      weatherCode,
+      tMinC: 7,
+      tMaxC: 19,
+      precipSumMm,
+    })
+
+    it('adds the real count', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 2, day(0)),
+        NOW,
+        makeConfidence(START, 2, () => ({ rainMembers: 8 })),
+      )
+      expect(rows[1].srText).toBe(
+        'Mañana: algo nublado, mínima 7 grados, máxima 19 grados, sin lluvia significativa. 8 de 51 escenarios traen lluvia.',
+      )
+    })
+
+    it('keeps the real count when no number is shown, and the real number of members', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 2, day(0)),
+        NOW,
+        makeConfidence(START, 2, (i) => ({ rainMembers: 5, members: i === 0 ? 51 : 50 })),
+      )
+      expect(rows[0].probText).toBeNull()
+      expect(rows[0].srText).toContain('5 de 51 escenarios traen lluvia.')
+      expect(rows[1].srText).toContain('5 de 50 escenarios traen lluvia.')
+    })
+
+    it('says so when the day has no ensemble data', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 2, day(3)),
+        NOW,
+        makeConfidence(START, 2, (i) => (i === 0 ? { rainMembers: 8 } : null)),
+      )
+      expect(rows[1].srText).toBe(
+        'Mañana: algo nublado, mínima 7 grados, máxima 19 grados, 3 milímetros de lluvia. Sin dato de probabilidad.',
+      )
+    })
+
+    it('omits the probability when the ensemble is down', () => {
+      const rows = buildDailyRows(makeDaily(START, 2, day(4.4, 80)), NOW, [])
+      expect(rows[1].srText).toBe(
+        'Mañana: chaparrones, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia.',
+      )
+    })
+
+    it('uses the long day and the full state', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 3, day(0, 99)),
+        NOW,
+        makeConfidence(START, 3, () => ({ rainMembers: 40 })),
+      )
+      expect(rows[2].label).toBe('dom 25')
+      expect(rows[2].srText).toBe(
+        'Domingo 25: tormenta con granizo, mínima 7 grados, máxima 19 grados, sin lluvia significativa. 40 de 51 escenarios traen lluvia.',
+      )
+    })
   })
 })

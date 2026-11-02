@@ -8,6 +8,7 @@ import {
   formatHeaderDate,
   localDateKey,
   localHour,
+  longDayLabel,
   monthLong,
   relativeDayLabel,
   weekdayLong,
@@ -79,6 +80,14 @@ describe('lib/time (D-08, DATA-04) under TZ=UTC', () => {
     expect(relativeDayLabel('2026-10-24', '2026-10-23')).toBe('Mañana')
     expect(relativeDayLabel('2026-10-25', '2026-10-23')).toBe('dom 25')
     expect(relativeDayLabel('2026-11-02', '2026-10-31')).toBe('lun 2')
+  })
+
+  it('longDayLabel: Hoy, Mañana, then the capitalized weekday and the day', () => {
+    expect(longDayLabel('2026-10-23', '2026-10-23')).toBe('Hoy')
+    expect(longDayLabel('2026-10-24', '2026-10-23')).toBe('Mañana')
+    expect(longDayLabel('2026-10-24', '2026-10-20')).toBe('Sábado 24')
+    expect(longDayLabel('2026-10-28', '2026-10-20')).toBe('Miércoles 28')
+    expect(longDayLabel('2026-11-02', '2026-10-31')).toBe('Lunes 2')
   })
 })
 

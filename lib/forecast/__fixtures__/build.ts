@@ -1,7 +1,7 @@
 // Fixture builders shared by every phase-2 test and /dev/estados. Not a test file. Pure.
 // Times use the exact withOffset format ('YYYY-MM-DDTHH:00:00-03:00').
 import { addDaysToKey } from '@/lib/time'
-import type { DailyPoint, HourlyPoint } from '@/lib/weather/types'
+import type { DailyPoint, DayConfidence, HourlyPoint } from '@/lib/weather/types'
 
 const HOUR_MS = 3_600_000
 const ART_OFFSET_MS = 3 * HOUR_MS
@@ -57,6 +57,40 @@ export function makeDaily(
       sunset: `${key}T19:45`,
       gustMaxKmh: 30,
       ...(over ? over(i, key) : {}),
+    })
+  }
+  return out
+}
+
+type EnsembleFields = NonNullable<DayConfidence['ensemble']>
+
+/**
+ * n consecutive DayConfidence starting at `startKey`, a dry 51-member day by default.
+ * `over(i, key)` returns field overrides, or null for a day without ensemble data.
+ */
+export function makeConfidence(
+  startKey: string,
+  n: number,
+  over?: (i: number, key: string) => Partial<EnsembleFields> | null,
+): DayConfidence[] {
+  const out: DayConfidence[] = []
+  for (let i = 0; i < n; i++) {
+    const date = addDaysToKey(startKey, i)
+    const fields = over ? over(i, date) : {}
+    out.push({
+      date,
+      ensemble:
+        fields === null
+          ? null
+          : {
+              members: 51,
+              rainMembers: 0,
+              rainP10Mm: 0,
+              rainP90Mm: 0,
+              tMinP10C: 7,
+              tMaxP90C: 28,
+              ...fields,
+            },
     })
   }
   return out
