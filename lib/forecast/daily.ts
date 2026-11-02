@@ -4,14 +4,16 @@ import { localDateKey, longDayLabel, relativeDayLabel } from '@/lib/time'
 import { formatTemp } from '@/lib/weather/format'
 import type { DailyPoint, DayConfidence } from '@/lib/weather/types'
 import { describeWeather } from '@/lib/weather/wmo'
-import { toDisplayPct } from './ensemble'
+import { rainRange, rainRangeText, toDisplayPct } from './ensemble'
 
 const NBSP = '\u00A0'
 
-/** Fractions 0..1 of the common scale of the visible days (D-09). */
+/** Fractions 0..1 of the common scale of the visible days (D-06). */
 export interface DailyBar {
   lo: number
   hi: number
+  bandLo: number | null // null without that percentile: no piece is drawn on that side
+  bandHi: number | null
 }
 
 export interface DailyRow {
@@ -33,6 +35,8 @@ export interface DailyRow {
 /** Max rows shown when expanded; the first DEFAULT_DAYS are the collapsed list (D-08). */
 export const MAX_DAYS = 14
 export const DEFAULT_DAYS = 7
+/** Index of day 4: from here on the rain is the ensemble range (D-07). */
+const FIRST_RANGE_INDEX = 3
 
 /** Rounded mm only from 1 mm (D-10). The probability of precipitation is never used. */
 export function rainText(mm: number | null): string | null {
@@ -42,12 +46,31 @@ export function rainText(mm: number | null): string | null {
 const tempText = (v: number | null) => (v === null ? '—' : `${formatTemp(v)}°`)
 
 type Scale = { lo: number; hi: number }
+type EnsembleFields = NonNullable<DayConfidence['ensemble']>
+type EnsembleByDate = Map<string, DayConfidence['ensemble']>
 
-function scaleFor(days: DailyPoint[]): Scale | null {
+/**
+ * Band limits in degrees, null by side. Each one contains the main value: the main forecast is not
+ * a member of the ensemble, so a p90 under the maximum is normal and must not eat the segment.
+ */
+function bandFor(d: DailyPoint, ensemble: EnsembleFields | null): { lo: number | null; hi: number | null } {
+  if (!ensemble || d.tMinC === null || d.tMaxC === null) return { lo: null, hi: null }
+  const { tMinP10C: p10, tMaxP90C: p90 } = ensemble
+  return {
+    lo: p10 === null ? null : Math.min(p10, d.tMinC),
+    hi: p90 === null ? null : Math.max(p90, d.tMaxC),
+  }
+}
+
+function scaleFor(days: DailyPoint[], ensembleByDate: EnsembleByDate): Scale | null {
   const values: number[] = []
   for (const d of days) {
     if (d.tMinC !== null) values.push(d.tMinC)
     if (d.tMaxC !== null) values.push(d.tMaxC)
+    // Only what is drawn takes room in the domain: without a band it stays the phase-2 one.
+    const band = bandFor(d, ensembleByDate.get(d.date) ?? null)
+    if (band.lo !== null) values.push(band.lo)
+    if (band.hi !== null) values.push(band.hi)
   }
   if (values.length === 0) return null
   const lo = Math.min(...values)
@@ -57,13 +80,17 @@ function scaleFor(days: DailyPoint[]): Scale | null {
 }
 
 // Same clamped linear map as d3 scaleLinear().clamp(true), inline so this module needs no d3.
-function barFor(d: DailyPoint, scale: Scale | null): DailyBar | null {
+function barFor(d: DailyPoint, ensemble: EnsembleFields | null, scale: Scale | null): DailyBar | null {
   if (!scale || d.tMinC === null || d.tMaxC === null) return null
   const frac = (v: number) => Math.min(1, Math.max(0, (v - scale.lo) / (scale.hi - scale.lo)))
-  return { lo: frac(d.tMinC), hi: frac(d.tMaxC) }
+  const band = bandFor(d, ensemble)
+  return {
+    lo: frac(d.tMinC),
+    hi: frac(d.tMaxC),
+    bandLo: band.lo === null ? null : frac(band.lo),
+    bandHi: band.hi === null ? null : frac(band.hi),
+  }
 }
-
-type EnsembleFields = NonNullable<DayConfidence['ensemble']>
 
 /** The shown value is rounded and capped, so the screen reader gets the real count instead (D-09). */
 function probabilitySentence(ensembleUp: boolean, ensemble: EnsembleFields | null): string {
@@ -72,19 +99,42 @@ function probabilitySentence(ensembleUp: boolean, ensemble: EnsembleFields | nul
   return ` ${ensemble.rainMembers} de ${ensemble.members} escenarios traen lluvia.`
 }
 
+const mmSentence = (mm: number) => `${mm} ${mm === 1 ? 'milímetro' : 'milímetros'} de lluvia`
+
+/** Same source as the visible text: the range from day 4 with ensemble, the main forecast otherwise. */
+function srRain(d: DailyPoint, ensemble: EnsembleFields | null, farDay: boolean): string {
+  if (farDay && ensemble) {
+    const range = rainRange(ensemble.rainP10Mm, ensemble.rainP90Mm)
+    if (!range) return 'sin lluvia significativa'
+    return range.lo === range.hi
+      ? mmSentence(range.hi)
+      : `entre ${range.lo} y ${range.hi} milímetros de lluvia`
+  }
+  return rainText(d.precipSumMm) !== null && d.precipSumMm !== null
+    ? mmSentence(Math.round(d.precipSumMm))
+    : 'sin lluvia significativa'
+}
+
+function temperatureRangeSentence(d: DailyPoint, ensemble: EnsembleFields | null, farDay: boolean): string {
+  if (!farDay) return ''
+  const band = bandFor(d, ensemble)
+  if (band.lo === null || band.hi === null) return ''
+  return ` La temperatura podría ir de ${formatTemp(band.lo)} a ${formatTemp(band.hi)} grados.`
+}
+
 function srTextFor(
   dayLabel: string,
   stateLabel: string | null,
   d: DailyPoint,
-  rain: string | null,
-  probability: string,
+  ensemble: EnsembleFields | null,
+  ensembleUp: boolean,
+  farDay: boolean,
 ): string {
   const t = (v: number | null) => (v === null ? 'sin dato' : `${formatTemp(v)} grados`)
   const state = stateLabel ? `${stateLabel.toLowerCase()}, ` : ''
-  const mm = rain !== null && d.precipSumMm !== null ? Math.round(d.precipSumMm) : null
-  const rainPart =
-    mm === null ? 'sin lluvia significativa' : `${mm} ${mm === 1 ? 'milímetro' : 'milímetros'} de lluvia`
-  return `${dayLabel}: ${state}mínima ${t(d.tMinC)}, máxima ${t(d.tMaxC)}, ${rainPart}.${probability}`
+  const probability = probabilitySentence(ensembleUp, ensemble)
+  const range = temperatureRangeSentence(d, ensemble, farDay)
+  return `${dayLabel}: ${state}mínima ${t(d.tMinC)}, máxima ${t(d.tMaxC)}, ${srRain(d, ensemble, farDay)}.${probability}${range}`
 }
 
 /**
@@ -95,14 +145,16 @@ function srTextFor(
 export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayConfidence[] = []): DailyRow[] {
   const todayKey = localDateKey(now)
   const days = daily.filter((d) => d.date >= todayKey).slice(0, MAX_DAYS)
-  const scale7 = scaleFor(days.slice(0, DEFAULT_DAYS))
-  const scale14 = scaleFor(days)
-  const ensembleByDate = new Map(confidence.map((c) => [c.date, c.ensemble]))
+  const ensembleByDate: EnsembleByDate = new Map(confidence.map((c) => [c.date, c.ensemble]))
+  const scale7 = scaleFor(days.slice(0, DEFAULT_DAYS), ensembleByDate)
+  const scale14 = scaleFor(days, ensembleByDate)
   const ensembleUp = days.some((d) => Boolean(ensembleByDate.get(d.date)))
   return days.map((d, i) => {
     const stateLabel = describeWeather(d.weatherCode, { night: false }).label
-    const rain = rainText(d.precipSumMm)
     const ensemble = ensembleByDate.get(d.date) ?? null
+    const farDay = i >= FIRST_RANGE_INDEX
+    const rain =
+      farDay && ensemble ? rainRangeText(ensemble.rainP10Mm, ensemble.rainP90Mm) : rainText(d.precipSumMm)
     const probPct = ensemble ? toDisplayPct(ensemble.rainMembers, ensemble.members) : null
     const probText = !ensembleUp
       ? null
@@ -121,16 +173,10 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
       probText,
       probPct,
       ensembleUp,
-      bar7: i < DEFAULT_DAYS ? barFor(d, scale7) : null,
-      bar14: barFor(d, scale14),
+      bar7: i < DEFAULT_DAYS ? barFor(d, ensemble, scale7) : null,
+      bar14: barFor(d, ensemble, scale14),
       tentative: i >= DEFAULT_DAYS,
-      srText: srTextFor(
-        longDayLabel(d.date, todayKey),
-        stateLabel,
-        d,
-        rain,
-        probabilitySentence(ensembleUp, ensemble),
-      ),
+      srText: srTextFor(longDayLabel(d.date, todayKey), stateLabel, d, ensemble, ensembleUp, farDay),
     }
   })
 }

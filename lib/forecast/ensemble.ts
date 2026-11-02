@@ -21,6 +21,8 @@ export const MEMBER_RAIN = /^precipitation(_member\d{2})?$/
 const MEMBER_T_MIN = /^temperature_2m_min(_member\d{2})?$/
 const MEMBER_T_MAX = /^temperature_2m_max(_member\d{2})?$/
 
+const NBSP = '\u00A0'
+
 const P10 = 0.1
 const P90 = 0.9
 
@@ -46,6 +48,21 @@ export function toDisplayPct(rainMembers: number, members: number): number | nul
   if (raw < MIN_DISPLAY_SHARE) return null
   if (raw >= TOP_DISPLAY_SHARE) return 95
   return Math.min(90, Math.max(10, Math.round((raw * 100) / 5) * 5))
+}
+
+/**
+ * Rounded limits of the rain range (D-07), or null under 1 mm of p90. The threshold reads the raw
+ * value: 0.9 mm shows nothing even though it rounds to 1. With real data p10 is usually 0 (Pitfall 4).
+ */
+export function rainRange(p10: number, p90: number): { lo: number; hi: number } | null {
+  if (p90 < RAIN_DAY_MM) return null
+  return { lo: Math.round(p10), hi: Math.round(p90) }
+}
+
+export function rainRangeText(p10: number, p90: number): string | null {
+  const range = rainRange(p10, p90)
+  if (!range) return null
+  return range.lo === range.hi ? `${range.hi}${NBSP}mm` : `${range.lo}–${range.hi}${NBSP}mm`
 }
 
 const ascending = (a: number, b: number) => a - b
