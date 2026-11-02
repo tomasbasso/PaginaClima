@@ -1,6 +1,6 @@
 import 'server-only'
 import { unstable_cache } from 'next/cache'
-import { OPEN_METEO_MODELS_URL, TTL, USER_AGENT } from '@/lib/config'
+import { MIN_CONFIDENCE_DAYS, OPEN_METEO_MODELS_URL, TTL, USER_AGENT } from '@/lib/config'
 import { aggregateModels, type ModelsDay } from '@/lib/forecast/agreement'
 import { ModelsDto } from './openMeteoModels.schema'
 import { SourceError, type Cached } from './errors'
@@ -38,9 +38,10 @@ export async function fetchOpenMeteoModelsRaw(): Promise<Cached<ModelsDay[]>> {
   if (!parsed.success) throw new SourceError('open-meteo-models', 'schema')
 
   const data = aggregateModels(parsed.data.hourly, parsed.data.daily)
-  // The schema accepts null columns, so "no usable day" gets here: it is a failed refresh and must
-  // never replace the last good value in the cache (D-17).
-  if (data.length === 0) throw new SourceError('open-meteo-models', 'schema')
+  // The schema accepts null columns and short responses, so an incomplete response gets here: it is
+  // a failed refresh and must never replace the last good value in the cache (D-17). data.length
+  // already counts only days with at least one vote.
+  if (data.length < MIN_CONFIDENCE_DAYS) throw new SourceError('open-meteo-models', 'schema')
 
   console.info('[upstream] open-meteo models fetched')
   return { data, fetchedAt: new Date().toISOString() }

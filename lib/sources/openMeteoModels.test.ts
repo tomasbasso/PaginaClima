@@ -34,6 +34,21 @@ const allNull = <T extends object>(block: T) =>
 
 const noData = { ...fixture, hourly: allNull(fixture.hourly), daily: allNull(fixture.daily) }
 
+const sliceColumns = <T extends object>(block: T, rows: number) =>
+  Object.fromEntries(
+    Object.entries(block).map(([key, values]) => [key, (values as unknown[]).slice(0, rows)]),
+  )
+
+/**
+ * The fixture cut to exactly n closed days. A local day ends on the 00:00 stamp of the next one and
+ * the first stamp belongs to a partial "yesterday", so n days need 24 * n + 1 hourly rows.
+ */
+const firstDays = (n: number) => ({
+  ...fixture,
+  hourly: sliceColumns(fixture.hourly, 24 * n + 1),
+  daily: sliceColumns(fixture.daily, n),
+})
+
 /** Stamps of one full local day: D 01:00 … D+1 00:00. */
 function fullDay(date: string): string[] {
   const hours = Array.from({ length: 23 }, (_, i) => `${date}T${pad(i + 1)}:00`)
@@ -291,6 +306,38 @@ describe('Open-Meteo models adapter', () => {
       readThrough({ getCached: getOpenMeteoModels, getFresh: getOpenMeteoModelsFresh, ttlS: 3600, nowMs }),
     ])
     expect(deriveSourceStatus(none[0])).toBe('error')
+  })
+
+  it.each([1, 11])('rejects with schema when truncated to %i usable days', async (days) => {
+    stub(json(firstDays(days)))
+    const { fetchOpenMeteoModelsRaw } = await load()
+    await expect(fetchOpenMeteoModelsRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-models',
+      code: 'schema',
+    })
+  })
+
+  it('accepts exactly 12 usable days, so a delayed run does not read as a failure', async () => {
+    stub(json(firstDays(12)))
+    const { fetchOpenMeteoModelsRaw } = await load()
+    const r = await fetchOpenMeteoModelsRaw()
+    expect(r.data).toHaveLength(12)
+  })
+
+  it('a truncated response leaves the last good value as stale', async () => {
+    const { deriveSourceStatus } = await import('@/lib/weather/status')
+    const { readThrough } = await import('./readThrough')
+    const { getOpenMeteoModelsFresh } = await load()
+    stub(json(firstDays(1)))
+    const nowMs = Date.parse('2026-11-02T15:00:00Z')
+    const lastGood = { data: [{ date: '2026-11-02', votes: [{ tMaxC: 20, tMinC: 10, rainMm: 0 }] }], fetchedAt: '2026-11-02T06:00:00.000Z' }
+
+    const kept = await Promise.allSettled([
+      readThrough({ getCached: async () => lastGood, getFresh: getOpenMeteoModelsFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(kept[0])).toBe('stale')
+    expect(kept[0]).toMatchObject({ value: { value: lastGood, refreshError: 'schema' } })
   })
 
   it('getOpenMeteoModelsFresh(bucket) resolves the same shape', async () => {
