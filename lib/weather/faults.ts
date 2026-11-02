@@ -3,9 +3,22 @@
 // VERCEL_ENV is 'production' there at build and runtime, and undefined locally.
 import type { SourceInfo, WeatherSnapshot } from './types'
 
-export type WeatherFault = 'openmeteo-down' | 'metno-down' | 'stale' | 'empty'
+export type WeatherFault =
+  | 'openmeteo-down'
+  | 'metno-down'
+  | 'stale'
+  | 'empty'
+  | 'ensemble-down'
+  | 'models-down'
 
-const FAULTS: readonly WeatherFault[] = ['openmeteo-down', 'metno-down', 'stale', 'empty']
+const FAULTS: readonly WeatherFault[] = [
+  'openmeteo-down',
+  'metno-down',
+  'stale',
+  'empty',
+  'ensemble-down',
+  'models-down',
+]
 
 export function readFault(env: {
   VERCEL_ENV?: string
@@ -56,7 +69,32 @@ export function applyFault(
         now: null,
         hourly48: [],
         daily: [],
+        confidence: [],
         sources: s.sources.map((src) => ({
+          id: src.id,
+          status: 'error',
+          fetchedAt: null,
+          errorCode: 'fault',
+        })),
+      }
+    // Unlike openmeteo-down, these two erase the data as well: for these sources 'error' means
+    // nothing to show, so the failure notice must not sit on top of a full row (D-17).
+    case 'ensemble-down':
+      return {
+        ...s,
+        confidence: s.confidence.map((day) => ({ ...day, ensemble: null })),
+        sources: mapSource('open-meteo-ensemble', (src) => ({
+          id: src.id,
+          status: 'error',
+          fetchedAt: null,
+          errorCode: 'fault',
+        })),
+      }
+    case 'models-down':
+      return {
+        ...s,
+        confidence: s.confidence.map((day) => ({ ...day, verdict: 'sinDato', voters: 0 })),
+        sources: mapSource('open-meteo-models', (src) => ({
           id: src.id,
           status: 'error',
           fetchedAt: null,
