@@ -375,11 +375,45 @@ describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
     expect(s.now).toBeNull()
     expect(s.hourly48).toEqual([])
     expect(s.daily).toEqual([])
+    expect(s.confidence).toEqual([])
     for (const src of s.sources) expect(src).toMatchObject({ status: 'error', fetchedAt: null })
     expect(selectAhoraVariant(s)).toBe('empty')
   })
 
-  it.each(['openmeteo-down', 'metno-down', 'stale', 'empty'])(
+  it('ensemble-down: the data goes too, so the failure notice never sits on a full row', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'ensemble-down')
+    const s = await loadSnapshot()
+    expect(s.sources[2]).toEqual({
+      id: 'open-meteo-ensemble',
+      status: 'error',
+      fetchedAt: null,
+      errorCode: 'fault',
+    })
+    expect(s.confidence.length).toBeGreaterThan(0)
+    for (const day of s.confidence) expect(day.ensemble).toBeNull()
+    // The other source and the main forecast stay untouched.
+    expect(s.sources[3].status).toBe('ok')
+    expect(s.confidence[0]).toMatchObject({ verdict: 'coinciden', voters: 4 })
+    expect(selectAhoraVariant(s)).toBe('normal')
+  })
+
+  it('models-down: every verdict goes to sinDato with no voters, and the ensemble stays', async () => {
+    vi.stubEnv('WEATHER_FAULT', 'models-down')
+    const s = await loadSnapshot()
+    expect(s.sources[3]).toEqual({
+      id: 'open-meteo-models',
+      status: 'error',
+      fetchedAt: null,
+      errorCode: 'fault',
+    })
+    expect(s.confidence.length).toBeGreaterThan(0)
+    for (const day of s.confidence) expect(day).toMatchObject({ verdict: 'sinDato', voters: 0 })
+    expect(s.sources[2].status).toBe('ok')
+    expect(s.confidence[0].ensemble?.rainMembers).toBe(35)
+    expect(selectAhoraVariant(s)).toBe('normal')
+  })
+
+  it.each(['openmeteo-down', 'metno-down', 'stale', 'empty', 'ensemble-down', 'models-down'])(
     'ignores %s in production',
     async (fault) => {
       vi.stubEnv('WEATHER_FAULT', fault)
@@ -388,6 +422,8 @@ describe('getWeatherSnapshot() WEATHER_FAULT (D-13)', () => {
       expect(s.now).not.toBeNull()
       expect(s.sources.map((x) => x.status)).toEqual(['ok', 'ok', 'ok', 'ok'])
       expect(s.sources[0].fetchedAt).toBe(iso(T0 - 5 * MIN))
+      expect(s.confidence[0]).toMatchObject({ verdict: 'coinciden', voters: 4 })
+      expect(s.confidence[0].ensemble).not.toBeNull()
     },
   )
 
