@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { makeConfidence, makeDaily } from './__fixtures__/build'
-import { buildDailyRows, rainText } from './daily'
+import type { Verdict } from './agreement'
+import { buildDailyRows, type DailyRow, rainText } from './daily'
 
 describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
   it('runs under TZ=UTC like Vercel', () => {
@@ -395,6 +396,155 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
         'Domingo 25: tormenta con granizo, mínima 7 grados, máxima 19 grados, sin lluvia significativa. 40 de 51 escenarios traen lluvia.',
       )
     })
+  })
+})
+
+describe('buildDailyRows with the model agreement (MODL-02, D-12, D-14, D-17)', () => {
+  const NOW = new Date('2026-10-23T15:00:00Z')
+  const START = '2026-10-23'
+
+  /** Same entries as makeConfidence, with the verdict and voters of each day. */
+  const withVerdicts = (
+    start: string,
+    verdicts: [Verdict, number][],
+    ensemble: boolean = true,
+  ) =>
+    makeConfidence(start, verdicts.length, () => (ensemble ? { rainMembers: 8 } : null)).map((c, i) => ({
+      ...c,
+      verdict: verdicts[i][0],
+      voters: verdicts[i][1],
+    }))
+
+  const day = () => ({ weatherCode: 80, tMinC: 7, tMaxC: 19, precipSumMm: 4.4 })
+  const BASE = 'Hoy: chaparrones, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia.'
+
+  it.each<[Verdict, number, DailyRow['word']]>([
+    ['coinciden', 4, null],
+    ['dudan', 4, 'Dudan'],
+    ['desacuerdo', 3, 'Sin acuerdo'],
+    ['solo', 1, 'Solo un modelo'],
+    ['sinDato', 0, null],
+  ])('maps %s with %d voters to the word %s', (verdict, voters, word) => {
+    const [row] = buildDailyRows(makeDaily(START, 1), NOW, withVerdicts(START, [[verdict, voters]]))
+    expect(row.verdict).toBe(verdict)
+    expect(row.word).toBe(word)
+  })
+
+  it.each<[Verdict, number, string]>([
+    ['coinciden', 4, 'Los modelos coinciden.'],
+    ['coinciden', 3, 'Los modelos coinciden.'],
+    ['dudan', 4, 'Los modelos dudan.'],
+    ['dudan', 3, 'Los modelos dudan.'],
+    ['desacuerdo', 4, 'Los modelos no se ponen de acuerdo.'],
+    ['coinciden', 2, 'Los 2 modelos con dato coinciden.'],
+    ['dudan', 2, 'Los 2 modelos con dato dudan.'],
+    ['solo', 1, 'Hay un solo modelo para este día, no se puede comparar.'],
+  ])('ends the screen-reader text of %s with %d voters with the agreement', (verdict, voters, sentence) => {
+    const [row] = buildDailyRows(
+      makeDaily(START, 1, day),
+      NOW,
+      withVerdicts(START, [[verdict, voters]]),
+    )
+    expect(row.srText).toBe(`${BASE} 8 de 51 escenarios traen lluvia. ${sentence}`)
+  })
+
+  it('never mentions the models with sinDato', () => {
+    const [row] = buildDailyRows(
+      makeDaily(START, 1, day),
+      NOW,
+      withVerdicts(START, [
+        ['sinDato', 0],
+      ]),
+    )
+    expect(row.srText).toBe(`${BASE} 8 de 51 escenarios traen lluvia.`)
+    expect(row.srText).not.toMatch(/modelo/i)
+  })
+
+  it('keeps the agreement last, after the temperature range of a far day', () => {
+    const start = '2026-07-21'
+    const rows = buildDailyRows(
+      makeDaily(start, 5, () => ({ weatherCode: 82, tMinC: 9, tMaxC: 24 })),
+      new Date('2026-07-21T15:00:00Z'),
+      makeConfidence(start, 5, () => ({
+        rainMembers: 36,
+        rainP10Mm: 5,
+        rainP90Mm: 15,
+        tMinP10C: 6,
+        tMaxP90C: 27,
+      })).map((c) => ({ ...c, verdict: 'dudan' as const, voters: 4 })),
+    )
+    expect(rows[4].srText).toBe(
+      'Sábado 25: chaparrones fuertes, mínima 9 grados, máxima 24 grados, entre 5 y 15 milímetros de lluvia. 36 de 51 escenarios traen lluvia. La temperatura podría ir de 6 a 27 grados. Los modelos dudan.',
+    )
+  })
+
+  describe('the four combinations of sources (UI-SPEC "Fallas por fuente")', () => {
+    const NEXT = 'Mañana: chaparrones, mínima 7 grados, máxima 19 grados, 4 milímetros de lluvia.'
+    const days = () => makeDaily(START, 2, day)
+
+    it('ensemble and models up', () => {
+      const rows = buildDailyRows(days(), NOW, withVerdicts(START, [['dudan', 4], ['dudan', 4]]))
+      expect(rows[1]).toMatchObject({ ensembleUp: true, modelsUp: true, word: 'Dudan' })
+      expect(rows[1].srText).toBe(`${NEXT} 8 de 51 escenarios traen lluvia. Los modelos dudan.`)
+    })
+
+    it('ensemble down with the models up', () => {
+      const rows = buildDailyRows(days(), NOW, withVerdicts(START, [['dudan', 4], ['dudan', 4]], false))
+      expect(rows[1]).toMatchObject({ ensembleUp: false, modelsUp: true, word: 'Dudan', probText: null })
+      expect(rows[1].srText).toBe(`${NEXT} Los modelos dudan.`)
+    })
+
+    it('ensemble up with the models down', () => {
+      const rows = buildDailyRows(days(), NOW, withVerdicts(START, [['sinDato', 0], ['sinDato', 0]]))
+      expect(rows[1]).toMatchObject({ ensembleUp: true, modelsUp: false, verdict: 'sinDato', word: null })
+      expect(rows[1].srText).toBe(`${NEXT} 8 de 51 escenarios traen lluvia.`)
+    })
+
+    it('both down, with no confidence or with entries that carry nothing', () => {
+      for (const rows of [
+        buildDailyRows(days(), NOW),
+        buildDailyRows(days(), NOW, []),
+        buildDailyRows(days(), NOW, withVerdicts(START, [['sinDato', 0], ['sinDato', 0]], false)),
+      ]) {
+        expect(rows[1]).toMatchObject({ ensembleUp: false, modelsUp: false, verdict: 'sinDato', word: null })
+        expect(rows[1].srText).toBe(NEXT)
+      }
+    })
+  })
+
+  it('counts the models as up when a single visible day has a verdict', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 2),
+      NOW,
+      withVerdicts(START, [['sinDato', 0], ['solo', 1]]),
+    )
+    expect(rows.map((r) => r.modelsUp)).toEqual([true, true])
+    expect(rows[0].verdict).toBe('sinDato')
+    expect(rows[1].verdict).toBe('solo')
+  })
+
+  it('joins by date, so the verdict of a past day is never used', () => {
+    // Offset by one day: the first entry is yesterday and must not land on today's row.
+    const rows = buildDailyRows(
+      makeDaily(START, 2),
+      NOW,
+      withVerdicts('2026-10-22', [['desacuerdo', 4], ['dudan', 4]]),
+    )
+    expect(rows[0].verdict).toBe('dudan')
+    expect(rows[1].verdict).toBe('sinDato')
+    expect(rows[1].word).toBeNull()
+  })
+
+  it('does not count only-past verdicts as the models being up', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 2),
+      NOW,
+      withVerdicts('2026-10-20', [['coinciden', 4], ['coinciden', 4]]),
+    )
+    for (const r of rows) {
+      expect(r.modelsUp).toBe(false)
+      expect(r.verdict).toBe('sinDato')
+    }
   })
 })
 
