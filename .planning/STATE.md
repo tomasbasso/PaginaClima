@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-02T01:26:13.951Z"
+last_updated: "2026-11-02T01:32:21.322Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 35
-  completed_plans: 26
+  completed_plans: 27
   percent: 57
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 04 (pron-stico-con-confianza) — EXECUTING
-Plan: 2 of 10
+Plan: 3 of 10
 Status: Ready to execute
 Last activity: 2026-11-02
 
-Progress: [███████░░░] 74%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [███████░░░] 74%
 | Phase 05 P03 | 12 min | 3 tasks | 11 files |
 | Phase 05 P05 | 45 min | 3 tasks | 4 files |
 | Phase 04 P01 | 2 min | 1 tasks | 3 files |
+| Phase 04 P02 | 6 min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -122,6 +123,9 @@ Recent decisions affecting current work:
 - [Phase 05]: 05-03: rotulo NORMAL en caja fija de 64 px clampeado con CSS clamp(); comparacion en minuscula dentro del texto sr
 - [Phase 05]: 05-05: revisión visual en navegador integrado a 390x844, sin iPhone real (decisión del dueño)
 - [Phase 04]: 04-01: MODL-02 sigue abierto: solo se sacó la pestaña; el semáforo por día llega en planes posteriores
+- [Phase 04]: 04-02: 'Hoy' cuenta el día local completo, incluidas las horas ya pasadas (FCST-03, D-10)
+- [Phase 04]: 04-02: localDayRain redondea la suma a 2 decimales para no perder el umbral de 1 mm por punto flotante
+- [Phase 04]: 04-02: FCST-03 sigue abierto hasta que 04-03 lo muestre en /pronostico
 
 ### Pending Todos
 
@@ -143,6 +147,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T01:26:13.929Z
-Stopped at: Completed 04-01-PLAN.md
+Last session: 2026-11-02T01:32:21.303Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None
