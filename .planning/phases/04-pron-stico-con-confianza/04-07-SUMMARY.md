@@ -78,7 +78,7 @@ Medidos una vez en Chrome headless, con `600 12px "Plus Jakarta Sans"` y el trac
 | Nevada | 58,9 |
 | Niebla | 52,5 |
 
-Los anchos del contrato quedaron iguales o hasta 1,1 px por encima de lo medido, salvo `Granizo`, donde el DOM dio 67,3 contra 67,2. La fórmula de mm también queda por encima (hasta 8,3 px), con una excepción de 0,1 px a favor del margen de 4 px: ninguna cambia un resultado.
+Los anchos del contrato quedaron iguales o hasta 1,1 px por encima de lo medido, salvo `Granizo`, donde el DOM dio 67,3 contra 67,2; esa diferencia de 0,1 px la cubre el margen de 4 px. La fórmula de mm también queda por encima de lo medido, hasta 8,3 px.
 
 ## Comprobación en el navegador
 
