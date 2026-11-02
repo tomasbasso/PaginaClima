@@ -2,8 +2,12 @@
 // "ACTUALIZADO HACE X MIN" ages and the Desactualizado threshold stay meaningful on each request.
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import type { Verdict } from '@/lib/forecast/agreement'
+import { confidenceNotice } from '@/lib/forecast/confidenceNotice'
+import { buildDailyRows, type DailyRow } from '@/lib/forecast/daily'
+import { buildDespacho, type DespachoTone } from '@/lib/forecast/despacho'
 import { buildHeadline } from '@/lib/forecast/headline'
-import { makeDaily, makeHourly } from '@/lib/forecast/__fixtures__/build'
+import { makeConfidence, makeDaily, makeHourly } from '@/lib/forecast/__fixtures__/build'
 import { doyIndex, loadClimatology } from '@/lib/rain/normal'
 import { seriesStart } from '@/lib/rain/periods'
 import type { RainDay, StitchedRain } from '@/lib/rain/stitch'
@@ -18,7 +22,14 @@ import { type MoonInfo, moonInfo, moonPath, moonPhaseName } from '@/lib/sky/moon
 import type { SkyState, SkyToken } from '@/lib/sky/state'
 import { type SunDay, sunDay } from '@/lib/sky/sun'
 import { addDaysToKey, localDateKey, localHour, weekdayLong } from '@/lib/time'
-import type { DailyPoint, HourlyPoint, NowData, SourceInfo, WeatherSnapshot } from '@/lib/weather/types'
+import type {
+  DailyPoint,
+  DayConfidence,
+  HourlyPoint,
+  NowData,
+  SourceInfo,
+  WeatherSnapshot,
+} from '@/lib/weather/types'
 
 const MIN = 60_000
 
@@ -68,6 +79,8 @@ function okSources(fetchedMs: number): SourceInfo[] {
   return [
     { id: 'open-meteo', status: 'ok', fetchedAt },
     { id: 'met-norway', status: 'ok', fetchedAt },
+    { id: 'open-meteo-ensemble', status: 'ok', fetchedAt },
+    { id: 'open-meteo-models', status: 'ok', fetchedAt },
   ]
 }
 
@@ -337,6 +350,243 @@ function stitched(
     todayFraction,
     lagging: until < addDaysToKey(todayKey, -1),
   }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Phase 4 ("Pronóstico con confianza"). Rows come from buildDailyRows and the notice from
+// confidenceNotice, so the frames cannot drift from the real code. Rain ranges use real-looking
+// values: with real data p10 is usually 0, as in "0–17 mm" and "0–4 mm" (RESEARCH Pitfall 4).
+
+export interface ConfidenceFrame {
+  name: string
+  rows: DailyRow[]
+  notice: string | null
+  initialExpanded?: boolean
+  width?: 390 | 320
+}
+
+export interface DespachoEntry {
+  rule: string
+  text: string
+  tone: DespachoTone
+}
+
+// One letter per day: coinciden, dudan, desacuerdo (x), solo, sinDato (n).
+const VERDICT_OF: Record<string, Verdict> = { c: 'coinciden', d: 'dudan', x: 'desacuerdo', s: 'solo', n: 'sinDato' }
+
+/** Fixed Monday: frame 16 names every weekday the same way whatever the day of the review. */
+const DESPACHO_WEEK = '2026-11-02'
+
+const DESPACHO_CASES: [rule: string, verdicts: string][] = [
+  ['Regla 1 · 4 días con un solo modelo', 'ssssccc'],
+  ['Regla 1 · Solo días sin comparar · Fuera del contrato', 'sssnnnn'],
+  ['Regla 2 · La frase más larga', 'ccxcccc'],
+  ['Regla 2', 'cccccxc'],
+  ['Regla 3 · La frase más larga', 'ddxdcdd'],
+  ['Regla 3 · Con mañana', 'cxdcccc'],
+  ['Regla 4', 'ddxxddd'],
+  ['Regla 5', 'ccxxxcc'],
+  ['Regla 6', 'xcxcccc'],
+  ['Regla 7', 'ccccccc'],
+  ['Regla 7b', 'ccccscc'],
+  ['Regla 8', 'cccccdd'],
+  ['Regla 9', 'ccccddd'],
+  ['Regla 10 · Con hoy y mañana', 'ddccccc'],
+  ['Regla 10', 'dddcccc'],
+  ['Regla 11', 'dddcddd'],
+  ['Regla 12', 'cdcdccc'],
+  ['Duda sin ningún acuerdo · Fuera del contrato', 'dsndsnn'],
+]
+
+export function buildConfidenceFixtures(nowMs: number): {
+  frames: ConfidenceFrame[]
+  despachos: DespachoEntry[]
+} {
+  const now = new Date(nowMs)
+  const todayKey = localDateKey(now)
+  const rowsOf = (daily: DailyPoint[], confidence: DayConfidence[]) => buildDailyRows(daily, now, confidence)
+
+  const up = (id: SourceInfo['id']): SourceInfo => ({
+    id,
+    status: 'ok',
+    fetchedAt: new Date(nowMs - 6 * MIN).toISOString(),
+  })
+  const down = (id: SourceInfo['id']): SourceInfo => ({
+    id,
+    status: 'error',
+    fetchedAt: null,
+    errorCode: 'fetch_failed',
+  })
+  const stale = (id: SourceInfo['id'], hoursAgo: number): SourceInfo => ({
+    id,
+    status: 'stale',
+    fetchedAt: new Date(nowMs - hoursAgo * HOUR).toISOString(),
+    errorCode: 'fetch_failed',
+  })
+  const ENSEMBLE = 'open-meteo-ensemble'
+  const MODELS = 'open-meteo-models'
+  const notice = (ensemble: SourceInfo, models: SourceInfo) => confidenceNotice([ensemble, models])
+
+  const tMax = [24, 27, 29, 22, 18, 16, 21, 25, 28, 31, 26, 19, 17, 23]
+  const tMin = [11, 12, 14, 10, 7, 4, 8, 10, 12, 15, 13, 9, 5, 7]
+  const codes = [2, 1, 61, 3, 63, 95, 80, 0, 2, 3, 81, 61, 2, 0]
+  const precip = [0, 0, 4, 2, 12, 18, 6, 0, 0.6, 0, 8, 3, 0, 0]
+  const rainMembers = [2, 8, 30, 22, 36, 40, 28, 10, 6, 14, 30, 26, 12, 6]
+  const rainP10 = [0, 0, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0]
+  const rainP90 = [0, 0.4, 6, 4, 17, 15, 9, 1.5, 0.8, 2, 12, 5, 0.6, 0]
+
+  const baseDaily = makeDaily(todayKey, 14, (i) => ({
+    weatherCode: codes[i],
+    tMaxC: tMax[i],
+    tMinC: tMin[i],
+    precipSumMm: precip[i],
+  }))
+  // The fan opens with the lead time, as a real ensemble does.
+  const ensembleOf = (i: number) => ({
+    tMinP10C: Math.round(tMin[i] - (1 + i * 0.6)),
+    tMaxP90C: Math.round(tMax[i] + (1 + i * 0.7)),
+    rainMembers: rainMembers[i],
+    rainP10Mm: rainP10[i],
+    rainP90Mm: rainP90[i],
+  })
+  const baseEnsemble = makeConfidence(todayKey, 14, ensembleOf)
+  const noEnsemble = makeConfidence(todayKey, 14, () => null)
+
+  /** Sets one verdict per day; voters follow the verdict, as aggregateModels does. */
+  const vote = (confidence: DayConfidence[], verdicts: string, voters: (i: number) => number = () => 4) =>
+    confidence.map((c, i) => {
+      const verdict = VERDICT_OF[verdicts[i] ?? 'n']
+      return { ...c, verdict, voters: verdict === 'solo' ? 1 : verdict === 'sinDato' ? 0 : voters(i) }
+    })
+
+  const VERDICTS = 'ccdcdxddxdddcd'
+  const votersByDay = (i: number) => (i < 8 ? 4 : i < 10 ? 3 : 2)
+  const full = vote(baseEnsemble, VERDICTS, votersByDay)
+  const fullRows = rowsOf(baseDaily, full)
+  const noEnsembleRows = rowsOf(baseDaily, vote(noEnsemble, VERDICTS, votersByDay))
+  const noModelsRows = rowsOf(baseDaily, baseEnsemble)
+
+  const twoModels = vote(baseEnsemble, 'cdcdcdccdcdccd', () => 2)
+  const onlyOne = vote(baseEnsemble, 'ssssssssssssss')
+
+  const lowMembers = [2, 5, 6, 8, 2, 5, 6, 8, 2, 5, 6, 8, 2, 5]
+  const lowProbability = vote(
+    makeConfidence(todayKey, 14, (i) => ({ ...ensembleOf(i), rainMembers: lowMembers[i], rainP90Mm: 0 })),
+    VERDICTS,
+    votersByDay,
+  )
+  const highMembers: Record<number, number> = { 2: 48, 3: 50, 4: 51 }
+  const highProbability = vote(
+    makeConfidence(todayKey, 14, (i) => ({
+      ...ensembleOf(i),
+      rainMembers: highMembers[i] ?? rainMembers[i],
+      rainP10Mm: i in highMembers ? 8 : rainP10[i],
+      rainP90Mm: i in highMembers ? 34 : rainP90[i],
+    })),
+    VERDICTS,
+    votersByDay,
+  )
+  const dryDaily = makeDaily(todayKey, 14, (i) => ({
+    weatherCode: i % 3 === 0 ? 1 : 0,
+    tMaxC: tMax[i],
+    tMinC: tMin[i],
+    precipSumMm: 0,
+  }))
+  const dry = vote(
+    makeConfidence(todayKey, 14, (i) => ({ ...ensembleOf(i), rainMembers: 0, rainP10Mm: 0, rainP90Mm: 0 })),
+    VERDICTS.replaceAll('x', 'd'),
+    votersByDay,
+  )
+  const dayWithoutEnsemble = vote(
+    makeConfidence(todayKey, 14, (i) => (i === 4 ? null : ensembleOf(i))),
+    VERDICTS,
+    votersByDay,
+  )
+
+  // Frames 14 and 15: the same list. The range starts on index 3 (D-07), so the tightest case goes
+  // there; the first three rows cover "{n} mm", −12°, 95 % and "Mañana". Any 14 days include the 7
+  // weekdays and two-digit dates.
+  const LONG: { code: number; verdict: string; members: number; mm: number; p10: number; p90: number }[] = [
+    { code: 99, verdict: 'c', members: 51, mm: 120, p10: 0, p90: 0 },
+    { code: 82, verdict: 'd', members: 49, mm: 15, p10: 0, p90: 0 },
+    { code: 65, verdict: 'x', members: 40, mm: 4, p10: 0, p90: 0 },
+    { code: 3, verdict: 's', members: 51, mm: 180, p10: 120, p90: 250 },
+    { code: 99, verdict: 'c', members: 45, mm: 60, p10: 15, p90: 120 },
+    { code: 99, verdict: 'd', members: 36, mm: 9, p10: 5, p90: 15 },
+    { code: 82, verdict: 'd', members: 42, mm: 60, p10: 15, p90: 120 },
+    { code: 99, verdict: 'x', members: 40, mm: 60, p10: 15, p90: 120 },
+    { code: 65, verdict: 'x', members: 38, mm: 60, p10: 15, p90: 120 },
+    { code: 1, verdict: 's', members: 20, mm: 9, p10: 5, p90: 15 },
+    { code: 95, verdict: 's', members: 44, mm: 60, p10: 15, p90: 120 },
+    { code: 53, verdict: 's', members: 51, mm: 60, p10: 15, p90: 120 },
+    { code: 95, verdict: 'x', members: 30, mm: 9, p10: 5, p90: 15 },
+    { code: 0, verdict: 's', members: 0, mm: 0, p10: 0, p90: 0 },
+  ]
+  const longDaily = makeDaily(todayKey, 14, (i) => ({
+    weatherCode: LONG[i].code,
+    tMaxC: i === 1 ? -2 : i === 6 ? 38 : tMax[i],
+    tMinC: i === 1 ? -12 : tMin[i],
+    precipSumMm: LONG[i].mm,
+  }))
+  const longConfidence = vote(
+    makeConfidence(todayKey, 14, (i) => ({
+      ...ensembleOf(i),
+      rainMembers: LONG[i].members,
+      rainP10Mm: LONG[i].p10,
+      rainP90Mm: LONG[i].p90,
+    })),
+    LONG.map((l) => l.verdict).join(''),
+  )
+  const longRows = rowsOf(longDaily, longConfidence)
+
+  const frames: ConfidenceFrame[] = [
+    { name: 'Cuadro 1 · Datos completos 7 días', rows: fullRows, notice: null },
+    { name: 'Cuadro 2 · Datos completos 14 días', rows: fullRows, notice: null, initialExpanded: true },
+    { name: 'Cuadro 3 · Falló el ensemble', rows: noEnsembleRows, notice: notice(down(ENSEMBLE), up(MODELS)) },
+    {
+      name: 'Cuadro 4 · Ensemble con último dato bueno',
+      rows: fullRows,
+      notice: notice(stale(ENSEMBLE, 3), up(MODELS)),
+    },
+    {
+      name: 'Cuadro 4b · Ensemble con último dato bueno y multimodelo caído',
+      rows: noModelsRows,
+      notice: notice(stale(ENSEMBLE, 3), down(MODELS)),
+    },
+    { name: 'Cuadro 5 · Falló el multimodelo', rows: noModelsRows, notice: notice(up(ENSEMBLE), down(MODELS)) },
+    {
+      name: 'Cuadro 6 · Multimodelo con último dato bueno',
+      rows: fullRows,
+      notice: notice(up(ENSEMBLE), stale(MODELS, 2)),
+    },
+    {
+      name: 'Cuadro 6b · Multimodelo con último dato bueno y ensemble caído',
+      rows: noEnsembleRows,
+      notice: notice(down(ENSEMBLE), stale(MODELS, 2)),
+    },
+    {
+      name: 'Cuadro 6c · Las dos con último dato bueno · Frase fuera del contrato',
+      rows: fullRows,
+      notice: notice(stale(ENSEMBLE, 3), stale(MODELS, 2)),
+    },
+    { name: 'Cuadro 7 · Fallaron los dos', rows: rowsOf(baseDaily, []), notice: notice(down(ENSEMBLE), down(MODELS)) },
+    { name: 'Cuadro 8 · Solo un modelo', rows: rowsOf(baseDaily, onlyOne), notice: null },
+    { name: 'Cuadro 9 · 2 modelos', rows: rowsOf(baseDaily, twoModels), notice: null },
+    { name: 'Cuadro 10 · Probabilidad baja', rows: rowsOf(baseDaily, lowProbability), notice: null },
+    { name: 'Cuadro 11 · Tres días seguidos con 95 %', rows: rowsOf(baseDaily, highProbability), notice: null },
+    { name: 'Cuadro 12 · Semana seca', rows: rowsOf(dryDaily, dry), notice: null },
+    { name: 'Cuadro 13 · Día sin dato de ensemble', rows: rowsOf(baseDaily, dayWithoutEnsemble), notice: null },
+    { name: 'Cuadro 14 · Textos largos a 390', rows: longRows, notice: null, initialExpanded: true },
+    { name: 'Cuadro 15 · Textos largos a 320', rows: longRows, notice: null, initialExpanded: true, width: 320 },
+  ]
+
+  const despachos = DESPACHO_CASES.flatMap(([rule, verdicts]): DespachoEntry[] => {
+    const days = [...verdicts].map((v, i) => ({ date: addDaysToKey(DESPACHO_WEEK, i), verdict: VERDICT_OF[v] }))
+    const despacho = buildDespacho(days, DESPACHO_WEEK)
+    return despacho ? [{ rule, ...despacho }] : []
+  })
+
+  return { frames, despachos }
 }
 
 export function buildCieloFixtures(nowMs: number): {

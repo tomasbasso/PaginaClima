@@ -11,6 +11,7 @@ import { NoData } from '@/components/NoData'
 import { PampaHorizon } from '@/components/PampaHorizon'
 import { Pronostico } from '@/components/Pronostico'
 import { DailySection } from '@/components/DailySection'
+import { Despacho } from '@/components/Despacho'
 import { SkyBackdrop } from '@/components/client/SkyBackdrop'
 import { buildDailyRows } from '@/lib/forecast/daily'
 import { selectFutureHours } from '@/lib/forecast/hours'
@@ -22,7 +23,7 @@ import { LluviaAcumulada } from '@/components/cielo/LluviaAcumulada'
 import { MoonDisc } from '@/components/cielo/MoonDisc'
 import { Satelite } from '@/components/cielo/Satelite'
 import { SolLuna } from '@/components/cielo/SolLuna'
-import { buildCieloFixtures, buildFixtures, buildForecastFixtures } from './fixtures'
+import { buildCieloFixtures, buildConfidenceFixtures, buildFixtures, buildForecastFixtures } from './fixtures'
 
 // Fixtures are relative to the request time, so the ages ("HACE X MIN") stay meaningful.
 export const dynamic = 'force-dynamic'
@@ -33,6 +34,8 @@ export const metadata: Metadata = {
 }
 
 const CAPTION = 'text-[12px] font-semibold uppercase tracking-[0.14em] text-white/75'
+// Literal classes: Tailwind does not generate interpolated ones.
+const FRAME_WIDTH = { 390: 'w-[390px]', 320: 'w-[320px]' } as const
 
 function Frame({
   name,
@@ -118,11 +121,13 @@ function DailyFrame({
   name,
   sky,
   head,
+  width = 390,
   children,
 }: {
   name: string
   sky: SkyState
   head: ReactNode
+  width?: 390 | 320
   children: ReactNode
 }) {
   const token = skyToken(sky)
@@ -131,7 +136,7 @@ function DailyFrame({
       <figcaption className={CAPTION}>
         Pronóstico diario · {name} · data-sky {token}
       </figcaption>
-      <section aria-label={`Pronóstico diario ${name}`} className="w-[390px] shrink-0 bg-ground">
+      <section aria-label={`Pronóstico diario ${name}`} className={`${FRAME_WIDTH[width]} shrink-0 bg-ground`}>
         <div data-sky={token} className="relative isolate flex flex-col [--bar-h:0px] [--band-h:120px]">
           <SkyBackdrop state={sky} />
           <div className="flex flex-col pt-[24px]">
@@ -160,6 +165,7 @@ export default function EstadosPage() {
   const forecast = buildForecastFixtures(nowMs)
   const { headlines } = forecast
   const cielo = buildCieloFixtures(nowMs)
+  const confidence = buildConfidenceFixtures(nowMs)
   const skyOf = (s: WeatherSnapshot) => skyFromSnapshot(s, now)
 
   const dataFrames: {
@@ -266,6 +272,33 @@ export default function EstadosPage() {
             <NoData />
           </div>
         </DailyFrame>
+      </div>
+
+      <h2 id="confianza" className="mb-8 mt-16 font-serif text-[24px] text-white">
+        Pronóstico con confianza
+      </h2>
+      <div className="flex flex-col gap-12">
+        {confidence.frames.map((f) => (
+          <DailyFrame key={f.name} name={f.name} sky={normalSky} head={head(states.normal)} width={f.width}>
+            <DailySection rows={f.rows} notice={f.notice} initialExpanded={f.initialExpanded} />
+          </DailyFrame>
+        ))}
+        {([390, 320] as const).map((width) => (
+          <figure key={width} className="flex flex-col gap-3">
+            <figcaption className={CAPTION}>Cuadro 16 · Despachos a {width}</figcaption>
+            <section
+              aria-label={`Cuadro 16 Despachos a ${width}`}
+              className={`${FRAME_WIDTH[width]} flex shrink-0 flex-col gap-8 bg-ground px-6 py-8`}
+            >
+              {confidence.despachos.map((d) => (
+                <div key={d.rule} className="flex flex-col gap-3">
+                  <p className="text-[12px] font-semibold leading-[1.33] text-ink/55">{d.rule}</p>
+                  <Despacho text={d.text} tone={d.tone} />
+                </div>
+              ))}
+            </section>
+          </figure>
+        ))}
       </div>
 
       <h2 id="luna" className="mb-8 mt-16 font-serif text-[24px] text-white">
