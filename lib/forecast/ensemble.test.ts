@@ -2,7 +2,7 @@
 import { describe, expect, it } from 'vitest'
 import fixture from '@/lib/sources/__fixtures__/open-meteo-ensemble.json'
 import { addDaysToKey } from '@/lib/time'
-import { aggregateEnsemble, quantile, toDisplayPct } from './ensemble'
+import { aggregateEnsemble, quantile, rainRange, rainRangeText, toDisplayPct } from './ensemble'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 const DATE = '2026-11-03'
@@ -154,5 +154,26 @@ describe('toDisplayPct()', () => {
     [0, 0, null],
   ])('%i of %i → %s', (rain, members, expected) => {
     expect(toDisplayPct(rain, members)).toBe(expected)
+  })
+})
+
+describe('rainRangeText() (D-07, FCST-04)', () => {
+  it.each([
+    [5, 15, '5–15\u00A0mm'],
+    [0, 17, '0–17\u00A0mm'], // the usual shape with real data: p10 is 0 on most far days
+    [4.6, 5.4, '5\u00A0mm'],
+    [0, 1, '0–1\u00A0mm'],
+  ])('%d, %d → %s', (p10, p90, expected) => {
+    expect(rainRangeText(p10, p90)).toBe(expected)
+  })
+
+  it('checks the 1 mm threshold before rounding', () => {
+    expect(rainRangeText(0, 0.9)).toBeNull()
+    expect(rainRangeText(0, 0.999)).toBeNull()
+    expect(rainRange(0, 0.9)).toBeNull()
+  })
+
+  it('exposes the rounded limits for the screen-reader text', () => {
+    expect(rainRange(4.6, 15.4)).toEqual({ lo: 5, hi: 15 })
   })
 })

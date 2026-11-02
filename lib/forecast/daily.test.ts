@@ -36,11 +36,11 @@ describe('buildDailyRows (FCST-02, D-08..D-12) under TZ=UTC', () => {
     // 7-day scale: lo 5 (row 1), hi 30 (row 2)
     expect(rows[1].bar7?.lo).toBe(0)
     expect(rows[2].bar7?.hi).toBe(1)
-    expect(rows[0].bar7).toEqual({ lo: 5 / 25, hi: 20 / 25 })
+    expect(rows[0].bar7).toEqual({ lo: 5 / 25, hi: 20 / 25, bandLo: null, bandHi: null })
     for (let i = 7; i < 14; i++) expect(rows[i].bar7).toBeNull()
     // 14-day scale: lo 2 (row 7), hi 35 (row 7)
-    expect(rows[7].bar14).toEqual({ lo: 0, hi: 1 })
-    expect(rows[0].bar14).toEqual({ lo: 8 / 33, hi: 23 / 33 })
+    expect(rows[7].bar14).toEqual({ lo: 0, hi: 1, bandLo: null, bandHi: null })
+    expect(rows[0].bar14).toEqual({ lo: 8 / 33, hi: 23 / 33, bandLo: null, bandHi: null })
     for (const r of rows) {
       for (const b of [r.bar7, r.bar14]) {
         if (!b) continue
@@ -217,16 +217,126 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
     expect(rows[0].rainText).toBeNull()
   })
 
-  it('keeps the main forecast mm on days 1 to 14', () => {
-    const rows = buildDailyRows(
-      makeDaily(START, 14, () => ({ precipSumMm: 4.4 })),
-      NOW,
-      makeConfidence(START, 14, () => ({ rainMembers: 30, rainP10Mm: 5, rainP90Mm: 15 })),
-    )
-    for (const r of rows) expect(r.rainText).toBe('4\u00A0mm')
+  describe('rain text by lead time (D-07, FCST-04)', () => {
+    const wet = () => ({ precipSumMm: 4.4 })
+
+    it('uses the main forecast on days 1 to 3 and the ensemble range from day 4', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 14, wet),
+        NOW,
+        makeConfidence(START, 14, () => ({ rainMembers: 30, rainP10Mm: 5, rainP90Mm: 15 })),
+      )
+      for (const i of [0, 1, 2]) expect(rows[i].rainText).toBe('4\u00A0mm')
+      for (let i = 3; i < 14; i++) expect(rows[i].rainText).toBe('5\u201315\u00A0mm')
+    })
+
+    it('falls back to the main forecast on a far day without ensemble data', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 5, wet),
+        NOW,
+        makeConfidence(START, 5, (i) => (i === 3 ? null : { rainP10Mm: 5, rainP90Mm: 15 })),
+      )
+      expect(rows[3].rainText).toBe('4\u00A0mm')
+      expect(rows[4].rainText).toBe('5\u201315\u00A0mm')
+    })
+
+    it('uses the main forecast on far days when the ensemble is down', () => {
+      const rows = buildDailyRows(makeDaily(START, 5, wet), NOW, [])
+      expect(rows[4].rainText).toBe('4\u00A0mm')
+    })
+
+    it('shows nothing from day 4 when p90 is under 1 mm, even if the main forecast has rain', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4, wet),
+        NOW,
+        makeConfidence(START, 4, () => ({ rainP10Mm: 0, rainP90Mm: 0.9 })),
+      )
+      expect(rows[3].rainText).toBeNull()
+    })
   })
 
   describe('srText', () => {
+    it('reads the far-day contract of the UI-SPEC', () => {
+      // 2026-07-25 is a Saturday, at index 4: day 5 of the list.
+      const start = '2026-07-21'
+      const rows = buildDailyRows(
+        makeDaily(start, 5, () => ({ weatherCode: 82, tMinC: 9, tMaxC: 24 })),
+        new Date('2026-07-21T15:00:00Z'),
+        makeConfidence(start, 5, () => ({
+          rainMembers: 36,
+          rainP10Mm: 5,
+          rainP90Mm: 15,
+          tMinP10C: 6,
+          tMaxP90C: 27,
+        })),
+      )
+      expect(rows[4].srText).toBe(
+        'S\u00E1bado 25: chaparrones fuertes, m\u00EDnima 9 grados, m\u00E1xima 24 grados, entre 5 y 15 mil\u00EDmetros de lluvia. 36 de 51 escenarios traen lluvia. La temperatura podr\u00EDa ir de 6 a 27 grados.',
+      )
+    })
+
+    it('leaves the temperature sentence out of days 1 to 3', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4),
+        NOW,
+        makeConfidence(START, 4, () => ({ tMinP10C: 6, tMaxP90C: 27 })),
+      )
+      for (const i of [0, 1, 2]) expect(rows[i].srText).not.toContain('La temperatura')
+      expect(rows[3].srText).toContain('La temperatura podr\u00EDa ir de 6 a 27 grados.')
+    })
+
+    it.each([
+      [4.6, 5.4, '5 mil\u00EDmetros de lluvia'],
+      [0.6, 1.2, '1 mil\u00EDmetro de lluvia'],
+      [0, 17, 'entre 0 y 17 mil\u00EDmetros de lluvia'],
+      [0, 0.9, 'sin lluvia significativa'],
+    ])('says the range %d..%d as "%s"', (rainP10Mm, rainP90Mm, expected) => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4, () => ({ precipSumMm: 40 })),
+        NOW,
+        makeConfidence(START, 4, () => ({ rainP10Mm, rainP90Mm })),
+      )
+      expect(rows[3].srText).toContain(`m\u00E1xima 25 grados, ${expected}.`)
+    })
+
+    it('uses the band limits, so the main forecast is always inside the sentence', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4, () => ({ tMinC: 10, tMaxC: 25 })),
+        NOW,
+        makeConfidence(START, 4, () => ({ tMinP10C: 12, tMaxP90C: 22 })),
+      )
+      expect(rows[3].srText).toContain('La temperatura podr\u00EDa ir de 10 a 25 grados.')
+    })
+
+    it('writes negatives like the rest of the app', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4, () => ({ tMinC: 1, tMaxC: 9 })),
+        NOW,
+        makeConfidence(START, 4, () => ({ tMinP10C: -2.4, tMaxP90C: 12 })),
+      )
+      expect(rows[3].srText).toContain('La temperatura podr\u00EDa ir de \u22122 a 12 grados.')
+    })
+
+    it('omits the temperature sentence when a limit is missing', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 5, (i) => (i === 4 ? { tMinC: null } : {})),
+        NOW,
+        makeConfidence(START, 5, (i) => (i === 3 ? { tMaxP90C: null } : {})),
+      )
+      expect(rows[3].srText).not.toContain('La temperatura')
+      expect(rows[4].srText).not.toContain('La temperatura')
+    })
+
+    it('reads the main forecast and no range on a far day without ensemble data', () => {
+      const rows = buildDailyRows(
+        makeDaily(START, 4, () => ({ precipSumMm: 3 })),
+        NOW,
+        makeConfidence(START, 4, (i) => (i === 3 ? null : {})),
+      )
+      expect(rows[3].srText).toContain('m\u00E1xima 25 grados, 3 mil\u00EDmetros de lluvia. Sin dato de probabilidad.')
+      expect(rows[3].srText).not.toContain('La temperatura')
+    })
+
     const day = (precipSumMm: number, weatherCode = 2) => () => ({
       weatherCode,
       tMinC: 7,
@@ -285,5 +395,114 @@ describe('buildDailyRows with the ensemble (FCST-03, D-09, D-10)', () => {
         'Domingo 25: tormenta con granizo, mínima 7 grados, máxima 19 grados, sin lluvia significativa. 40 de 51 escenarios traen lluvia.',
       )
     })
+  })
+})
+
+describe('buildDailyRows fan bands (FCST-04, D-05, D-06)', () => {
+  const NOW = new Date('2026-10-23T15:00:00Z')
+  const START = '2026-10-23'
+
+  it('maps the band on the same scale, whose domain includes it', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 2, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 2, () => ({ tMinP10C: 5, tMaxP90C: 25 })),
+    )
+    // Domain 5..25, not 10..20.
+    expect(rows[0].bar7).toEqual({ lo: 0.25, hi: 0.75, bandLo: 0, bandHi: 1 })
+    expect(rows[0].bar14).toEqual({ lo: 0.25, hi: 0.75, bandLo: 0, bandHi: 1 })
+  })
+
+  // Pitfall 7: the main forecast is not one of the members. This is normal, do not "fix" it.
+  it('keeps the segment inside the band when the percentiles fall inside the main range', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 1, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 1, () => ({ tMinP10C: 12, tMaxP90C: 18 })),
+    )
+    const bar = rows[0].bar7!
+    expect(bar.bandHi).toBe(bar.hi)
+    expect(bar.bandLo).toBe(bar.lo)
+    expect(bar).toEqual({ lo: 0, hi: 1, bandLo: 0, bandHi: 1 })
+  })
+
+  it('keeps every fraction in [0, 1] and the band around the segment on both scales', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 14, (i) => ({ tMinC: 8 + (i % 3), tMaxC: 18 + (i % 5) })),
+      NOW,
+      makeConfidence(START, 14, (i) => ({ tMinP10C: 8 - i, tMaxP90C: 20 + i })),
+    )
+    for (const r of rows) {
+      for (const b of [r.bar7, r.bar14]) {
+        if (!b) continue
+        for (const v of [b.lo, b.hi, b.bandLo!, b.bandHi!]) {
+          expect(v).toBeGreaterThanOrEqual(0)
+          expect(v).toBeLessThanOrEqual(1)
+        }
+        expect(b.bandLo!).toBeLessThanOrEqual(b.lo)
+        expect(b.bandHi!).toBeGreaterThanOrEqual(b.hi)
+      }
+    }
+  })
+
+  it('builds the bar7 domain from rows 0..6 and the bar14 domain from all of them', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 14, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 14, (i) =>
+        i === 7 ? { tMinP10C: 0, tMaxP90C: 30 } : { tMinP10C: 5, tMaxP90C: 25 },
+      ),
+    )
+    expect(rows[0].bar7).toEqual({ lo: 0.25, hi: 0.75, bandLo: 0, bandHi: 1 })
+    expect(rows[0].bar14).toEqual({ lo: 1 / 3, hi: 2 / 3, bandLo: 5 / 30, bandHi: 25 / 30 })
+    expect(rows[7].bar14).toEqual({ lo: 1 / 3, hi: 2 / 3, bandLo: 0, bandHi: 1 })
+  })
+
+  it('leaves the phase-2 domain and null bands without an ensemble', () => {
+    const days = makeDaily(START, 3, (i) => ({ tMinC: 10 - i, tMaxC: 20 + i }))
+    for (const rows of [
+      buildDailyRows(days, NOW),
+      buildDailyRows(days, NOW, makeConfidence(START, 3, () => null)),
+    ]) {
+      expect(rows[0].bar7).toEqual({ lo: 2 / 14, hi: 12 / 14, bandLo: null, bandHi: null })
+    }
+  })
+
+  it('gives a day without ensemble null bands on the shared scale', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 2, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 2, (i) => (i === 0 ? null : { tMinP10C: 5, tMaxP90C: 25 })),
+    )
+    expect(rows[0].bar7).toEqual({ lo: 0.25, hi: 0.75, bandLo: null, bandHi: null })
+    expect(rows[1].bar7).toEqual({ lo: 0.25, hi: 0.75, bandLo: 0, bandHi: 1 })
+  })
+
+  it('nulls one side when only that percentile is missing, and reserves nothing for it', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 1, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 1, () => ({ tMinP10C: null, tMaxP90C: 30 })),
+    )
+    expect(rows[0].bar7).toEqual({ lo: 0, hi: 0.5, bandLo: null, bandHi: 1 })
+  })
+
+  it('reserves nothing for the band of a day whose bar is not drawn', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 2, (i) => (i === 0 ? { tMinC: null, tMaxC: 20 } : { tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence(START, 2, (i) => (i === 0 ? { tMinP10C: -50, tMaxP90C: 70 } : { tMinP10C: 10, tMaxP90C: 20 })),
+    )
+    expect(rows[0].bar7).toBeNull()
+    expect(rows[1].bar7).toEqual({ lo: 0, hi: 1, bandLo: 0, bandHi: 1 })
+  })
+
+  it('never uses an ensemble entry of another date in the domain', () => {
+    const rows = buildDailyRows(
+      makeDaily(START, 1, () => ({ tMinC: 10, tMaxC: 20 })),
+      NOW,
+      makeConfidence('2026-10-20', 1, () => ({ tMinP10C: -50, tMaxP90C: 70 })),
+    )
+    expect(rows[0].bar7).toEqual({ lo: 0, hi: 1, bandLo: null, bandHi: null })
   })
 })
