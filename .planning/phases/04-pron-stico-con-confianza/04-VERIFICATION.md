@@ -238,3 +238,9 @@ No quedan gaps bloqueantes. La fase no está cerrada por tres motivos: los arreg
 
 _Verified: 2026-11-02T14:58:16Z_
 _Verifier: Claude (gsd-verifier)_
+
+## Actualización del 2026-11-02, después de esta verificación
+
+- **Publicación:** los arreglos de la revisión ya están en producción, con smoke en verde en `72d82a0`.
+- **Respuestas parciales (punto 7 de la revisión del dueño):** el dueño decidió que cuentan como falla. La tarea rápida 261102-gtn (`de99cd1`, `38b8ea9`) pide al menos 12 días utilizables en ambas fuentes; en el ensemble, cada día necesita las dos temperaturas. Esto cierra los dos WARNING de respuestas parciales.
+- **Sigue pendiente del dueño:** el resto de la lista de `human_verification`. Nada de eso quedó aprobado.
