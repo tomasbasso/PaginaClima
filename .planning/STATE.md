@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-02T13:52:04.946Z"
+last_updated: "2026-11-02T14:02:35.135Z"
 last_activity: 2026-11-02
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 35
-  completed_plans: 33
+  completed_plans: 34
   percent: 57
 ---
 
@@ -25,11 +25,11 @@ See: .planning/PROJECT.md (updated 2026-10-23)
 ## Current Position
 
 Phase: 04 (pron-stico-con-confianza) — EXECUTING
-Plan: 9 of 10
+Plan: 10 of 10
 Status: Ready to execute
 Last activity: 2026-11-02
 
-Progress: [█████████░] 94%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [█████████░] 94%
 | Phase 04 P06 | 4 min | 2 tasks | 5 files |
 | Phase 04 P07 | 5 min | 2 tasks | 6 files |
 | Phase 04 P08 | 8 min | 2 tasks | 7 files |
+| Phase 04 P09 | 7 min | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,10 @@ Recent decisions affecting current work:
 - [Phase 04]: 04-08: en una mezcla de error y stale gana la copy de falla: la fuente stale conserva su fila completa y la otra no muestra nada
 - [Phase 04]: 04-08: stale y stale usa una frase fuera del contrato, con la hora más vieja; queda para revisión del dueño
 - [Phase 04]: 04-08: una fuente stale sin fetchedAt usable se trata como error: no hay hora para citar
+- [Phase 04]: 04-09: buildDespacho devuelve { text, tone } | null, porque el color de la regla no se deduce de la frase
+- [Phase 04]: 04-09: las reglas 8, 9 y 10 no se disparan si hay un día solo o sinDato en la lista; caen en la regla 11 o 12
+- [Phase 04]: 04-09: 'Los días que se pueden comparar, los modelos dudan.' está fuera del contrato; queda para revisión del dueño
+- [Phase 04]: 04-09: N del crédito es el máximo de votantes de la lista, y M el máximo de escenarios
 
 ### Pending Todos
 
@@ -166,6 +171,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-11-02T13:52:04.927Z
-Stopped at: Completed 04-08-PLAN.md
+Last session: 2026-11-02T14:02:35.102Z
+Stopped at: Completed 04-09-PLAN.md
 Resume file: None
