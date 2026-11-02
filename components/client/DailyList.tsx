@@ -6,7 +6,8 @@
 // with CSS only (globals.css, D-03): the delay comes from --i, and the tail restarts its animations
 // when `hidden` goes away. Rows are static: no links, buttons or hover (D-11).
 import { type CSSProperties, useId, useState } from 'react'
-import type { DailyBar, DailyRow } from '@/lib/forecast/daily'
+import { Rombo } from '@/components/Rombo'
+import type { DailyBar, DailyRow, DoubtWord } from '@/lib/forecast/daily'
 
 const LABEL = 'text-[12px] font-semibold leading-[1.33] tracking-[0.14em] uppercase'
 const LABEL_NUM = 'text-[12px] font-semibold leading-[1.33]'
@@ -16,6 +17,11 @@ const GRID_ENSEMBLE =
   'grid-cols-[60px_40px_1fr_36px_44px] gap-x-2 @max-[327px]:grid-cols-[56px_40px_1fr_32px_44px] @max-[327px]:gap-x-1'
 const GRID_FALLBACK =
   'grid-cols-[60px_40px_1fr_36px_64px] gap-x-2 @max-[327px]:grid-cols-[56px_40px_1fr_32px_64px] @max-[327px]:gap-x-1'
+const WORD_COLORS: Record<DoubtWord, string> = {
+  Dudan: 'text-sun',
+  'Sin acuerdo': 'text-ember',
+  'Solo un modelo': 'text-ink/75',
+}
 /** Days 8+ keep the azure and get engraved stripes: another kind of data, not weaker rain. */
 const STRIPED_FILL = 'repeating-linear-gradient(to top, var(--color-azure) 0 2px, transparent 2px 4px)'
 const BUTTON =
@@ -121,8 +127,13 @@ function Row({
             <span className={`${BODY} nums text-right text-azure`}>{row.rainText ?? ''}</span>
           )}
         </div>
-        {row.ensembleUp || row.stateLabel ? (
-          <div className="mt-1 flex min-h-4 items-center gap-2 whitespace-nowrap">
+        {/* With both sources down the line goes back to phase 2: only when there is a state to show. */}
+        {row.ensembleUp || row.modelsUp || row.stateLabel ? (
+          <div
+            className={`mt-1 flex items-center gap-2 whitespace-nowrap ${row.ensembleUp || row.modelsUp ? 'min-h-4' : ''}`}
+          >
+            {row.verdict !== 'sinDato' ? <Rombo kind={row.verdict} /> : null}
+            {row.word ? <span className={`${LABEL} shrink-0 ${WORD_COLORS[row.word]}`}>{row.word}</span> : null}
             <span className={`${LABEL} min-w-0 flex-1 overflow-hidden text-ink/75`}>{row.stateLabel ?? ''}</span>
             {row.ensembleUp && row.rainText ? (
               <span className={`${LABEL_NUM} nums shrink-0 text-azure`}>{row.rainText}</span>

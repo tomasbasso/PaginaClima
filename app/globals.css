@@ -13,6 +13,7 @@
   --color-sun: #f4c06a;          /* acento amanecer/atardecer */
   --color-storm: #b9b7f0;        /* acento tormenta */
   --color-peach: #fcd5ce;        /* avisos (desactualizado / fuente caída) */
+  --color-ember: #e8603a;        /* brasa: "no se ponen de acuerdo". Solo rombo vacío y palabra SIN ACUERDO */
 }
 
 @theme inline {
