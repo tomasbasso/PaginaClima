@@ -147,25 +147,32 @@ describe('buildDespacho (D-15) under TZ=UTC', () => {
       for (const head of alphabet) for (const tail of patterns(alphabet, length - 1)) yield head + tail
     }
 
-    function honest(pattern: string, start: string) {
+    // Plain checks with one final expect: an expect per week would take this close to the test timeout.
+    function dishonest(pattern: string, start: string): boolean {
       const out = buildDespacho(week(pattern, start), start)
-      if (out === null) return
-      withinLimits(out.text)
-      if (/coinciden/.test(out.text)) expect(pattern).toContain('C')
-      if (/dudan/.test(out.text)) expect(pattern).toContain('D')
-      if (/acuerdo/.test(out.text)) expect(pattern).toContain('X')
-      // The two neutral phrases are the only ones that may leave solo days out of the count.
-      if (out.tone === 'azure') expect(pattern).toMatch(/^C+$/)
+      if (out === null) return false
+      const { text, tone } = out
+      return (
+        text.length > MAX_DESPACHO_CHARS ||
+        text.includes('!') ||
+        !text.endsWith('.') ||
+        (text.includes('coinciden') && !pattern.includes('C')) ||
+        (text.includes('dudan') && !pattern.includes('D')) ||
+        (text.includes('acuerdo') && !pattern.includes('X')) ||
+        (tone === 'azure' && !/^C+$/.test(pattern))
+      )
     }
 
     it('every week starting on wednesday, the longest day name', () => {
-      for (const pattern of patterns(letters, 7)) honest(pattern, WED)
+      const bad = [...patterns(letters, 7)].filter((pattern) => dishonest(pattern, WED))
+      expect(bad).toEqual([])
     })
 
     it('every start day with the three comparable verdicts', () => {
       for (let i = 0; i < 7; i++) {
         const start = addDaysToKey(MON, i)
-        for (const pattern of patterns(['C', 'D', 'X'], 7)) honest(pattern, start)
+        const bad = [...patterns(['C', 'D', 'X'], 7)].filter((pattern) => dishonest(pattern, start))
+        expect(bad).toEqual([])
       }
     })
   })
