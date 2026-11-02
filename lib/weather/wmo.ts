@@ -45,6 +45,9 @@ const WMO: Record<number, Entry> = {
   99: e('Tormenta con granizo', 'tormenta'),
 }
 
+/** Every known code, derived so a new entry in the table reaches the tests on its own. */
+export const WMO_CODES: readonly number[] = Object.keys(WMO).map(Number)
+
 /**
  * `night` is decided by the caller from the solar phase ('noche' = sun below −6°), not `is_day`.
  * Unknown or null codes return nulls so the UI hides the diamond and label.
