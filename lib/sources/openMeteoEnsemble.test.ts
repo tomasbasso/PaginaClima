@@ -30,6 +30,21 @@ const allNull = <T extends object>(block: T) =>
 
 const noData = { ...fixture, hourly: allNull(fixture.hourly), daily: allNull(fixture.daily) }
 
+const sliceColumns = <T extends object>(block: T, rows: number) =>
+  Object.fromEntries(
+    Object.entries(block).map(([key, values]) => [key, (values as unknown[]).slice(0, rows)]),
+  )
+
+/**
+ * The fixture cut to exactly n closed days. A local day ends on the 00:00 stamp of the next one and
+ * the first stamp belongs to a partial "yesterday", so n days need 24 * n + 1 hourly rows.
+ */
+const firstDays = (n: number) => ({
+  ...fixture,
+  hourly: sliceColumns(fixture.hourly, 24 * n + 1),
+  daily: sliceColumns(fixture.daily, n),
+})
+
 describe('Open-Meteo ensemble adapter', () => {
   beforeEach(() => {
     vi.resetModules()
@@ -202,6 +217,85 @@ describe('Open-Meteo ensemble adapter', () => {
       readThrough({ getCached: getOpenMeteoEnsemble, getFresh: getOpenMeteoEnsembleFresh, ttlS: 3600, nowMs }),
     ])
     expect(deriveSourceStatus(none[0])).toBe('error')
+  })
+
+  it.each([1, 11])('rejects with schema when truncated to %i usable days', async (days) => {
+    stub(json(firstDays(days)))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    await expect(fetchOpenMeteoEnsembleRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-ensemble',
+      code: 'schema',
+    })
+  })
+
+  it('accepts exactly 12 usable days, so a delayed run does not read as a failure', async () => {
+    stub(json(firstDays(12)))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    const r = await fetchOpenMeteoEnsembleRaw()
+    expect(r.data).toHaveLength(12)
+  })
+
+  it('rejects with schema when the hourly block is good but every daily column is null', async () => {
+    stub(json({ ...fixture, daily: allNull(fixture.daily) }))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    await expect(fetchOpenMeteoEnsembleRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-ensemble',
+      code: 'schema',
+    })
+  })
+
+  it.each([
+    ['no rows', { time: [] }],
+    ['no columns', {}],
+  ])('rejects with schema when the hourly block is good but the daily block has %s', async (_, daily) => {
+    stub(json({ ...fixture, daily }))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    await expect(fetchOpenMeteoEnsembleRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-ensemble',
+      code: 'schema',
+    })
+  })
+
+  it('rejects with schema when only the minimums are null: a day needs both limits to count', async () => {
+    const daily = Object.fromEntries(
+      Object.entries(fixture.daily).map(([key, values]) => [
+        key,
+        key.startsWith('temperature_2m_min') ? (values as unknown[]).map(() => null) : values,
+      ]),
+    )
+    stub(json({ ...fixture, daily }))
+    const { fetchOpenMeteoEnsembleRaw } = await load()
+    await expect(fetchOpenMeteoEnsembleRaw()).rejects.toMatchObject({
+      name: 'SourceError',
+      source: 'open-meteo-ensemble',
+      code: 'schema',
+    })
+  })
+
+  it('a truncated response leaves the last good value as stale', async () => {
+    const { deriveSourceStatus } = await import('@/lib/weather/status')
+    const { readThrough } = await import('./readThrough')
+    const { getOpenMeteoEnsembleFresh } = await load()
+    stub(json(firstDays(1)))
+    const nowMs = Date.parse('2026-11-02T15:00:00Z')
+    const lastGood = { data: [{
+        date: '2026-11-02',
+        members: 51,
+        rainMembers: 10,
+        rainP10Mm: 0,
+        rainP90Mm: 4,
+        tMinP10C: 8,
+        tMaxP90C: 24,
+      }], fetchedAt: '2026-11-02T06:00:00.000Z' }
+
+    const kept = await Promise.allSettled([
+      readThrough({ getCached: async () => lastGood, getFresh: getOpenMeteoEnsembleFresh, ttlS: 3600, nowMs }),
+    ])
+    expect(deriveSourceStatus(kept[0])).toBe('stale')
+    expect(kept[0]).toMatchObject({ value: { value: lastGood, refreshError: 'schema' } })
   })
 
   it('getOpenMeteoEnsembleFresh(bucket) resolves the same shape', async () => {

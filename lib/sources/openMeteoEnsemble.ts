@@ -1,6 +1,6 @@
 import 'server-only'
 import { unstable_cache } from 'next/cache'
-import { OPEN_METEO_ENSEMBLE_URL, TTL, USER_AGENT } from '@/lib/config'
+import { MIN_CONFIDENCE_DAYS, OPEN_METEO_ENSEMBLE_URL, TTL, USER_AGENT } from '@/lib/config'
 import { aggregateEnsemble, type EnsembleDay } from '@/lib/forecast/ensemble'
 import { EnsembleDto } from './openMeteoEnsemble.schema'
 import { SourceError, type Cached } from './errors'
@@ -38,9 +38,12 @@ export async function fetchOpenMeteoEnsembleRaw(): Promise<Cached<EnsembleDay[]>
   if (!parsed.success) throw new SourceError('open-meteo-ensemble', 'schema')
 
   const data = aggregateEnsemble(parsed.data.hourly, parsed.data.daily)
-  // The schema accepts null columns, so "no usable day" gets here: it is a failed refresh and must
-  // never replace the last good value in the cache (D-17).
-  if (data.length === 0) throw new SourceError('open-meteo-ensemble', 'schema')
+  // The schema accepts null columns, a daily block with no rows and short responses, so an incomplete
+  // response gets here: it is a failed refresh and must never replace the last good value in the
+  // cache (D-17). A day counts only with both temperature limits, which covers both the missing
+  // daily block and the truncated response.
+  const usableDays = data.filter((day) => day.tMinP10C !== null && day.tMaxP90C !== null).length
+  if (usableDays < MIN_CONFIDENCE_DAYS) throw new SourceError('open-meteo-ensemble', 'schema')
 
   console.info('[upstream] open-meteo ensemble fetched')
   return { data, fetchedAt: new Date().toISOString() }

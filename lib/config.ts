@@ -168,6 +168,13 @@ export const OPEN_METEO_MODELS_URL = `https://api.open-meteo.com/v1/forecast?${n
 }).toString()}`
 
 /**
+ * Usable days a response needs to count as a good refresh. The list shows 14; two days of slack
+ * because a delayed model run can leave the last day or two unclosed, and that must not read as a
+ * failure.
+ */
+export const MIN_CONFIDENCE_DAYS = 12
+
+/**
  * GOES-East clean IR (10.3 µm, band 13) on NASA GIBS (D-07, SAT-01). The old name
  * `…_v0_NRT_ZENJPEG` no longer exists (verified in GetCapabilities 2026-10-25).
  */
