@@ -238,7 +238,8 @@ export function layoutMeteogram(points: HourlyPoint[], width: number, todayKey: 
   let rainPeak: MeteogramLayout['rainPeak'] = null
   if (maxMm >= RAIN_PEAK_MIN_MM) {
     const i = mms.indexOf(maxMm)
-    const text = `${formatInt(maxMm)} mm`
+    // Per hour, so it does not read as the day's total shown in /pronostico.
+    const text = `${formatInt(maxMm)} mm/h`
     const cx = clampCentre(xs[i], chars(text) * CHAR_W, width)
     const py = PLOT_H - rainScale(maxMm) - LABEL_H
     if (tryKeep(centredBox(cx, py, text))) rainPeak = { x: cx, y: py, text }

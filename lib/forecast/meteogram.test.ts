@@ -176,7 +176,7 @@ describe('layoutMeteogram (FCST-01, D-04/D-06/D-07) under TZ=UTC', () => {
     expect(none.rainPeak).toBeNull()
     const pts = makeHourly(START, 48, (i) => ({ precipMm: i === 10 || i === 30 ? 6.4 : i === 11 ? 2 : 0 }))
     const l = layoutMeteogram(pts, 342, TODAY)
-    expect(l.rainPeak!.text).toBe('6 mm')
+    expect(l.rainPeak!.text).toBe('6 mm/h')
     expect(l.rainPeak!.x).toBeCloseTo(l.xs[10])
     const bar = l.rainBars.find((b) => Math.abs(b.x + b.w / 2 - l.xs[10]) < 1e-6)!
     expect(l.rainPeak!.y + LABEL_H).toBeLessThanOrEqual(bar.y + 1e-9)
