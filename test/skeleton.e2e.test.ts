@@ -2,6 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import fixture from '@/lib/sources/__fixtures__/open-meteo-forecast.json'
 import metFixture from '@/lib/sources/__fixtures__/met-norway-compact.json'
+import ensembleFixture from '@/lib/sources/__fixtures__/open-meteo-ensemble.json'
 
 // unstable_cache needs the Next incremental cache; in tests it is a passthrough.
 vi.mock('next/cache', () => ({
@@ -10,15 +11,17 @@ vi.mock('next/cache', () => ({
 
 type Reply = () => Response
 
-/** fetch stub routed by host: api.open-meteo.com and api.met.no answer independently. */
+/** fetch stub routed by host: each upstream answers independently. */
 function stubFetch({
   om = () => new Response(JSON.stringify(fixture), { status: 200 }),
   met = () => new Response(JSON.stringify(metFixture), { status: 200 }),
-}: { om?: Reply; met?: Reply } = {}) {
+  ensemble = () => new Response(JSON.stringify(ensembleFixture), { status: 200 }),
+}: { om?: Reply; met?: Reply; ensemble?: Reply } = {}) {
   const fn = vi.fn(async (input: unknown) => {
     const host = new URL(String(input)).host
     if (host === 'api.open-meteo.com') return om()
     if (host === 'api.met.no') return met()
+    if (host === 'ensemble-api.open-meteo.com') return ensemble()
     throw new TypeError(`unexpected host ${host}`)
   })
   vi.stubGlobal('fetch', fn)
@@ -105,5 +108,48 @@ describe('walking skeleton: getWeatherSnapshot()', () => {
       fetchedAt: null,
       errorCode: 'http_500',
     })
+  })
+
+  it('adds per-day confidence from the real ensemble fixture, aggregated only', async () => {
+    stubFetch()
+
+    const snap = await loadSnapshot()
+
+    expect(snap.sources).toContainEqual(
+      expect.objectContaining({ id: 'open-meteo-ensemble', status: 'ok' }),
+    )
+    expect(snap.confidence).toHaveLength(14)
+    for (const day of snap.confidence) expect(day.ensemble?.members).toBe(51)
+    // Not the bare word: EnsembleDay has the legitimate fields members and rainMembers (D-18).
+    expect(JSON.stringify(snap)).not.toMatch(/_memberd|precipitation_member/)
+  })
+
+  it('asks the ensemble host once, for hourly rain and never for the daily sum', async () => {
+    const fetchMock = stubFetch()
+
+    await loadSnapshot()
+
+    const calls = callsTo(fetchMock, 'ensemble-api.open-meteo.com')
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toContain('models=ecmwf_ifs025')
+    expect(calls[0]).toContain('forecast_days=15')
+    expect(calls[0]).toContain('hourly=precipitation')
+    expect(calls[0]).not.toContain('precipitation_sum')
+  })
+
+  it('keeps the page data when the ensemble answers 500: no confidence, source in error', async () => {
+    stubFetch({ ensemble: () => new Response('down', { status: 500 }) })
+
+    const snap = await loadSnapshot()
+
+    expect(snap.now).not.toBeNull()
+    expect(snap.sources[0]).toMatchObject({ id: 'open-meteo', status: 'ok' })
+    expect(snap.sources).toContainEqual({
+      id: 'open-meteo-ensemble',
+      status: 'error',
+      fetchedAt: null,
+      errorCode: 'http_500',
+    })
+    expect(snap.confidence.filter((day) => day.ensemble !== null)).toEqual([])
   })
 })
