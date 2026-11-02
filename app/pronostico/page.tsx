@@ -20,7 +20,7 @@ export const metadata = pageMetadata({
   path: '/pronostico',
   title: { absolute: 'Pronóstico extendido en Winifreda, La Pampa' },
   description:
-    'Pronóstico extendido de 7 a 14 días para Winifreda, La Pampa: máximas y mínimas, lluvia prevista y ráfagas de viento, todo en hora argentina.',
+    'Pronóstico extendido de 7 a 14 días para Winifreda, La Pampa: máximas y mínimas, probabilidad real de lluvia y cuánto coinciden los modelos, en hora argentina.',
 })
 
 export default async function PronosticoPage() {

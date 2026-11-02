@@ -160,9 +160,12 @@ function Row({
 
 export function DailyList({
   rows,
+  credit,
   initialExpanded = false,
 }: {
   rows: DailyRow[]
+  /** Lines from buildCredit, at the foot of the list; empty with both sources down. */
+  credit: string[]
   /** Only the /dev/estados 14-day frame passes true; the real page always starts collapsed. */
   initialExpanded?: boolean
 }) {
@@ -223,6 +226,15 @@ export function DailyList({
             {expanded ? 'VER 7 DÍAS' : 'VER 14 DÍAS'}
           </button>
         </>
+      ) : null}
+      {credit.length > 0 ? (
+        <div className="mt-6 flex flex-col gap-1">
+          {credit.map((line) => (
+            <p key={line} className={`${LABEL} text-ink/75`}>
+              {line}
+            </p>
+          ))}
+        </div>
       ) : null}
     </div>
   )

@@ -35,6 +35,8 @@ export interface DailyRow {
   verdict: Verdict
   word: DoubtWord | null // sentence case, uppercased by CSS; null when agreeing or without data (D-12)
   modelsUp: boolean // some visible day has a verdict other than sinDato
+  members: number | null // ensemble scenarios of this day, for the credit
+  voters: number // models that voted on this day, for the credit
   bar7: DailyBar | null // scale of rows 0..6; null for rows 7..13
   bar14: DailyBar | null // scale of all rows
   tentative: boolean // days 8..14 (D-08)
@@ -174,6 +176,19 @@ function srTextFor(
 }
 
 /**
+ * Foot of the list (D-16), one line per source that is up. Both counts are the highest of the list, read
+ * from the data: the ensemble's members and the voters can change between runs and along the horizon.
+ */
+export function buildCredit(rows: DailyRow[]): string[] {
+  const members = Math.max(0, ...rows.map((r) => r.members ?? 0))
+  const voters = Math.max(0, ...rows.map((r) => r.voters))
+  const credit: string[] = []
+  if (members > 0) credit.push(`Probabilidad: ${members} escenarios de ECMWF`)
+  if (voters > 0) credit.push(`Coincidencia: ${voters} ${voters === 1 ? 'modelo' : 'modelos'}`)
+  return credit
+}
+
+/**
  * Rows from today's local date on (past days of a stale snapshot are dropped, D-12), at most 14.
  * Day keys are compared as 'YYYY-MM-DD' strings; today comes from localDateKey (ART), never UTC.
  * Ensemble and verdict join by date: an entry for a day that is not visible is never used.
@@ -193,7 +208,8 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
     const ensemble = ensembleByDate.get(d.date) ?? null
     const farDay = i >= FIRST_RANGE_INDEX
     const verdict = verdictOf(d.date)
-    const agreement = agreementSentence(verdict, modelsByDate.get(d.date)?.voters ?? 0)
+    const voters = modelsByDate.get(d.date)?.voters ?? 0
+    const agreement = agreementSentence(verdict, voters)
     const rain =
       farDay && ensemble ? rainRangeText(ensemble.rainP10Mm, ensemble.rainP90Mm) : rainText(d.precipSumMm)
     const probPct = ensemble ? toDisplayPct(ensemble.rainMembers, ensemble.members) : null
@@ -227,6 +243,8 @@ export function buildDailyRows(daily: DailyPoint[], now: Date, confidence: DayCo
       verdict,
       word,
       modelsUp,
+      members: ensemble?.members ?? null,
+      voters,
       bar7: i < DEFAULT_DAYS ? barFor(d, ensemble, scale7) : null,
       bar14: barFor(d, ensemble, scale14),
       tentative: i >= DEFAULT_DAYS,
