@@ -1,5 +1,6 @@
 // Verdict thresholds (D-13, D-14). Every edge of AGREEMENT_C, plus the float trap (Pitfall 3).
 import { describe, expect, it } from 'vitest'
+import { VOTING_MODELS } from '@/lib/config'
 import { AGREEMENT_C, verdictFor, type ModelVote } from './agreement'
 
 const vote = (tMaxC: number, rainMm = 0, tMinC = 10): ModelVote => ({ tMaxC, tMinC, rainMm })
@@ -18,12 +19,22 @@ describe('AGREEMENT_C', () => {
     expect(AGREEMENT_C[3]).toEqual([4, 7.5])
     expect(AGREEMENT_C[2]).toEqual([2.5, Infinity])
   })
+
+  it('has an entry for every voter count from 2 to the number of voting models', () => {
+    const table: Record<number, unknown> = AGREEMENT_C
+    for (let n = 2; n <= VOTING_MODELS.length; n++) expect(table[n], `${n} voters`).toBeDefined()
+  })
 })
 
 describe('verdictFor()', () => {
   it('no voters give sinDato and one voter gives solo, never an agreement (D-14)', () => {
     expect(verdictFor([])).toBe('sinDato')
     expect(verdictFor([vote(20)])).toBe('solo')
+  })
+
+  it('a voter count with no thresholds is sinDato, never a crash or a false verdict', () => {
+    expect(verdictFor(spreadVotes(5, 1))).toBe('sinDato')
+    expect(verdictFor(spreadVotes(12, 30))).toBe('sinDato')
   })
 
   it.each([

@@ -39,13 +39,16 @@ const range = (values: number[]) => round1(Math.max(...values) - Math.min(...val
 /**
  * Never a false agreement (D-14): one voter is 'solo' and none is 'sinDato'. The wider of the two
  * temperature ranges decides. With 3 voters rain cannot split in halves, so only temperature can
- * reach 'desacuerdo' there, which is the literal reading of D-13.
+ * reach 'desacuerdo' there, which is the literal reading of D-13. A voter count with no thresholds is
+ * 'sinDato': this runs outside the allSettled that isolates source failures, so it must never throw.
  */
 export function verdictFor(votes: ModelVote[]): Verdict {
   const n = votes.length
   if (n === 0) return 'sinDato'
   if (n === 1) return 'solo'
-  const [agreeUpToC, disagreeAboveC] = AGREEMENT_C[n as 2 | 3 | 4]
+  const thresholds: readonly [number, number] | undefined = AGREEMENT_C[n as keyof typeof AGREEMENT_C]
+  if (!thresholds) return 'sinDato'
+  const [agreeUpToC, disagreeAboveC] = thresholds
   const spread = Math.max(range(votes.map((v) => v.tMaxC)), range(votes.map((v) => v.tMinC)))
   const wet = votes.filter((v) => v.rainMm >= RAIN_DAY_MM).length
   if (n > 2 && (wet * 2 === n || spread > disagreeAboveC)) return 'desacuerdo'
