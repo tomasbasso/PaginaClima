@@ -548,6 +548,76 @@ describe('buildDailyRows with the model agreement (MODL-02, D-12, D-14, D-17)', 
   })
 })
 
+describe('buildDailyRows state variants for line 2 (D-04)', () => {
+  const NOW = new Date('2026-10-23T15:00:00Z')
+  const START = '2026-10-23'
+
+  const confidence = (verdict: Verdict, voters: number, ensemble: boolean) =>
+    makeConfidence(START, 1, () => (ensemble ? { rainMembers: 8 } : null)).map((c) => ({ ...c, verdict, voters }))
+
+  const rowOf = (weatherCode: number, precipSumMm: number, verdict: Verdict, voters: number, ensemble = true) =>
+    buildDailyRows(makeDaily(START, 1, () => ({ weatherCode, precipSumMm })), NOW, confidence(verdict, voters, ensemble))[0]
+
+  it('fixes the case that was clipped at 320 px: SIN ACUERDO + CHAPARRONES + 2 mm', () => {
+    const row = rowOf(80, 2, 'desacuerdo', 3)
+    expect(row.statusNormal).toBe('Chaparrones')
+    expect(row.statusCompact).toBe('Chaparrón')
+  })
+
+  it('counts the mm on line 2 with the ensemble up', () => {
+    // Lluvia helada fits 272 − 20 − 109.1 − 4 = 138.9, but not the 98.1 left by the 5 mm.
+    const row = rowOf(66, 5, 'desacuerdo', 3)
+    expect(row.statusNormal).toBe('Lluvia helada')
+    expect(row.statusCompact).toBe('Lluvia')
+  })
+
+  it('gives the state their room with the ensemble down: the mm are in the last column', () => {
+    const row = rowOf(96, 80, 'solo', 1, false)
+    expect(row.ensembleUp).toBe(false)
+    expect(row.rainText).not.toBeNull()
+    // 272 − 20 − 142.6 − 4 = 105.4 keeps the short form, which the mm would have pushed out.
+    expect(row.statusCompact).toBe('Granizo')
+  })
+
+  it('gives all the width to the state on a sinDato day: no glyph and no word', () => {
+    const row = rowOf(96, 1000, 'sinDato', 0)
+    expect(row.word).toBeNull()
+    // 272 − 66.5 − 4 = 201.5 fits the 188-px label; a glyph would leave 181.5 and shorten it.
+    expect(row.statusCompact).toBe('Tormenta con granizo')
+    expect(row.statusNormal).toBe('Tormenta con granizo')
+  })
+
+  it('keeps the full label in the screen-reader text when the screen shortens it', () => {
+    const row = rowOf(96, 80, 'desacuerdo', 3)
+    expect(row.statusCompact).toBe('Granizo')
+    expect(row.stateLabel).toBe('Tormenta con granizo')
+    expect(row.srText).toContain('tormenta con granizo')
+  })
+
+  it('keeps the full label in the screen-reader text when the screen drops it', () => {
+    // Day 4+ shows the range: SOLO UN MODELO + TORMENTA + a 2-digit range leaves no room for it.
+    const rows = buildDailyRows(
+      makeDaily(START, 4, () => ({ weatherCode: 95 })),
+      NOW,
+      makeConfidence(START, 4, () => ({ rainMembers: 8, rainP10Mm: 5, rainP90Mm: 15 })).map((c) => ({
+        ...c,
+        verdict: 'solo' as const,
+        voters: 1,
+      })),
+    )
+    expect(rows[3].rainText).toContain('5–15')
+    expect(rows[3].statusCompact).toBeNull()
+    expect(rows[3].srText).toContain('tormenta')
+  })
+
+  it('has no state in either variant without a label', () => {
+    const row = rowOf(1234, 2, 'dudan', 4)
+    expect(row.stateLabel).toBeNull()
+    expect(row.statusNormal).toBeNull()
+    expect(row.statusCompact).toBeNull()
+  })
+})
+
 describe('buildDailyRows fan bands (FCST-04, D-05, D-06)', () => {
   const NOW = new Date('2026-10-23T15:00:00Z')
   const START = '2026-10-23'
